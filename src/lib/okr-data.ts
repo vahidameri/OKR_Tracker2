@@ -11,13 +11,20 @@ const tkrInclude = {
   milestones: { orderBy: { order: 'asc' as const } },
   checkIns: {
     orderBy: { weekStartDate: 'desc' as const },
-    include: { feedback: true, submittedBy: { select: { fullName: true } } },
+    include: {
+      feedback: true,
+      submittedBy: { select: { fullName: true } },
+      editedBy: { select: { fullName: true } },
+    },
   },
 };
 
 export type TkrWithData = Awaited<ReturnType<typeof fetchAllTkrs>>[number];
 
-export function fetchAllTkrs(teamId?: string) {
+export async function fetchAllTkrs(teamId?: string) {
+  // آستانه‌های وضعیت خودکار را قبل از هر محاسبه تازه کن (کش ۳۰ ثانیه‌ای)
+  const { loadAutoThresholds } = await import('@/lib/settings');
+  await loadAutoThresholds();
   return prisma.teamKeyResult.findMany({
     where: teamId ? { teamId } : undefined,
     include: tkrInclude,
@@ -40,12 +47,42 @@ export function tkrAutoStatus(tkr: TkrWithData): AutoStatus | null {
 }
 
 /** میانگین وزنی «پیشرفت مورد انتظار» مجموعه‌ای از KR-تیم‌ها (دوره‌های ناشناخته حذف می‌شوند) */
-export function expectedOf(tkrs: TkrWithData[]): number | null {
+export function expectedOf(tkrs: TkrWithData[], at: Date = new Date()): number | null {
   const items = tkrs
-    .map((t) => ({ weight: t.weight, expected: tkrExpected(t) }))
+    .map((t) => ({ weight: t.weight, expected: expectedProgressForPeriod(t.keyResult.objective.period, at) }))
     .filter((i): i is { weight: number; expected: number } => i.expected !== null);
   if (items.length === 0) return null;
   return weightedProgress(items.map((i) => ({ weight: i.weight, progress: i.expected })));
+}
+
+export interface PersistentBlocker {
+  teamId: string;
+  teamName: string;
+  krTitle: string;
+  weeks: number;
+  blocker: string | null;
+}
+
+/** بلاکرهای پایدار: KRهایی که آخرین چک‌این‌هایشان ۲ هفته‌ی متوالی یا بیشتر BLOCKED بوده */
+export function computePersistentBlockers(tkrs: TkrWithData[]): PersistentBlocker[] {
+  const result: PersistentBlocker[] = [];
+  for (const tkr of tkrs) {
+    let streak = 0;
+    for (const c of tkr.checkIns) {
+      if (c.progressStatus === 'BLOCKED') streak += 1;
+      else break;
+    }
+    if (streak >= 2) {
+      result.push({
+        teamId: tkr.teamId,
+        teamName: tkr.team.name,
+        krTitle: tkr.keyResult.title,
+        weeks: streak,
+        blocker: tkr.checkIns[0]?.blockerDescription ?? null,
+      });
+    }
+  }
+  return result.sort((a, b) => b.weeks - a.weeks);
 }
 
 /** برچسب متنی آخرین مقدار ثبت‌شده‌ی یک KR-تیم (با پشتیبانی مایل‌استون) */
@@ -191,6 +228,9 @@ export interface ComplianceCell {
   submitted: number;
   total: number;
   ratio: number;
+  /** وضعیت pacing تیم در پایان آن هفته (خودکار) */
+  autoStatus: AutoStatus | null;
+  progressAtWeek: number;
 }
 
 export interface ComplianceRow {
@@ -199,13 +239,16 @@ export interface ComplianceRow {
   cells: ComplianceCell[];
 }
 
-/** ماتریس نظم ثبت چک‌این: هر تیم × هر هفته، چند KR از کل ثبت شده */
+/**
+ * ماتریس تیم × هفته: ترکیب «ثبت/عدم‌ثبت چک‌این» و «وضعیت pacing» هر تیم در هر هفته
+ * برای دید سریع کل دوره در یک نگاه.
+ */
 export function computeCompliance(teams: TeamRow[], tkrs: TkrWithData[]) {
   const weekSet = new Set<string>();
   for (const tkr of tkrs) {
     for (const c of tkr.checkIns) weekSet.add(c.weekStartDate.toISOString());
   }
-  const weeks = Array.from(weekSet).sort().slice(-10); // ۱۰ هفته‌ی اخیر
+  const weeks = Array.from(weekSet).sort().slice(-12); // ۱۲ هفته‌ی اخیر
 
   const rows: ComplianceRow[] = teams.map((team) => {
     const teamTkrs = tkrs.filter((t) => t.teamId === team.id);
@@ -216,11 +259,22 @@ export function computeCompliance(teams: TeamRow[], tkrs: TkrWithData[]) {
         const submitted = teamTkrs.filter((t) =>
           t.checkIns.some((c) => c.weekStartDate.toISOString() === weekIso)
         ).length;
+        // پیشرفت تیم تا انتهای آن هفته (آخرین چک‌این تا آن هفته carry-forward می‌شود)
+        const progressAtWeek = weightedProgress(
+          teamTkrs.map((tkr) => {
+            const upTo = tkr.checkIns.find((c) => c.weekStartDate.toISOString() <= weekIso);
+            return { weight: tkr.weight, progress: checkInProgress(tkr, upTo ?? null) };
+          })
+        );
+        const weekEnd = new Date(new Date(weekIso).getTime() + 6 * 86400000);
+        const expected = expectedOf(teamTkrs, weekEnd);
         return {
           weekIso,
           submitted,
           total: teamTkrs.length,
           ratio: teamTkrs.length === 0 ? 0 : submitted / teamTkrs.length,
+          autoStatus: teamTkrs.length > 0 ? computeAutoStatus(progressAtWeek, expected) : null,
+          progressAtWeek,
         };
       }),
     };

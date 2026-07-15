@@ -9,9 +9,12 @@ import { JalaliCalendar } from '@/components/jalali-calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { formatJalali, formatJalaliLong } from '@/lib/jalali';
+import { LeaderboardHistory, LeaderboardTable } from '@/components/leaderboard-table';
+import { computeStandings, getLeaderboardHistory } from '@/lib/leaderboard';
 import {
   computeCompliance,
   computeObjectiveProgress,
+  computePersistentBlockers,
   computeTrend,
   getDepartmentOverview,
 } from '@/lib/okr-data';
@@ -24,6 +27,9 @@ export default async function AdminDashboard() {
   const trend = computeTrend(tkrs);
   const objectives = computeObjectiveProgress(tkrs);
   const compliance = computeCompliance(teams, tkrs);
+  const persistentBlockers = computePersistentBlockers(tkrs);
+  const standings = computeStandings(overviews);
+  const historyByMonth = await getLeaderboardHistory();
 
   const totals = overviews.reduce(
     (acc, o) => ({
@@ -91,6 +97,49 @@ export default async function AdminDashboard() {
           </Card>
         ))}
       </div>
+
+      {/* هشدار بلاکرهای پایدار */}
+      {persistentBlockers.length > 0 && (
+        <Card className="border-red-300 bg-red-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-red-800">🔁 بلاکرهای پایدار — نیازمند مداخله</CardTitle>
+            <CardDescription className="text-red-700">
+              این KRها دو هفته‌ی متوالی یا بیشتر در وضعیت «بلاک‌شده» گزارش شده‌اند.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {persistentBlockers.map((b, i) => (
+              <div key={i} className="rounded-md bg-white/70 p-2 text-sm">
+                <p className="font-medium">
+                  {b.teamName} — {b.krTitle}
+                  <span className="mr-2 rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">
+                    {b.weeks} هفته متوالی
+                  </span>
+                </p>
+                {b.blocker && <p className="mt-1 text-xs text-red-800">آخرین بلاکر: {b.blocker}</p>}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* لیدربورد ماهانه */}
+      <Card>
+        <CardHeader>
+          <CardTitle>🏆 لیدربورد تیم‌ها (pacing)</CardTitle>
+          <CardDescription>
+            رتبه‌بندی بر اساس فاصله‌ی پیشرفت واقعی از پیشرفت مورد انتظار زمان — پایان هر ماه شمسی خودکار
+            اسنپ‌شات می‌شود.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <LeaderboardTable standings={standings} />
+          <div>
+            <p className="mb-2 text-sm font-bold">تاریخچه‌ی ماه‌های قبل</p>
+            <LeaderboardHistory historyByMonth={historyByMonth} />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* نمودارها: میله‌ای تیم‌ها + دونات وضعیت */}
       <div className="grid gap-4 lg:grid-cols-5">
@@ -172,11 +221,13 @@ export default async function AdminDashboard() {
         </Card>
       )}
 
-      {/* هیت‌مپ نظم ثبت */}
+      {/* هیت‌مپ تیم × هفته */}
       <Card>
         <CardHeader>
-          <CardTitle>نظم ثبت چک‌این هفتگی</CardTitle>
-          <CardDescription>سهم KRهای ثبت‌شده‌ی هر تیم در هر هفته (۱۰ هفته اخیر)</CardDescription>
+          <CardTitle>هیت‌مپ هفتگی تیم × هفته</CardTitle>
+          <CardDescription>
+            رنگ = وضعیت pacing تیم در پایان هر هفته · عدد = KRهای ثبت‌شده / کل · خط‌چین = عدم ثبت (۱۲ هفته اخیر)
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <CheckinHeatmap weeks={compliance.weeks} rows={compliance.rows} />

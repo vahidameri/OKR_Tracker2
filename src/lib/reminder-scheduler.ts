@@ -29,6 +29,14 @@ export function startReminderScheduler() {
   started = true;
 
   const tick = async () => {
+    // اسنپ‌شات لیدربورد با تغییر ماه شمسی (مستقل از یادآوری پوش)
+    try {
+      const { snapshotLeaderboardIfMonthChanged } = await import('@/lib/leaderboard');
+      await snapshotLeaderboardIfMonthChanged();
+    } catch (err) {
+      console.error('[leaderboard] خطا در اسنپ‌شات ماهانه:', err);
+    }
+
     try {
       const { weekday, hour, dateKey } = tehranNow();
       if (!REMINDER_DAYS.has(weekday) || hour < REMINDER_HOUR) return;

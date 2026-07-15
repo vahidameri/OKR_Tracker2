@@ -42,6 +42,7 @@ export async function POST(req: Request) {
 
   let objectivesCreated = 0;
   let krsCreated = 0;
+  const auditEntries: import('@/lib/audit').AuditEntry[] = [];
 
   await prisma.$transaction(async (tx) => {
     const objectiveCache = new Map<string, string>();
@@ -68,11 +69,18 @@ export async function POST(req: Request) {
           });
           objectiveId = created.id;
           objectivesCreated += 1;
+          auditEntries.push({
+            entityType: 'OBJECTIVE',
+            entityId: created.id,
+            entityLabel: created.title,
+            field: 'ایجاد هدف (آپلود اکسل)',
+            newValue: `دوره ${created.period}`,
+          });
         }
         objectiveCache.set(key, objectiveId);
       }
 
-      await tx.keyResult.create({
+      const createdKr = await tx.keyResult.create({
         data: {
           objectiveId,
           title: row.krTitle,
@@ -93,8 +101,18 @@ export async function POST(req: Request) {
         },
       });
       krsCreated += 1;
+      auditEntries.push({
+        entityType: 'KEY_RESULT',
+        entityId: createdKr.id,
+        entityLabel: createdKr.title,
+        field: 'ایجاد نتیجه کلیدی (آپلود اکسل)',
+        newValue: `${row.teams.length} تیم`,
+      });
     }
   });
+
+  const { logAudit } = await import('@/lib/audit');
+  await logAudit(prisma, session!.user.id, auditEntries);
 
   return NextResponse.json({ objectivesCreated, krsCreated });
 }

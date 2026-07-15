@@ -40,6 +40,8 @@ model User {
   feedbacks          CheckInFeedback[]
   objectives         Objective[]
   pushSubscriptions  PushSubscription[]
+  editedCheckIns     WeeklyCheckIn[]    @relation("CheckInEditor")
+  auditLogs          OkrAuditLog[]
 }
 
 model UserTeam {
@@ -65,12 +67,13 @@ model UserSession {
 }
 
 model Team {
-  id             String          @id @default(cuid())
-  name           String          @unique
-  description    String?
-  leadName       String?
-  members        UserTeam[]
-  teamKeyResults TeamKeyResult[]
+  id                 String               @id @default(cuid())
+  name               String               @unique
+  description        String?
+  leadName           String?
+  members            UserTeam[]
+  teamKeyResults     TeamKeyResult[]
+  leaderboardEntries MonthlyLeaderboard[]
 }
 
 model Objective {
@@ -144,9 +147,47 @@ model WeeklyCheckIn {
   progressStatus     ProgressStatus   @default(ON_TRACK)
   blockerDescription String?
   submittedAt        DateTime         @default(now())
+  // ویرایش ادمین روی چک‌این هفته‌های گذشته — برای شفافیت داده‌های تاریخی
+  isEdited           Boolean          @default(false)
+  editedById         String?
+  editedBy           User?            @relation("CheckInEditor", fields: [editedById], references: [id], onDelete: SetNull)
+  editedAt           DateTime?
   feedback           CheckInFeedback?
 
   @@unique([teamKeyResultId, weekStartDate])
+}
+
+// تاریخچه‌ی تغییرات تعریف OKR (وزن، تارگت، حداقل و...) توسط ادمین
+model OkrAuditLog {
+  id          String   @id @default(cuid())
+  entityType  String // OBJECTIVE | KEY_RESULT | TEAM_KEY_RESULT
+  entityId    String
+  entityLabel String // عنوان در لحظه‌ی تغییر، برای نمایش حتی پس از حذف
+  field       String
+  oldValue    String?
+  newValue    String?
+  changedById String?
+  changedBy   User?    @relation(fields: [changedById], references: [id], onDelete: SetNull)
+  changedAt   DateTime @default(now())
+
+  @@index([changedAt])
+  @@index([entityType, entityId])
+}
+
+// اسنپ‌شات ماهانه‌ی رتبه‌بندی تیم‌ها بر اساس pacing
+model MonthlyLeaderboard {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  month     String // ماه شمسی، مثل «1405-04»
+  rank      Int
+  paceScore Float // پیشرفت واقعی − پیشرفت مورد انتظار
+  progress  Float
+  expected  Float?
+  createdAt DateTime @default(now())
+
+  @@unique([teamId, month])
+  @@index([month])
 }
 
 // اشتراک وب‌پوش هر کاربر برای یادآوری‌ها

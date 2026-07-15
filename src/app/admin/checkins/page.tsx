@@ -1,3 +1,4 @@
+import { CheckinEditForm } from '@/components/admin/checkin-edit-form';
 import { FeedbackForm } from '@/components/admin/feedback-form';
 import { StatusBadge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +27,7 @@ export default async function CheckInsReviewPage({
     include: {
       feedback: true,
       submittedBy: { select: { fullName: true } },
+      editedBy: { select: { fullName: true } },
       teamKeyResult: {
         include: {
           team: { select: { id: true, name: true } },
@@ -142,6 +144,12 @@ export default async function CheckInsReviewPage({
                 <CardDescription>
                   هفته {formatJalali(c.weekStartDate)} · ثبت توسط {c.submittedBy?.fullName ?? '—'} در{' '}
                   {formatJalaliDateTime(c.submittedAt)}
+                  {c.isEdited && (
+                    <span className="mr-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900">
+                      ✎ ویرایش‌شده توسط {c.editedBy?.fullName ?? 'ادمین'}
+                      {c.editedAt ? ` — ${formatJalaliDateTime(c.editedAt)}` : ''}
+                    </span>
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -161,6 +169,17 @@ export default async function CheckInsReviewPage({
                   checkInId={c.id}
                   initialScore={c.feedback?.score ?? null}
                   initialComment={c.feedback?.comment ?? null}
+                />
+                <CheckinEditForm
+                  checkInId={c.id}
+                  metricType={kr.metricType}
+                  initial={{
+                    currentValue: c.currentValue,
+                    booleanValue: c.booleanValue,
+                    textValue: c.textValue,
+                    progressStatus: c.progressStatus,
+                    blockerDescription: c.blockerDescription,
+                  }}
                 />
               </CardContent>
             </Card>

@@ -5,11 +5,15 @@ import { getSession } from '@/lib/auth';
 
 const links = [
   { href: '/admin', label: 'داشبورد' },
+  { href: '/admin/summary', label: 'خلاصه هفته' },
   { href: '/admin/okrs', label: 'مدیریت OKR' },
   { href: '/admin/import', label: 'آپلود اکسل' },
   { href: '/admin/checkins', label: 'گزارش‌های هفتگی' },
+  { href: '/admin/compare', label: 'مقایسه دوره‌ها' },
+  { href: '/admin/audit', label: 'تاریخچه تغییرات' },
   { href: '/admin/export', label: 'خروجی‌ها' },
   { href: '/admin/users', label: 'کاربران' },
+  { href: '/admin/settings', label: 'تنظیمات' },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

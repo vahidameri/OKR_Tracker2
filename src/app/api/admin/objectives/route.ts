@@ -57,5 +57,16 @@ export async function POST(req: Request) {
     },
   });
 
+  const { logAudit } = await import('@/lib/audit');
+  await logAudit(prisma, session!.user.id, [
+    {
+      entityType: 'OBJECTIVE',
+      entityId: created.id,
+      entityLabel: created.title,
+      field: 'ایجاد هدف',
+      newValue: `دوره ${created.period} · وزن ${created.weight} · ${keyResults.length} نتیجه کلیدی`,
+    },
+  ]);
+
   return NextResponse.json({ id: created.id }, { status: 201 });
 }

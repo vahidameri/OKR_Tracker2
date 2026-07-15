@@ -38,15 +38,36 @@ export const AUTO_STATUS_STYLES: Record<AutoStatus, string> = {
 };
 
 /**
- * آستانه‌ها (اختلاف پیشرفت واقعی − مورد انتظار به واحد درصد):
- * +۵ به بالا جلوتر، تا −۱۰ در مسیر، تا −۲۵ در ریسک، پایین‌تر عقب‌افتاده.
+ * آستانه‌های وضعیت خودکار (قابل تنظیم توسط ادمین از صفحه‌ی «تنظیمات»).
+ * diff = پیشرفت واقعی − مورد انتظار (واحد: درصدپوینت):
+ * diff ≥ +ahead → جلوتر؛ تا −atRisk → در مسیر؛ تا −behind → در ریسک؛ پایین‌تر → عقب‌افتاده.
  */
+export interface AutoThresholds {
+  ahead: number;
+  atRisk: number;
+  behind: number;
+}
+
+export const DEFAULT_THRESHOLDS: AutoThresholds = { ahead: 5, atRisk: 10, behind: 25 };
+
+// وضعیت ماژول-سطح؛ توسط loadAutoThresholds از دیتابیس تازه می‌شود
+let currentThresholds: AutoThresholds = { ...DEFAULT_THRESHOLDS };
+
+export function setAutoThresholds(t: AutoThresholds) {
+  currentThresholds = t;
+}
+
+export function getAutoThresholds(): AutoThresholds {
+  return currentThresholds;
+}
+
 export function computeAutoStatus(actual: number, expected: number | null): AutoStatus | null {
   if (expected === null) return null;
+  const t = currentThresholds;
   const diff = actual - expected;
-  if (diff >= 5) return 'AHEAD';
-  if (diff >= -10) return 'ON_SCHEDULE';
-  if (diff >= -25) return 'AT_RISK';
+  if (diff >= t.ahead) return 'AHEAD';
+  if (diff >= -t.atRisk) return 'ON_SCHEDULE';
+  if (diff >= -t.behind) return 'AT_RISK';
   return 'BEHIND';
 }
 

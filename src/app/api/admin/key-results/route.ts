@@ -7,7 +7,7 @@ import { keyResultSchema } from '@/lib/validations';
 const createSchema = z.object({ objectiveId: z.string().min(1) }).and(keyResultSchema);
 
 export async function POST(req: Request) {
-  const { error } = await requireAdmin();
+  const { error, session } = await requireAdmin();
   if (error) return NextResponse.json({ error }, { status: error === 'unauthorized' ? 401 : 403 });
 
   const body = await req.json().catch(() => null);
@@ -41,6 +41,17 @@ export async function POST(req: Request) {
       },
     },
   });
+
+  const { logAudit } = await import('@/lib/audit');
+  await logAudit(prisma, session!.user.id, [
+    {
+      entityType: 'KEY_RESULT',
+      entityId: created.id,
+      entityLabel: created.title,
+      field: 'ایجاد نتیجه کلیدی',
+      newValue: `${teams.length} تیم · وزن ${created.weight}${created.targetValue !== null ? ` · تارگت ${created.targetValue}` : ''}`,
+    },
+  ]);
 
   return NextResponse.json({ id: created.id }, { status: 201 });
 }

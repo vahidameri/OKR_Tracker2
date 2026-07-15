@@ -19,6 +19,8 @@ import {
   tkrProgress,
 } from '@/lib/okr-data';
 import { METRIC_LABELS, weightedProgress } from '@/lib/progress';
+import { LeaderboardTable } from '@/components/leaderboard-table';
+import { getLeaderboard } from '@/lib/leaderboard';
 import { getUserTeams, resolveActiveTeam } from '@/lib/team-access';
 import { formatCompact } from '@/lib/utils';
 
@@ -45,7 +47,11 @@ export default async function TeamHomePage({
     );
   }
 
-  const [okrs, trend] = await Promise.all([getTeamOkrs(activeTeam.id), getWeeklyTrend(activeTeam.id)]);
+  const [okrs, trend, leaderboard] = await Promise.all([
+    getTeamOkrs(activeTeam.id),
+    getWeeklyTrend(activeTeam.id),
+    getLeaderboard(),
+  ]);
   const allTkrs = okrs.flatMap((o) => o.items);
   const teamProgress = weightedProgress(allTkrs.map((t) => ({ weight: t.weight, progress: tkrProgress(t) })));
   const view: 'cards' | 'table' = searchParams.view === 'table' ? 'table' : 'cards';
@@ -94,6 +100,19 @@ export default async function TeamHomePage({
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>🏆 لیدربورد تیم‌ها (pacing)</CardTitle>
+          <CardDescription>
+            رتبه‌بندی همه‌ی تیم‌ها بر اساس فاصله از برنامه — فقط برای مشاهده و انگیزه‌ی رقابتی؛ جزئیات OKR
+            سایر تیم‌ها نمایش داده نمی‌شود.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <LeaderboardTable standings={leaderboard.standings} highlightTeamId={activeTeam.id} />
+        </CardContent>
+      </Card>
 
       {okrs.length === 0 && (
         <Card>
@@ -215,6 +234,11 @@ export default async function TeamHomePage({
                     <div className="mt-2 rounded-md bg-red-50 p-2 text-xs text-red-800">
                       بلاکر: {latest.blockerDescription}
                     </div>
+                  )}
+                  {latest?.isEdited && (
+                    <p className="mt-2 text-xs text-amber-700">
+                      ✎ این چک‌این توسط {latest.editedBy?.fullName ?? 'ادمین'} ویرایش شده است.
+                    </p>
                   )}
                 </div>
               );

@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  TEAM_MEMBER
+}
+
+enum MetricType {
+  NUMERIC
+  BOOLEAN
+  TEXT
+}
+
+enum ProgressStatus {
+  ON_TRACK
+  AT_RISK
+  BLOCKED
+  COMPLETED
+}
+
+model User {
+  id                 String            @id @default(cuid())
+  username           String            @unique
+  passwordHash       String
+  fullName           String
+  role               Role              @default(TEAM_MEMBER)
+  isActive           Boolean           @default(true)
+  mustChangePassword Boolean           @default(true)
+  createdAt          DateTime          @default(now())
+  teams              UserTeam[]
+  sessions           UserSession[]
+  checkIns           WeeklyCheckIn[]
+  feedbacks          CheckInFeedback[]
+  objectives         Objective[]
+}
+
+model UserTeam {
+  id     String @id @default(cuid())
+  userId String
+  teamId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+}
+
+model UserSession {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loginAt   DateTime  @default(now())
+  logoutAt  DateTime?
+  ipAddress String?
+  userAgent String?
+
+  @@index([userId, loginAt])
+}
+
+model Team {
+  id             String          @id @default(cuid())
+  name           String          @unique
+  description    String?
+  leadName       String?
+  members        UserTeam[]
+  teamKeyResults TeamKeyResult[]
+}
+
+model Objective {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  weight      Float       @default(1)
+  period      String // دوره شمسی، مثل «Q2-1405»
+  createdById String?
+  createdBy   User?       @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime    @default(now())
+  keyResults  KeyResult[]
+}
+
+model KeyResult {
+  id          String          @id @default(cuid())
+  objectiveId String
+  objective   Objective       @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
+  title       String
+  weight      Float           @default(1) // وزن پیش‌فرض KR در سطح هدف
+  metricType  MetricType
+  minValue    Float?
+  targetValue Float?
+  unit        String?
+  description String?
+  isShared    Boolean         @default(false)
+  teams       TeamKeyResult[]
+}
+
+// جدول واسط: سهم هر تیم از یک KR (مشترک یا اختصاصی) با وزن و تارگت مخصوص خودش
+model TeamKeyResult {
+  id                  String          @id @default(cuid())
+  teamId              String
+  keyResultId         String
+  team                Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  keyResult           KeyResult       @relation(fields: [keyResultId], references: [id], onDelete: Cascade)
+  weight              Float           @default(1) // وزن اختصاصی این KR برای این تیم
+  targetValueOverride Float?
+  minValueOverride    Float?
+  checkIns            WeeklyCheckIn[]
+
+  @@unique([teamId, keyResultId])
+}
+
+model WeeklyCheckIn {
+  id                 String           @id @default(cuid())
+  teamKeyResultId    String
+  teamKeyResult      TeamKeyResult    @relation(fields: [teamKeyResultId], references: [id], onDelete: Cascade)
+  weekStartDate      DateTime // شنبه‌ی ابتدای هفته (شمسی)
+  submittedById      String?
+  submittedBy        User?            @relation(fields: [submittedById], references: [id], onDelete: SetNull)
+  currentValue       Float?
+  booleanValue       Boolean?
+  textValue          String?
+  progressStatus     ProgressStatus   @default(ON_TRACK)
+  blockerDescription String?
+  submittedAt        DateTime         @default(now())
+  feedback           CheckInFeedback?
+
+  @@unique([teamKeyResultId, weekStartDate])
+}
+
+model CheckInFeedback {
+  id           String        @id @default(cuid())
+  checkInId    String        @unique
+  checkIn      WeeklyCheckIn @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+  score        Int?
+  comment      String?
+  reviewedById String?
+  reviewedBy   User?         @relation(fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt   DateTime      @default(now())
+}

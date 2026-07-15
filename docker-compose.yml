@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-okr}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-okr_password}
+      POSTGRES_DB: ${POSTGRES_DB:-okr_tracker}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-okr} -d ${POSTGRES_DB:-okr_tracker}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-okr}:${POSTGRES_PASSWORD:-okr_password}@postgres:5432/${POSTGRES_DB:-okr_tracker}?schema=public
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-me-to-a-strong-random-secret}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      SEED_DEFAULT_PASSWORD: ${SEED_DEFAULT_PASSWORD:-Okr@1404}
+    ports:
+      - '3000:3000'
+
+  # اختیاری: reverse proxy برای دیپلوی روی سرور داخلی (پورت ۸۰)
+  # برای فعال‌سازی: docker compose --profile proxy up -d
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    profiles: ['proxy']
+    depends_on:
+      - app
+    ports:
+      - '80:80'
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  postgres_data:

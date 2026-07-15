@@ -1,0 +1,9 @@
+import { redirect } from 'next/navigation';
+import { getSession } from '@/lib/auth';
+
+export default async function Home() {
+  const session = await getSession();
+  if (!session?.user) redirect('/login');
+  if (session.user.mustChangePassword) redirect('/change-password');
+  redirect(session.user.role === 'ADMIN' ? '/admin' : '/team');
+}

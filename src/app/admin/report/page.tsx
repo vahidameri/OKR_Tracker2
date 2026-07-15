@@ -1,0 +1,113 @@
+import { StatusBadge } from '@/components/ui/badge';
+import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table';
+import { formatJalali, formatJalaliLong } from '@/lib/jalali';
+import { fetchAllTkrs, getDepartmentOverview, tkrProgress } from '@/lib/okr-data';
+import { METRIC_LABELS } from '@/lib/progress';
+import { formatCompact } from '@/lib/utils';
+import { PrintButton } from './print-button';
+
+export const dynamic = 'force-dynamic';
+
+/** گزارش چاپی: با دکمه چاپ مرورگر به PDF تبدیل می‌شود (بدون سرویس خارجی) */
+export default async function ReportPage() {
+  const [{ overviews, departmentProgress }, tkrs] = await Promise.all([
+    getDepartmentOverview(),
+    fetchAllTkrs(),
+  ]);
+
+  return (
+    <div className="space-y-6 bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-black">گزارش وضعیت OKR — دپارتمان محصول و تکنولوژی</h1>
+          <p className="text-sm text-muted-foreground">
+            تاریخ گزارش: {formatJalaliLong(new Date())} · پیشرفت وزنی کل دپارتمان: {departmentProgress}٪
+          </p>
+        </div>
+        <PrintButton />
+      </div>
+
+      <section>
+        <h2 className="mb-2 text-base font-bold">خلاصه تیم‌ها</h2>
+        <Table>
+          <THead>
+            <TR>
+              <TH>تیم</TH>
+              <TH>مسئول</TH>
+              <TH>پیشرفت</TH>
+              <TH>در مسیر</TH>
+              <TH>در ریسک</TH>
+              <TH>بلاک‌شده</TH>
+              <TH>تکمیل‌شده</TH>
+              <TH>آخرین چک‌این</TH>
+            </TR>
+          </THead>
+          <TBody>
+            {overviews.map((o) => (
+              <TR key={o.teamId}>
+                <TD className="font-medium">{o.teamName}</TD>
+                <TD>{o.leadName ?? '—'}</TD>
+                <TD className="font-bold">{o.progress}٪</TD>
+                <TD>{o.statusCounts.ON_TRACK}</TD>
+                <TD>{o.statusCounts.AT_RISK}</TD>
+                <TD>{o.statusCounts.BLOCKED}</TD>
+                <TD>{o.statusCounts.COMPLETED}</TD>
+                <TD>{o.lastCheckInAt ? formatJalali(o.lastCheckInAt) : '—'}</TD>
+              </TR>
+            ))}
+          </TBody>
+        </Table>
+      </section>
+
+      <section>
+        <h2 className="mb-2 text-base font-bold">آخرین وضعیت نتایج کلیدی</h2>
+        <Table>
+          <THead>
+            <TR>
+              <TH>تیم</TH>
+              <TH>هدف</TH>
+              <TH>نتیجه کلیدی</TH>
+              <TH>نوع</TH>
+              <TH>تارگت</TH>
+              <TH>آخرین مقدار</TH>
+              <TH>پیشرفت</TH>
+              <TH>وضعیت</TH>
+            </TR>
+          </THead>
+          <TBody>
+            {tkrs.map((tkr) => {
+              const latest = tkr.checkIns[0];
+              const target = tkr.targetValueOverride ?? tkr.keyResult.targetValue;
+              return (
+                <TR key={tkr.id}>
+                  <TD>{tkr.team.name}</TD>
+                  <TD className="max-w-40 text-xs">{tkr.keyResult.objective.title}</TD>
+                  <TD className="max-w-52 text-xs">{tkr.keyResult.title}</TD>
+                  <TD className="text-xs">{METRIC_LABELS[tkr.keyResult.metricType]}</TD>
+                  <TD className="text-xs">
+                    {tkr.keyResult.metricType === 'NUMERIC'
+                      ? `${formatCompact(target)} ${tkr.keyResult.unit ?? ''}`
+                      : '—'}
+                  </TD>
+                  <TD className="text-xs">
+                    {tkr.keyResult.metricType === 'NUMERIC'
+                      ? formatCompact(latest?.currentValue)
+                      : tkr.keyResult.metricType === 'BOOLEAN'
+                        ? latest
+                          ? latest.booleanValue
+                            ? 'بله'
+                            : 'خیر'
+                          : '—'
+                        : latest?.textValue ?? '—'}
+                  </TD>
+                  <TD className="font-bold">{tkrProgress(tkr)}٪</TD>
+                  <TD>{latest ? <StatusBadge status={latest.progressStatus} /> : '—'}</TD>
+                </TR>
+              );
+            })}
+          </TBody>
+        </Table>
+      </section>
+    </div>
+  );
+}

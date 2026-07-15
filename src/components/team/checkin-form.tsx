@@ -7,12 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { MilestoneChecklist, type MilestoneItem } from '@/components/team/milestone-checklist';
 import { formatCompact } from '@/lib/utils';
 
 export interface CheckInFormProps {
   teamKeyResultId: string;
   metricType: 'NUMERIC' | 'BOOLEAN' | 'TEXT';
   unit: string | null;
+  milestones?: MilestoneItem[];
   existing: {
     currentValue: number | null;
     booleanValue: boolean | null;
@@ -22,7 +24,7 @@ export interface CheckInFormProps {
   } | null;
 }
 
-export function CheckInForm({ teamKeyResultId, metricType, unit, existing }: CheckInFormProps) {
+export function CheckInForm({ teamKeyResultId, metricType, unit, milestones = [], existing }: CheckInFormProps) {
   const router = useRouter();
   const [currentValue, setCurrentValue] = useState(existing?.currentValue?.toString() ?? '');
   const [booleanValue, setBooleanValue] = useState<boolean | null>(existing?.booleanValue ?? null);
@@ -35,12 +37,14 @@ export function CheckInForm({ teamKeyResultId, metricType, unit, existing }: Che
 
   const numericValue = currentValue.trim() === '' ? null : Number(currentValue.replace(/[,،\s]/g, ''));
 
+  const hasMilestones = metricType === 'BOOLEAN' && milestones.length > 0;
+
   async function submit() {
     setError('');
     if (metricType === 'NUMERIC' && (numericValue === null || !Number.isFinite(numericValue))) {
       return setError('مقدار عددی معتبر وارد کنید.');
     }
-    if (metricType === 'BOOLEAN' && booleanValue === null) {
+    if (metricType === 'BOOLEAN' && !hasMilestones && booleanValue === null) {
       return setError('بله یا خیر را انتخاب کنید.');
     }
     if (metricType === 'TEXT' && !textValue.trim()) {
@@ -85,26 +89,36 @@ export function CheckInForm({ teamKeyResultId, metricType, unit, existing }: Che
       )}
 
       {metricType === 'BOOLEAN' && (
-        <div>
-          <Label>انجام شد؟</Label>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant={booleanValue === true ? 'success' : 'outline'}
-              onClick={() => setBooleanValue(true)}
-            >
-              بله
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={booleanValue === false ? 'destructive' : 'outline'}
-              onClick={() => setBooleanValue(false)}
-            >
-              خیر
-            </Button>
-          </div>
+        <div className="space-y-3">
+          <MilestoneChecklist teamKeyResultId={teamKeyResultId} milestones={milestones} />
+          {!hasMilestones && (
+            <div>
+              <Label>انجام شد؟ (یا بالاتر مایل‌استون تعریف کنید)</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={booleanValue === true ? 'success' : 'outline'}
+                  onClick={() => setBooleanValue(true)}
+                >
+                  بله
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={booleanValue === false ? 'destructive' : 'outline'}
+                  onClick={() => setBooleanValue(false)}
+                >
+                  خیر
+                </Button>
+              </div>
+            </div>
+          )}
+          {hasMilestones && (
+            <p className="text-xs text-muted-foreground">
+              با ثبت چک‌این، وضعیت فعلی چک‌لیست به‌عنوان مقدار این هفته ذخیره می‌شود.
+            </p>
+          )}
         </div>
       )}
 

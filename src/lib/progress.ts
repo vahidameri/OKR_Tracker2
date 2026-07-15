@@ -16,9 +16,39 @@ export const STATUS_COLORS: Record<ProgressStatus, string> = {
 
 export const METRIC_LABELS: Record<MetricType, string> = {
   NUMERIC: 'عددی',
-  BOOLEAN: 'بله/خیر',
+  BOOLEAN: 'بله/خیر (مایل‌استونی)',
   TEXT: 'محتوایی',
 };
+
+/** وضعیت خودکار زمانی: مقایسه‌ی پیشرفت واقعی با پیشرفت مورد انتظارِ زمان */
+export type AutoStatus = 'AHEAD' | 'ON_SCHEDULE' | 'AT_RISK' | 'BEHIND';
+
+export const AUTO_STATUS_LABELS: Record<AutoStatus, string> = {
+  AHEAD: 'جلوتر از برنامه',
+  ON_SCHEDULE: 'در مسیر',
+  AT_RISK: 'در ریسک',
+  BEHIND: 'عقب‌افتاده',
+};
+
+export const AUTO_STATUS_STYLES: Record<AutoStatus, string> = {
+  AHEAD: 'bg-blue-100 text-blue-800',
+  ON_SCHEDULE: 'bg-emerald-100 text-emerald-800',
+  AT_RISK: 'bg-amber-100 text-amber-800',
+  BEHIND: 'bg-red-100 text-red-800',
+};
+
+/**
+ * آستانه‌ها (اختلاف پیشرفت واقعی − مورد انتظار به واحد درصد):
+ * +۵ به بالا جلوتر، تا −۱۰ در مسیر، تا −۲۵ در ریسک، پایین‌تر عقب‌افتاده.
+ */
+export function computeAutoStatus(actual: number, expected: number | null): AutoStatus | null {
+  if (expected === null) return null;
+  const diff = actual - expected;
+  if (diff >= 5) return 'AHEAD';
+  if (diff >= -10) return 'ON_SCHEDULE';
+  if (diff >= -25) return 'AT_RISK';
+  return 'BEHIND';
+}
 
 export interface CheckInLike {
   currentValue: number | null;
@@ -59,6 +89,11 @@ export function checkInProgress(tkr: TkrLike, checkIn: CheckInLike | null | unde
   }
 
   if (metricType === 'BOOLEAN') {
+    // حالت مایل‌استونی: currentValue = تعداد انجام‌شده و تارگت = تعداد کل مایل‌استون‌ها
+    const target = tkr.targetValueOverride ?? tkr.keyResult.targetValue;
+    if (checkIn.currentValue !== null && checkIn.currentValue !== undefined && target && target > 0) {
+      return Math.round(Math.min(Math.max(checkIn.currentValue / target, 0), 1) * 100);
+    }
     return checkIn.booleanValue ? 100 : 0;
   }
 

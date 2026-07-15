@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AutoStatusBadge } from '@/components/ui/badge';
 import { CheckinHeatmap } from '@/components/charts/checkin-heatmap';
 import { Sparkline } from '@/components/charts/sparkline';
 import { StatusDonut } from '@/components/charts/status-donut';
@@ -153,9 +154,13 @@ export default async function AdminDashboard() {
             {objectives.map((o) => (
               <div key={o.id} className="flex flex-wrap items-center gap-3">
                 <div className="min-w-52 flex-1">
-                  <p className="text-sm font-medium">{o.title}</p>
+                  <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                    {o.title}
+                    <AutoStatusBadge status={o.autoStatus} expected={o.expected} />
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {o.period} · وزن {o.weight} · {o.krCount} نتیجه کلیدی
+                    {o.expected !== null && ` · انتظار زمانی تا امروز: ${o.expected}٪`}
                   </p>
                 </div>
                 <div className="w-full sm:w-72">
@@ -190,7 +195,10 @@ export default async function AdminDashboard() {
                     <span>{o.teamName}</span>
                     <span className="text-xs font-normal text-muted-foreground">{o.krCount} KR</span>
                   </CardTitle>
-                  <CardDescription>مسئول: {o.leadName ?? '—'}</CardDescription>
+                  <CardDescription className="flex flex-wrap items-center gap-2">
+                    مسئول: {o.leadName ?? '—'}
+                    <AutoStatusBadge status={o.autoStatus} expected={o.expected} />
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <ProgressBar value={o.progress} />

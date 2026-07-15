@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
   const tkr = await prisma.teamKeyResult.findUnique({
     where: { id: parsed.data.teamKeyResultId },
-    include: { keyResult: { select: { metricType: true } } },
+    include: { keyResult: { select: { metricType: true } }, milestones: true },
   });
   if (!tkr) return NextResponse.json({ error: 'نتیجه کلیدی تیم یافت نشد' }, { status: 404 });
 
@@ -27,20 +27,34 @@ export async function POST(req: Request) {
 
   // اعتبارسنجی مقدار متناسب با نوع سنجش
   const { metricType } = tkr.keyResult;
+  const hasMilestones = metricType === 'BOOLEAN' && tkr.milestones.length > 0;
   if (metricType === 'NUMERIC' && (parsed.data.currentValue === null || parsed.data.currentValue === undefined)) {
     return NextResponse.json({ error: 'برای KR عددی، مقدار فعلی الزامی است' }, { status: 400 });
   }
-  if (metricType === 'BOOLEAN' && (parsed.data.booleanValue === null || parsed.data.booleanValue === undefined)) {
+  if (
+    metricType === 'BOOLEAN' &&
+    !hasMilestones &&
+    (parsed.data.booleanValue === null || parsed.data.booleanValue === undefined)
+  ) {
     return NextResponse.json({ error: 'برای KR بله/خیر، انتخاب بله یا خیر الزامی است' }, { status: 400 });
   }
   if (metricType === 'TEXT' && !parsed.data.textValue?.trim()) {
     return NextResponse.json({ error: 'برای KR محتوایی، متن گزارش الزامی است' }, { status: 400 });
   }
 
+  // KR مایل‌استونی: مقدار از وضعیت فعلی چک‌لیست محاسبه می‌شود، نه ورودی کاربر
+  const doneCount = tkr.milestones.filter((m) => m.isDone).length;
+
   const weekStartDate = getWeekStart();
   const data = {
-    currentValue: metricType === 'NUMERIC' ? parsed.data.currentValue : null,
-    booleanValue: metricType === 'BOOLEAN' ? parsed.data.booleanValue : null,
+    currentValue:
+      metricType === 'NUMERIC' ? parsed.data.currentValue : hasMilestones ? doneCount : null,
+    booleanValue:
+      metricType === 'BOOLEAN'
+        ? hasMilestones
+          ? doneCount === tkr.milestones.length
+          : parsed.data.booleanValue
+        : null,
     textValue: metricType === 'TEXT' ? (parsed.data.textValue ?? null) : null,
     progressStatus: parsed.data.progressStatus,
     blockerDescription: parsed.data.blockerDescription?.trim() || null,

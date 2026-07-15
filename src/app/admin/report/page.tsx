@@ -1,7 +1,14 @@
-import { StatusBadge } from '@/components/ui/badge';
+import { AutoStatusBadge, StatusBadge } from '@/components/ui/badge';
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table';
 import { formatJalali, formatJalaliLong } from '@/lib/jalali';
-import { fetchAllTkrs, getDepartmentOverview, tkrProgress } from '@/lib/okr-data';
+import {
+  fetchAllTkrs,
+  getDepartmentOverview,
+  latestValueLabel,
+  tkrAutoStatus,
+  tkrExpected,
+  tkrProgress,
+} from '@/lib/okr-data';
 import { METRIC_LABELS } from '@/lib/progress';
 import { formatCompact } from '@/lib/utils';
 import { PrintButton } from './print-button';
@@ -71,7 +78,8 @@ export default async function ReportPage() {
               <TH>تارگت</TH>
               <TH>آخرین مقدار</TH>
               <TH>پیشرفت</TH>
-              <TH>وضعیت</TH>
+              <TH>وضعیت ثبت‌شده</TH>
+              <TH>وضعیت زمانی</TH>
             </TR>
           </THead>
           <TBody>
@@ -89,19 +97,12 @@ export default async function ReportPage() {
                       ? `${formatCompact(target)} ${tkr.keyResult.unit ?? ''}`
                       : '—'}
                   </TD>
-                  <TD className="text-xs">
-                    {tkr.keyResult.metricType === 'NUMERIC'
-                      ? formatCompact(latest?.currentValue)
-                      : tkr.keyResult.metricType === 'BOOLEAN'
-                        ? latest
-                          ? latest.booleanValue
-                            ? 'بله'
-                            : 'خیر'
-                          : '—'
-                        : latest?.textValue ?? '—'}
-                  </TD>
+                  <TD className="text-xs">{latestValueLabel(tkr)}</TD>
                   <TD className="font-bold">{tkrProgress(tkr)}٪</TD>
                   <TD>{latest ? <StatusBadge status={latest.progressStatus} /> : '—'}</TD>
+                  <TD>
+                    <AutoStatusBadge status={tkrAutoStatus(tkr)} expected={tkrExpected(tkr)} />
+                  </TD>
                 </TR>
               );
             })}

@@ -133,6 +133,12 @@ export function KrForm({
             <option value="TEXT">محتوایی (کیفی)</option>
           </Select>
         </div>
+        {value.metricType === 'BOOLEAN' && (
+          <p className="self-end pb-2 text-xs text-muted-foreground md:col-span-2">
+            برای این نوع، هر تیم می‌تواند در پنل خودش مایل‌استون (ریز-وظیفه) تعریف کند؛ تارگت خودکار برابر تعداد
+            مایل‌استون‌ها و پیشرفت برابر نسبت انجام‌شده‌ها می‌شود.
+          </p>
+        )}
         {value.metricType === 'NUMERIC' && (
           <>
             <div>

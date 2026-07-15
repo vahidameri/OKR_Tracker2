@@ -2,8 +2,15 @@ import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import { requireAdmin } from '@/lib/auth';
 import { formatJalali } from '@/lib/jalali';
-import { fetchAllTkrs, getDepartmentOverview, tkrProgress } from '@/lib/okr-data';
-import { STATUS_LABELS, METRIC_LABELS } from '@/lib/progress';
+import {
+  fetchAllTkrs,
+  getDepartmentOverview,
+  latestValueLabel,
+  tkrAutoStatus,
+  tkrExpected,
+  tkrProgress,
+} from '@/lib/okr-data';
+import { AUTO_STATUS_LABELS, STATUS_LABELS, METRIC_LABELS } from '@/lib/progress';
 
 export const runtime = 'nodejs';
 
@@ -53,17 +60,13 @@ export async function GET() {
       'حداقل': tkr.minValueOverride ?? tkr.keyResult.minValue ?? '',
       'تارگت': tkr.targetValueOverride ?? tkr.keyResult.targetValue ?? '',
       'واحد': tkr.keyResult.unit ?? '',
-      'آخرین مقدار':
-        tkr.keyResult.metricType === 'NUMERIC'
-          ? latest?.currentValue ?? ''
-          : tkr.keyResult.metricType === 'BOOLEAN'
-            ? latest
-              ? latest.booleanValue
-                ? 'بله'
-                : 'خیر'
-              : ''
-            : latest?.textValue ?? '',
+      'آخرین مقدار': latestValueLabel(tkr),
       'درصد پیشرفت': tkrProgress(tkr),
+      'انتظار زمانی (٪)': tkrExpected(tkr) ?? '',
+      'وضعیت زمانی (خودکار)': (() => {
+        const auto = tkrAutoStatus(tkr);
+        return auto ? AUTO_STATUS_LABELS[auto] : '';
+      })(),
       'وضعیت': latest ? STATUS_LABELS[latest.progressStatus] : 'بدون چک‌این',
       'بلاکر': latest?.blockerDescription ?? '',
       'تاریخ آخرین چک‌این': latest ? formatJalali(latest.weekStartDate) : '',

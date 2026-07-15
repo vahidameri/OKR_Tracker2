@@ -111,8 +111,24 @@ model TeamKeyResult {
   targetValueOverride Float?
   minValueOverride    Float?
   checkIns            WeeklyCheckIn[]
+  milestones          Milestone[]
 
   @@unique([teamId, keyResultId])
+}
+
+// مایل‌استون‌های سهم یک تیم از KRهای بله/خیر (چک‌لیستی)
+// تارگت این KRها = تعداد کل مایل‌استون‌ها و پیشرفت = نسبت انجام‌شده‌ها
+model Milestone {
+  id              String        @id @default(cuid())
+  teamKeyResultId String
+  teamKeyResult   TeamKeyResult @relation(fields: [teamKeyResultId], references: [id], onDelete: Cascade)
+  title           String
+  isDone          Boolean       @default(false)
+  doneAt          DateTime?
+  order           Int           @default(0)
+  createdAt       DateTime      @default(now())
+
+  @@index([teamKeyResultId, order])
 }
 
 model WeeklyCheckIn {

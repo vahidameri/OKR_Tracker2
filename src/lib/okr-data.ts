@@ -1,11 +1,14 @@
 import { ProgressStatus } from '@prisma/client';
 import { weekLabel } from '@/lib/jalali';
+import { expectedProgressForPeriod } from '@/lib/period';
 import { prisma } from '@/lib/prisma';
-import { checkInProgress, weightedProgress } from '@/lib/progress';
+import { checkInProgress, computeAutoStatus, weightedProgress, type AutoStatus } from '@/lib/progress';
+import { formatCompact } from '@/lib/utils';
 
 const tkrInclude = {
   team: true,
   keyResult: { include: { objective: true } },
+  milestones: { orderBy: { order: 'asc' as const } },
   checkIns: {
     orderBy: { weekStartDate: 'desc' as const },
     include: { feedback: true, submittedBy: { select: { fullName: true } } },
@@ -26,11 +29,49 @@ export function tkrProgress(tkr: TkrWithData): number {
   return checkInProgress(tkr, tkr.checkIns[0] ?? null);
 }
 
+/** پیشرفت مورد انتظار این KR-تیم بر اساس زمان سپری‌شده از دوره‌ی هدفش */
+export function tkrExpected(tkr: TkrWithData): number | null {
+  return expectedProgressForPeriod(tkr.keyResult.objective.period);
+}
+
+/** وضعیت خودکار زمانی این KR-تیم (بدون قضاوت دستی) */
+export function tkrAutoStatus(tkr: TkrWithData): AutoStatus | null {
+  return computeAutoStatus(tkrProgress(tkr), tkrExpected(tkr));
+}
+
+/** میانگین وزنی «پیشرفت مورد انتظار» مجموعه‌ای از KR-تیم‌ها (دوره‌های ناشناخته حذف می‌شوند) */
+export function expectedOf(tkrs: TkrWithData[]): number | null {
+  const items = tkrs
+    .map((t) => ({ weight: t.weight, expected: tkrExpected(t) }))
+    .filter((i): i is { weight: number; expected: number } => i.expected !== null);
+  if (items.length === 0) return null;
+  return weightedProgress(items.map((i) => ({ weight: i.weight, progress: i.expected })));
+}
+
+/** برچسب متنی آخرین مقدار ثبت‌شده‌ی یک KR-تیم (با پشتیبانی مایل‌استون) */
+export function latestValueLabel(tkr: TkrWithData): string {
+  const latest = tkr.checkIns[0];
+  const kr = tkr.keyResult;
+  if (!latest) return '—';
+  if (kr.metricType === 'NUMERIC') {
+    return `${formatCompact(latest.currentValue)} ${kr.unit ?? ''}`.trim();
+  }
+  if (kr.metricType === 'BOOLEAN') {
+    if (tkr.milestones.length > 0 && latest.currentValue !== null) {
+      return `${latest.currentValue} از ${tkr.milestones.length} مایل‌استون`;
+    }
+    return latest.booleanValue ? 'بله' : 'خیر';
+  }
+  return latest.textValue ?? '—';
+}
+
 export interface TeamOverview {
   teamId: string;
   teamName: string;
   leadName: string | null;
   progress: number;
+  expected: number | null;
+  autoStatus: AutoStatus | null;
   krCount: number;
   statusCounts: Record<ProgressStatus, number>;
   lastCheckInAt: Date | null;
@@ -56,11 +97,15 @@ export function computeOverviews(teams: TeamRow[], tkrs: TkrWithData[]): TeamOve
         if (!lastCheckInAt || latest.submittedAt > lastCheckInAt) lastCheckInAt = latest.submittedAt;
       }
     }
+    const progress = weightedProgress(teamTkrs.map((t) => ({ weight: t.weight, progress: tkrProgress(t) })));
+    const expected = expectedOf(teamTkrs);
     return {
       teamId: team.id,
       teamName: team.name,
       leadName: team.leadName,
-      progress: weightedProgress(teamTkrs.map((t) => ({ weight: t.weight, progress: tkrProgress(t) }))),
+      progress,
+      expected,
+      autoStatus: teamTkrs.length > 0 ? computeAutoStatus(progress, expected) : null,
       krCount: teamTkrs.length,
       statusCounts,
       lastCheckInAt,
@@ -113,6 +158,8 @@ export interface ObjectiveProgress {
   weight: number;
   krCount: number;
   progress: number;
+  expected: number | null;
+  autoStatus: AutoStatus | null;
 }
 
 /** پیشرفت وزنی هر هدف (تجمیع همه‌ی سهم‌های تیمی KRهایش) */
@@ -123,14 +170,20 @@ export function computeObjectiveProgress(tkrs: TkrWithData[]): ObjectiveProgress
     if (!byObjective.has(obj.id)) byObjective.set(obj.id, { obj, items: [] });
     byObjective.get(obj.id)!.items.push(tkr);
   }
-  return Array.from(byObjective.values()).map(({ obj, items }) => ({
-    id: obj.id,
-    title: obj.title,
-    period: obj.period,
-    weight: obj.weight,
-    krCount: new Set(items.map((i) => i.keyResultId)).size,
-    progress: weightedProgress(items.map((t) => ({ weight: t.weight, progress: tkrProgress(t) }))),
-  }));
+  return Array.from(byObjective.values()).map(({ obj, items }) => {
+    const progress = weightedProgress(items.map((t) => ({ weight: t.weight, progress: tkrProgress(t) })));
+    const expected = expectedProgressForPeriod(obj.period);
+    return {
+      id: obj.id,
+      title: obj.title,
+      period: obj.period,
+      weight: obj.weight,
+      krCount: new Set(items.map((i) => i.keyResultId)).size,
+      progress,
+      expected,
+      autoStatus: computeAutoStatus(progress, expected),
+    };
+  });
 }
 
 export interface ComplianceCell {

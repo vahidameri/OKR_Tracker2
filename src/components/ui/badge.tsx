@@ -1,7 +1,12 @@
 import * as React from 'react';
 import { ProgressStatus } from '@prisma/client';
 import { cn } from '@/lib/utils';
-import { STATUS_LABELS } from '@/lib/progress';
+import {
+  AUTO_STATUS_LABELS,
+  AUTO_STATUS_STYLES,
+  STATUS_LABELS,
+  type AutoStatus,
+} from '@/lib/progress';
 
 export function Badge({
   className,
@@ -27,4 +32,26 @@ const statusStyles: Record<ProgressStatus, string> = {
 
 export function StatusBadge({ status }: { status: ProgressStatus }) {
   return <Badge className={statusStyles[status]}>{STATUS_LABELS[status]}</Badge>;
+}
+
+export function AutoStatusBadge({
+  status,
+  expected,
+}: {
+  status: AutoStatus | null;
+  expected?: number | null;
+}) {
+  if (!status) return null;
+  return (
+    <Badge
+      className={AUTO_STATUS_STYLES[status]}
+      title={
+        expected !== null && expected !== undefined
+          ? `وضعیت خودکار بر اساس زمان: انتظار ${expected}٪ پیشرفت تا امروز`
+          : 'وضعیت خودکار بر اساس زمان سپری‌شده از دوره'
+      }
+    >
+      ⏱ {AUTO_STATUS_LABELS[status]}
+    </Badge>
+  );
 }

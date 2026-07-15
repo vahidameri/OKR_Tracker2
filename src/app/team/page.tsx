@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { StatusBadge } from '@/components/ui/badge';
+import { AutoStatusBadge, StatusBadge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { TrendChart } from '@/components/charts/trend-chart';
@@ -10,7 +10,14 @@ import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table';
 import { ViewToggle } from '@/components/view-toggle';
 import { getSession } from '@/lib/auth';
 import { formatJalali } from '@/lib/jalali';
-import { getTeamOkrs, getWeeklyTrend, tkrProgress } from '@/lib/okr-data';
+import {
+  getTeamOkrs,
+  getWeeklyTrend,
+  latestValueLabel,
+  tkrAutoStatus,
+  tkrExpected,
+  tkrProgress,
+} from '@/lib/okr-data';
 import { METRIC_LABELS, weightedProgress } from '@/lib/progress';
 import { getUserTeams, resolveActiveTeam } from '@/lib/team-access';
 import { formatCompact } from '@/lib/utils';
@@ -131,21 +138,16 @@ export default async function TeamHomePage({
                           ? `${formatCompact(target)} ${tkr.keyResult.unit ?? ''}`
                           : '—'}
                       </TD>
-                      <TD className="text-xs">
-                        {tkr.keyResult.metricType === 'NUMERIC'
-                          ? formatCompact(latest?.currentValue)
-                          : tkr.keyResult.metricType === 'BOOLEAN'
-                            ? latest
-                              ? latest.booleanValue
-                                ? 'بله'
-                                : 'خیر'
-                              : '—'
-                            : latest?.textValue ?? '—'}
-                      </TD>
+                      <TD className="text-xs">{latestValueLabel(tkr)}</TD>
                       <TD className="min-w-[120px]">
                         <ProgressBar value={tkrProgress(tkr)} />
                       </TD>
-                      <TD>{latest ? <StatusBadge status={latest.progressStatus} /> : '—'}</TD>
+                      <TD>
+                        <div className="flex flex-col gap-1">
+                          {latest ? <StatusBadge status={latest.progressStatus} /> : '—'}
+                          <AutoStatusBadge status={tkrAutoStatus(tkr)} expected={tkrExpected(tkr)} />
+                        </div>
+                      </TD>
                       <TD className="text-xs text-muted-foreground">
                         {latest ? formatJalali(latest.weekStartDate) : '—'}
                       </TD>
@@ -183,13 +185,17 @@ export default async function TeamHomePage({
                         {METRIC_LABELS[tkr.keyResult.metricType]} · وزن تیمی: {tkr.weight}
                         {tkr.keyResult.metricType === 'NUMERIC' &&
                           ` · تارگت: ${formatCompact(target)} ${tkr.keyResult.unit ?? ''}`}
+                        {tkr.keyResult.metricType === 'BOOLEAN' &&
+                          tkr.milestones.length > 0 &&
+                          ` · مایل‌استون: ${tkr.milestones.filter((m) => m.isDone).length} از ${tkr.milestones.length}`}
                       </p>
                       {tkr.keyResult.description && (
                         <p className="mt-1 text-xs text-muted-foreground">{tkr.keyResult.description}</p>
                       )}
                     </div>
-                    <div className="text-left">
+                    <div className="flex flex-col items-end gap-1 text-left">
                       {latest ? <StatusBadge status={latest.progressStatus} /> : <span className="text-xs text-muted-foreground">بدون چک‌این</span>}
+                      <AutoStatusBadge status={tkrAutoStatus(tkr)} expected={tkrExpected(tkr)} />
                       <p className="mt-1 text-xs text-muted-foreground">
                         {latest ? `آخرین ثبت: ${formatJalali(latest.weekStartDate)}` : ''}
                       </p>

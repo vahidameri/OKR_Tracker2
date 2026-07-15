@@ -1,14 +1,22 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { StatusBadge } from '@/components/ui/badge';
+import { AutoStatusBadge, StatusBadge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table';
 import { TrendChart } from '@/components/charts/trend-chart';
 import { formatJalali } from '@/lib/jalali';
-import { getTeamOkrs, getWeeklyTrend, tkrProgress } from '@/lib/okr-data';
+import {
+  expectedOf,
+  getTeamOkrs,
+  getWeeklyTrend,
+  latestValueLabel,
+  tkrAutoStatus,
+  tkrExpected,
+  tkrProgress,
+} from '@/lib/okr-data';
 import { prisma } from '@/lib/prisma';
-import { METRIC_LABELS, weightedProgress } from '@/lib/progress';
+import { computeAutoStatus, METRIC_LABELS, weightedProgress } from '@/lib/progress';
 import { formatCompact } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -20,6 +28,8 @@ export default async function TeamDrilldown({ params }: { params: { id: string }
   const [okrs, trend] = await Promise.all([getTeamOkrs(params.id), getWeeklyTrend(params.id)]);
   const allTkrs = okrs.flatMap((o) => o.items);
   const teamProgress = weightedProgress(allTkrs.map((t) => ({ weight: t.weight, progress: tkrProgress(t) })));
+  const teamExpected = expectedOf(allTkrs);
+  const teamAutoStatus = allTkrs.length > 0 ? computeAutoStatus(teamProgress, teamExpected) : null;
 
   return (
     <div className="space-y-6">
@@ -38,6 +48,12 @@ export default async function TeamDrilldown({ params }: { params: { id: string }
           <CardContent className="pt-5 text-center">
             <p className="text-4xl font-black text-primary">{teamProgress}٪</p>
             <p className="mt-2 text-sm text-muted-foreground">پیشرفت وزنی تیم</p>
+            {teamExpected !== null && (
+              <p className="mt-1 text-xs text-muted-foreground">انتظار زمانی تا امروز: {teamExpected}٪</p>
+            )}
+            <div className="mt-2">
+              <AutoStatusBadge status={teamAutoStatus} expected={teamExpected} />
+            </div>
           </CardContent>
         </Card>
         <Card className="lg:col-span-2">
@@ -77,7 +93,8 @@ export default async function TeamDrilldown({ params }: { params: { id: string }
                   <TH>تارگت</TH>
                   <TH>آخرین مقدار</TH>
                   <TH>پیشرفت</TH>
-                  <TH>وضعیت</TH>
+                  <TH>وضعیت ثبت‌شده</TH>
+                  <TH>وضعیت زمانی (خودکار)</TH>
                   <TH>آخرین چک‌این</TH>
                 </TR>
               </THead>
@@ -103,21 +120,14 @@ export default async function TeamDrilldown({ params }: { params: { id: string }
                           ? `${formatCompact(target)} ${tkr.keyResult.unit ?? ''}`
                           : '—'}
                       </TD>
-                      <TD>
-                        {tkr.keyResult.metricType === 'NUMERIC'
-                          ? formatCompact(latest?.currentValue)
-                          : tkr.keyResult.metricType === 'BOOLEAN'
-                            ? latest
-                              ? latest.booleanValue
-                                ? 'بله'
-                                : 'خیر'
-                              : '—'
-                            : latest?.textValue ?? '—'}
-                      </TD>
+                      <TD>{latestValueLabel(tkr)}</TD>
                       <TD className="min-w-[130px]">
                         <ProgressBar value={tkrProgress(tkr)} />
                       </TD>
                       <TD>{latest ? <StatusBadge status={latest.progressStatus} /> : '—'}</TD>
+                      <TD>
+                        <AutoStatusBadge status={tkrAutoStatus(tkr)} expected={tkrExpected(tkr)} />
+                      </TD>
                       <TD className="text-xs text-muted-foreground">
                         {latest ? formatJalali(latest.weekStartDate) : 'ثبت نشده'}
                       </TD>

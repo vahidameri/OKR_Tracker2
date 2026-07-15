@@ -8,10 +8,10 @@ export const STATUS_LABELS: Record<ProgressStatus, string> = {
 };
 
 export const STATUS_COLORS: Record<ProgressStatus, string> = {
-  ON_TRACK: '#16a34a',
-  AT_RISK: '#d97706',
-  BLOCKED: '#dc2626',
-  COMPLETED: '#2563eb',
+  ON_TRACK: '#0ca30c',
+  AT_RISK: '#fab219',
+  BLOCKED: '#d03b3b',
+  COMPLETED: '#2a78d6',
 };
 
 export const METRIC_LABELS: Record<MetricType, string> = {

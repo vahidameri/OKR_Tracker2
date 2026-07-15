@@ -45,7 +45,13 @@ export function AppNav({
           })}
         </nav>
         <div className="mr-auto flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">{userName}</span>
+          <Link
+            href="/settings"
+            className="rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+            title="تنظیمات کاربری"
+          >
+            ⚙ {userName}
+          </Link>
           <button
             onClick={() => signOut({ callbackUrl: '/login' })}
             className="rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted"

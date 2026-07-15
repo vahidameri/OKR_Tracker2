@@ -3,6 +3,7 @@
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,7 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <Logo className="mx-auto mb-3 h-20 w-auto" />
           <CardTitle className="text-xl">سامانه رهگیری OKR</CardTitle>
           <CardDescription>دپارتمان محصول و تکنولوژی — ورود به حساب کاربری</CardDescription>
         </CardHeader>

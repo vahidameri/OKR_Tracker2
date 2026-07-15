@@ -36,14 +36,11 @@ export interface TeamOverview {
   lastCheckInAt: Date | null;
 }
 
-/** نمای کلی همه‌ی تیم‌ها + پیشرفت وزنی کل دپارتمان */
-export async function getDepartmentOverview() {
-  const [teams, tkrs] = await Promise.all([
-    prisma.team.findMany({ orderBy: { name: 'asc' } }),
-    fetchAllTkrs(),
-  ]);
+type TeamRow = { id: string; name: string; leadName: string | null };
 
-  const overviews: TeamOverview[] = teams.map((team) => {
+/** نمای کلی تیم‌ها از داده‌ی از قبل واکشی‌شده (بدون کوئری اضافه) */
+export function computeOverviews(teams: TeamRow[], tkrs: TkrWithData[]): TeamOverview[] {
+  return teams.map((team) => {
     const teamTkrs = tkrs.filter((t) => t.teamId === team.id);
     const statusCounts: Record<ProgressStatus, number> = {
       ON_TRACK: 0,
@@ -69,13 +66,114 @@ export async function getDepartmentOverview() {
       lastCheckInAt,
     };
   });
+}
+
+/** نمای کلی همه‌ی تیم‌ها + پیشرفت وزنی کل دپارتمان (+ داده‌ی خام برای محاسبات بیشتر) */
+export async function getDepartmentOverview() {
+  const [teams, tkrs] = await Promise.all([
+    prisma.team.findMany({ orderBy: { name: 'asc' } }),
+    fetchAllTkrs(),
+  ]);
+
+  const overviews = computeOverviews(teams, tkrs);
 
   // پیشرفت دپارتمان: میانگین وزنی روی تمام رکوردهای TeamKeyResult (نه وزن ثابت روی KR)
   const departmentProgress = weightedProgress(
     tkrs.map((t) => ({ weight: t.weight, progress: tkrProgress(t) }))
   );
 
-  return { overviews, departmentProgress, totalTkrs: tkrs.length };
+  return { overviews, departmentProgress, totalTkrs: tkrs.length, teams, tkrs };
+}
+
+/** روند هفتگی از داده‌ی از قبل واکشی‌شده */
+export function computeTrend(tkrs: TkrWithData[]): TrendPoint[] {
+  const weekSet = new Set<string>();
+  for (const tkr of tkrs) {
+    for (const c of tkr.checkIns) weekSet.add(c.weekStartDate.toISOString());
+  }
+  const weeks = Array.from(weekSet).sort();
+
+  return weeks.map((weekIso) => {
+    const items = tkrs.map((tkr) => {
+      const upTo = tkr.checkIns.find((c) => c.weekStartDate.toISOString() <= weekIso);
+      return { weight: tkr.weight, progress: checkInProgress(tkr, upTo ?? null) };
+    });
+    return {
+      week: weekLabel(new Date(weekIso)),
+      weekDate: weekIso,
+      progress: weightedProgress(items),
+    };
+  });
+}
+
+export interface ObjectiveProgress {
+  id: string;
+  title: string;
+  period: string;
+  weight: number;
+  krCount: number;
+  progress: number;
+}
+
+/** پیشرفت وزنی هر هدف (تجمیع همه‌ی سهم‌های تیمی KRهایش) */
+export function computeObjectiveProgress(tkrs: TkrWithData[]): ObjectiveProgress[] {
+  const byObjective = new Map<string, { obj: TkrWithData['keyResult']['objective']; items: TkrWithData[] }>();
+  for (const tkr of tkrs) {
+    const obj = tkr.keyResult.objective;
+    if (!byObjective.has(obj.id)) byObjective.set(obj.id, { obj, items: [] });
+    byObjective.get(obj.id)!.items.push(tkr);
+  }
+  return Array.from(byObjective.values()).map(({ obj, items }) => ({
+    id: obj.id,
+    title: obj.title,
+    period: obj.period,
+    weight: obj.weight,
+    krCount: new Set(items.map((i) => i.keyResultId)).size,
+    progress: weightedProgress(items.map((t) => ({ weight: t.weight, progress: tkrProgress(t) }))),
+  }));
+}
+
+export interface ComplianceCell {
+  weekIso: string;
+  submitted: number;
+  total: number;
+  ratio: number;
+}
+
+export interface ComplianceRow {
+  teamId: string;
+  teamName: string;
+  cells: ComplianceCell[];
+}
+
+/** ماتریس نظم ثبت چک‌این: هر تیم × هر هفته، چند KR از کل ثبت شده */
+export function computeCompliance(teams: TeamRow[], tkrs: TkrWithData[]) {
+  const weekSet = new Set<string>();
+  for (const tkr of tkrs) {
+    for (const c of tkr.checkIns) weekSet.add(c.weekStartDate.toISOString());
+  }
+  const weeks = Array.from(weekSet).sort().slice(-10); // ۱۰ هفته‌ی اخیر
+
+  const rows: ComplianceRow[] = teams.map((team) => {
+    const teamTkrs = tkrs.filter((t) => t.teamId === team.id);
+    return {
+      teamId: team.id,
+      teamName: team.name,
+      cells: weeks.map((weekIso) => {
+        const submitted = teamTkrs.filter((t) =>
+          t.checkIns.some((c) => c.weekStartDate.toISOString() === weekIso)
+        ).length;
+        return {
+          weekIso,
+          submitted,
+          total: teamTkrs.length,
+          ratio: teamTkrs.length === 0 ? 0 : submitted / teamTkrs.length,
+        };
+      }),
+    };
+  });
+
+  return { weeks, rows };
 }
 
 export interface TrendPoint {
@@ -87,24 +185,7 @@ export interface TrendPoint {
 /** روند هفتگی پیشرفت وزنی (کل دپارتمان یا یک تیم) */
 export async function getWeeklyTrend(teamId?: string): Promise<TrendPoint[]> {
   const tkrs = await fetchAllTkrs(teamId);
-  const weekSet = new Set<string>();
-  for (const tkr of tkrs) {
-    for (const c of tkr.checkIns) weekSet.add(c.weekStartDate.toISOString());
-  }
-  const weeks = Array.from(weekSet).sort();
-
-  return weeks.map((weekIso) => {
-    const items = tkrs.map((tkr) => {
-      // آخرین چک‌این تا انتهای این هفته (چک‌این‌ها نزولی مرتب‌اند)
-      const upTo = tkr.checkIns.find((c) => c.weekStartDate.toISOString() <= weekIso);
-      return { weight: tkr.weight, progress: checkInProgress(tkr, upTo ?? null) };
-    });
-    return {
-      week: weekLabel(new Date(weekIso)),
-      weekDate: weekIso,
-      progress: weightedProgress(items),
-    };
-  });
+  return computeTrend(tkrs);
 }
 
 /** OKRهای یک تیم به تفکیک هدف، برای پنل تیم و drill-down ادمین */

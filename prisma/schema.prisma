@@ -39,6 +39,7 @@ model User {
   checkIns           WeeklyCheckIn[]
   feedbacks          CheckInFeedback[]
   objectives         Objective[]
+  pushSubscriptions  PushSubscription[]
 }
 
 model UserTeam {
@@ -130,6 +131,24 @@ model WeeklyCheckIn {
   feedback           CheckInFeedback?
 
   @@unique([teamKeyResultId, weekStartDate])
+}
+
+// اشتراک وب‌پوش هر کاربر برای یادآوری‌ها
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+}
+
+// تنظیمات کلید-مقدار (کلیدهای VAPID، آخرین زمان ارسال یادآوری و...)
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }
 
 model CheckInFeedback {

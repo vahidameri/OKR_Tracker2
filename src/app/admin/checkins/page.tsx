@@ -1,6 +1,8 @@
 import { FeedbackForm } from '@/components/admin/feedback-form';
 import { StatusBadge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table';
+import { ViewToggle } from '@/components/view-toggle';
 import { formatJalali, formatJalaliDateTime } from '@/lib/jalali';
 import { prisma } from '@/lib/prisma';
 import { formatCompact } from '@/lib/utils';
@@ -10,10 +12,12 @@ export const dynamic = 'force-dynamic';
 export default async function CheckInsReviewPage({
   searchParams,
 }: {
-  searchParams: { team?: string };
+  searchParams: { team?: string; view?: string };
 }) {
   const teams = await prisma.team.findMany({ orderBy: { name: 'asc' } });
   const teamFilter = searchParams.team;
+  const view: 'cards' | 'table' = searchParams.view === 'table' ? 'table' : 'cards';
+  const teamQuery = teamFilter ? `team=${teamFilter}&` : '';
 
   const checkIns = await prisma.weeklyCheckIn.findMany({
     where: teamFilter ? { teamKeyResult: { teamId: teamFilter } } : undefined,
@@ -40,23 +44,81 @@ export default async function CheckInsReviewPage({
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <a
-          href="/admin/checkins"
-          className={`rounded-full px-3 py-1 text-sm ${!teamFilter ? 'bg-primary text-primary-foreground' : 'border border-border bg-card hover:bg-muted'}`}
-        >
-          همه تیم‌ها
-        </a>
-        {teams.map((t) => (
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
           <a
-            key={t.id}
-            href={`/admin/checkins?team=${t.id}`}
-            className={`rounded-full px-3 py-1 text-sm ${teamFilter === t.id ? 'bg-primary text-primary-foreground' : 'border border-border bg-card hover:bg-muted'}`}
+            href={`/admin/checkins${view === 'table' ? '?view=table' : ''}`}
+            className={`rounded-full px-3 py-1 text-sm ${!teamFilter ? 'bg-primary text-primary-foreground' : 'border border-border bg-card hover:bg-muted'}`}
           >
-            {t.name}
+            همه تیم‌ها
           </a>
-        ))}
+          {teams.map((t) => (
+            <a
+              key={t.id}
+              href={`/admin/checkins?team=${t.id}${view === 'table' ? '&view=table' : ''}`}
+              className={`rounded-full px-3 py-1 text-sm ${teamFilter === t.id ? 'bg-primary text-primary-foreground' : 'border border-border bg-card hover:bg-muted'}`}
+            >
+              {t.name}
+            </a>
+          ))}
+        </div>
+        <ViewToggle
+          view={view}
+          hrefCards={`/admin/checkins?${teamQuery}`.replace(/[?&]$/, '') || '/admin/checkins'}
+          hrefTable={`/admin/checkins?${teamQuery}view=table`}
+        />
       </div>
+
+      {view === 'table' && checkIns.length > 0 && (
+        <Card>
+          <CardContent className="pt-4">
+            <Table>
+              <THead>
+                <TR>
+                  <TH>تیم</TH>
+                  <TH>نتیجه کلیدی</TH>
+                  <TH>هفته</TH>
+                  <TH>مقدار / گزارش</TH>
+                  <TH>وضعیت</TH>
+                  <TH>ثبت‌کننده</TH>
+                  <TH>امتیاز و کامنت ادمین</TH>
+                </TR>
+              </THead>
+              <TBody>
+                {checkIns.map((c) => {
+                  const kr = c.teamKeyResult.keyResult;
+                  return (
+                    <TR key={c.id}>
+                      <TD className="text-xs">{c.teamKeyResult.team.name}</TD>
+                      <TD className="max-w-52 text-xs">{kr.title}</TD>
+                      <TD className="text-xs">{formatJalali(c.weekStartDate)}</TD>
+                      <TD className="max-w-48 text-xs">
+                        {kr.metricType === 'NUMERIC' && `${formatCompact(c.currentValue)} ${kr.unit ?? ''}`}
+                        {kr.metricType === 'BOOLEAN' && (c.booleanValue ? 'بله' : 'خیر')}
+                        {kr.metricType === 'TEXT' && (c.textValue ?? '—')}
+                        {c.blockerDescription && (
+                          <p className="mt-1 text-red-700">بلاکر: {c.blockerDescription}</p>
+                        )}
+                      </TD>
+                      <TD>
+                        <StatusBadge status={c.progressStatus} />
+                      </TD>
+                      <TD className="text-xs">{c.submittedBy?.fullName ?? '—'}</TD>
+                      <TD className="min-w-72">
+                        <FeedbackForm
+                          checkInId={c.id}
+                          initialScore={c.feedback?.score ?? null}
+                          initialComment={c.feedback?.comment ?? null}
+                        />
+                      </TD>
+                    </TR>
+                  );
+                })}
+              </TBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
       {checkIns.length === 0 && (
         <Card>
@@ -65,7 +127,8 @@ export default async function CheckInsReviewPage({
       )}
 
       <div className="space-y-4">
-        {checkIns.map((c) => {
+        {view === 'cards' &&
+          checkIns.map((c) => {
           const kr = c.teamKeyResult.keyResult;
           return (
             <Card key={c.id}>

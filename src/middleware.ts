@@ -6,15 +6,6 @@ export default withAuth(
     const token = req.nextauth.token;
     const { pathname } = req.nextUrl;
 
-    // اجبار به تغییر پسورد اولیه
-    if (
-      token?.mustChangePassword &&
-      !pathname.startsWith('/change-password') &&
-      !pathname.startsWith('/api')
-    ) {
-      return NextResponse.redirect(new URL('/change-password', req.url));
-    }
-
     // RBAC: مسیرهای ادمین فقط برای ADMIN
     if ((pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) && token?.role !== 'ADMIN') {
       if (pathname.startsWith('/api')) {
@@ -38,7 +29,9 @@ export const config = {
     '/',
     '/admin/:path*',
     '/team/:path*',
+    '/settings',
     '/change-password',
+    '/api/push/:path*',
     '/api/admin/:path*',
     '/api/team/:path*',
   ],

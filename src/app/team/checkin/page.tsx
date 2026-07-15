@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckInForm } from '@/components/team/checkin-form';
+import { CheckinTable, type CheckinTableRow } from '@/components/team/checkin-table';
 import { TeamSwitcher } from '@/components/team/team-switcher';
+import { ViewToggle } from '@/components/view-toggle';
 import { getSession } from '@/lib/auth';
 import { formatJalali, getWeekStart } from '@/lib/jalali';
 import { getTeamOkrs } from '@/lib/okr-data';
@@ -11,7 +13,11 @@ import { formatCompact } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
-export default async function CheckInPage({ searchParams }: { searchParams: { team?: string } }) {
+export default async function CheckInPage({
+  searchParams,
+}: {
+  searchParams: { team?: string; view?: string };
+}) {
   const session = await getSession();
   if (!session?.user) redirect('/login');
 
@@ -31,6 +37,32 @@ export default async function CheckInPage({ searchParams }: { searchParams: { te
   const okrs = await getTeamOkrs(activeTeam.id);
   const weekStart = getWeekStart();
   const weekStartIso = weekStart.toISOString();
+  const view: 'cards' | 'table' = searchParams.view === 'table' ? 'table' : 'cards';
+
+  const tableRows: CheckinTableRow[] = okrs.flatMap(({ objective, items }) =>
+    items.map((tkr) => {
+      const thisWeek = tkr.checkIns.find((c) => c.weekStartDate.toISOString() === weekStartIso) ?? null;
+      return {
+        teamKeyResultId: tkr.id,
+        objectiveTitle: objective.title,
+        krTitle: tkr.keyResult.title,
+        isShared: tkr.keyResult.isShared,
+        metricType: tkr.keyResult.metricType,
+        unit: tkr.keyResult.unit,
+        weight: tkr.weight,
+        target: tkr.targetValueOverride ?? tkr.keyResult.targetValue,
+        existing: thisWeek
+          ? {
+              currentValue: thisWeek.currentValue,
+              booleanValue: thisWeek.booleanValue,
+              textValue: thisWeek.textValue,
+              progressStatus: thisWeek.progressStatus,
+              blockerDescription: thisWeek.blockerDescription,
+            }
+          : null,
+      };
+    })
+  );
 
   return (
     <div className="space-y-6">
@@ -41,7 +73,22 @@ export default async function CheckInPage({ searchParams }: { searchParams: { te
         </p>
       </div>
 
-      <TeamSwitcher teams={teams} activeTeamId={activeTeam.id} basePath="/team/checkin" />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <TeamSwitcher teams={teams} activeTeamId={activeTeam.id} basePath="/team/checkin" />
+        <ViewToggle
+          view={view}
+          hrefCards={`/team/checkin?team=${activeTeam.id}`}
+          hrefTable={`/team/checkin?team=${activeTeam.id}&view=table`}
+        />
+      </div>
+
+      {view === 'table' && okrs.length > 0 && (
+        <Card>
+          <CardContent className="pt-4">
+            <CheckinTable rows={tableRows} />
+          </CardContent>
+        </Card>
+      )}
 
       {okrs.length === 0 && (
         <Card>
@@ -51,7 +98,8 @@ export default async function CheckInPage({ searchParams }: { searchParams: { te
         </Card>
       )}
 
-      {okrs.map(({ objective, items }) => (
+      {view === 'cards' &&
+        okrs.map(({ objective, items }) => (
         <Card key={objective.id}>
           <CardHeader>
             <CardTitle>{objective.title}</CardTitle>

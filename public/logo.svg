@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340" height="150" viewBox="0 0 340 150">
+  <!-- لوگوی شاد (بازسازی ساده — برای لوگوی اصلی، فایل logo.png را در پوشه public قرار دهید) -->
+  <g>
+    <circle cx="288" cy="26" r="15" fill="#F5C518"/>
+    <circle cx="318" cy="52" r="11" fill="#F5C518"/>
+    <circle cx="308" cy="88" r="8" fill="#F5C518"/>
+    <text x="255" y="95" text-anchor="end" direction="rtl"
+          font-family="Vazirmatn, Tahoma, sans-serif" font-size="82" font-weight="900"
+          fill="#3EC9A7">شاد</text>
+    <text x="255" y="132" text-anchor="end" direction="rtl"
+          font-family="Vazirmatn, Tahoma, sans-serif" font-size="20" font-weight="500"
+          fill="#5a5a57">مدرسه‌ای به وسعت ایران</text>
+  </g>
+</svg>

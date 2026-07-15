@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { AppNav } from '@/components/nav';
+import { PasswordBanner } from '@/components/password-banner';
 import { getSession } from '@/lib/auth';
 
 const links = [
@@ -14,7 +15,10 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
   return (
     <div className="min-h-screen">
       <AppNav title="پنل تیم — OKR" links={links} userName={session.user.fullName} />
-      <main className="mx-auto max-w-6xl p-4 md:p-6">{children}</main>
+      <main className="mx-auto max-w-6xl p-4 md:p-6">
+        <PasswordBanner />
+        {children}
+      </main>
     </div>
   );
 }

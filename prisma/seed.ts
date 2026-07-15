@@ -3,7 +3,7 @@ import { hash } from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-const DEFAULT_PASSWORD = process.env.SEED_DEFAULT_PASSWORD ?? 'Okr@1404';
+const DEFAULT_PASSWORD = process.env.SEED_DEFAULT_PASSWORD ?? 'okr405@TPD';
 
 const TEAMS: { name: string; leadName: string; description: string }[] = [
   { name: 'تکنولوژی', leadName: 'مرتضی صفری شاهی', description: 'تیم تکنولوژی' },

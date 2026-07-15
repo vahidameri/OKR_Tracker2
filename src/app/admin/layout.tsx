@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { AppNav } from '@/components/nav';
+import { PasswordBanner } from '@/components/password-banner';
 import { getSession } from '@/lib/auth';
 
 const links = [
@@ -7,6 +8,7 @@ const links = [
   { href: '/admin/okrs', label: 'مدیریت OKR' },
   { href: '/admin/import', label: 'آپلود اکسل' },
   { href: '/admin/checkins', label: 'گزارش‌های هفتگی' },
+  { href: '/admin/export', label: 'خروجی‌ها' },
   { href: '/admin/users', label: 'کاربران' },
 ];
 
@@ -18,7 +20,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="min-h-screen">
       <AppNav title="پنل مدیریت OKR" links={links} userName={session.user.fullName} />
-      <main className="mx-auto max-w-7xl p-4 md:p-6">{children}</main>
+      <main className="mx-auto max-w-7xl p-4 md:p-6">
+        <PasswordBanner />
+        {children}
+      </main>
     </div>
   );
 }

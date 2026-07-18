@@ -21,7 +21,7 @@ export const chartTheme = {
   /** خانه‌ی «صفر/خالی» در هیت‌مپ */
   empty: '#f0efec',
   tooltip: {
-    fontFamily: 'Vazirmatn',
+    fontFamily: 'Vazirmatn FD, Vazirmatn',
     direction: 'rtl' as const,
     borderRadius: 8,
     border: '1px solid #e1e0d9',

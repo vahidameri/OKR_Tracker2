@@ -27,13 +27,13 @@ export function TrendChart({ data, height = 256 }: { data: TrendChartPoint[]; he
           <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} vertical={false} />
           <XAxis
             dataKey="week"
-            tick={{ fontSize: 12, fontFamily: 'Vazirmatn', fill: chartTheme.axisInk }}
+            tick={{ fontSize: 12, fontFamily: 'Vazirmatn FD, Vazirmatn', fill: chartTheme.axisInk }}
             axisLine={{ stroke: chartTheme.baseline }}
             tickLine={false}
           />
           <YAxis
             domain={[0, 100]}
-            tick={{ fontSize: 11, fill: chartTheme.axisInk }}
+            tick={{ fontSize: 11, fontFamily: 'Vazirmatn FD, Vazirmatn', fill: chartTheme.axisInk }}
             width={36}
             axisLine={false}
             tickLine={false}

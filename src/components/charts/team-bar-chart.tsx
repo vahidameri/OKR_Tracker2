@@ -25,14 +25,14 @@ export function TeamBarChart({ data }: { data: TeamBarPoint[] }) {
           <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} vertical={false} />
           <XAxis
             dataKey="name"
-            tick={{ fontSize: 12, fontFamily: 'Vazirmatn', fill: chartTheme.axisInk }}
+            tick={{ fontSize: 12, fontFamily: 'Vazirmatn FD, Vazirmatn', fill: chartTheme.axisInk }}
             interval={0}
             axisLine={{ stroke: chartTheme.baseline }}
             tickLine={false}
           />
           <YAxis
             domain={[0, 100]}
-            tick={{ fontSize: 11, fill: chartTheme.axisInk }}
+            tick={{ fontSize: 11, fontFamily: 'Vazirmatn FD, Vazirmatn', fill: chartTheme.axisInk }}
             width={36}
             axisLine={false}
             tickLine={false}
@@ -47,7 +47,7 @@ export function TeamBarChart({ data }: { data: TeamBarPoint[] }) {
               dataKey="progress"
               position="top"
               formatter={(v: number) => `${v}٪`}
-              style={{ fontSize: 11, fontFamily: 'Vazirmatn', fill: '#52514e' }}
+              style={{ fontSize: 11, fontFamily: 'Vazirmatn FD, Vazirmatn', fill: '#52514e' }}
             />
           </Bar>
         </BarChart>

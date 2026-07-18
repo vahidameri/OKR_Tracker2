@@ -1,3 +1,5 @@
+/* نسخه‌ی FD فونت وزیرمتن: تمام ارقام لاتین به‌صورت فارسی (۰۱۲۳...) رندر می‌شوند */
+@import 'vazirmatn/misc/Farsi-Digits/Vazirmatn-FD-font-face.css';
 @import 'vazirmatn/Vazirmatn-font-face.css';
 
 @tailwind base;

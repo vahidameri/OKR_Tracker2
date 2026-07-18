@@ -26,7 +26,8 @@ services:
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       SEED_DEFAULT_PASSWORD: ${SEED_DEFAULT_PASSWORD:-okr405@TPD}
     ports:
-      - '3000:3000'
+      # پورت بیرونی از .env قابل تغییر است (APP_PORT)؛ پیش‌فرض 3000
+      - '${APP_PORT:-3000}:3000'
 
   # اختیاری: reverse proxy برای دیپلوی روی سرور داخلی (پورت ۸۰)
   # برای فعال‌سازی: docker compose --profile proxy up -d

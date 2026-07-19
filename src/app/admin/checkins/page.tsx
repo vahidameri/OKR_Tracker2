@@ -1,5 +1,6 @@
 import { CheckinEditForm } from '@/components/admin/checkin-edit-form';
 import { FeedbackForm } from '@/components/admin/feedback-form';
+import { CommentThread } from '@/components/comment-thread';
 import { StatusBadge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table';
@@ -28,6 +29,10 @@ export default async function CheckInsReviewPage({
       feedback: true,
       submittedBy: { select: { fullName: true } },
       editedBy: { select: { fullName: true } },
+      comments: {
+        orderBy: { createdAt: 'asc' },
+        include: { author: { select: { fullName: true, role: true } } },
+      },
       teamKeyResult: {
         include: {
           team: { select: { id: true, name: true } },
@@ -180,6 +185,16 @@ export default async function CheckInsReviewPage({
                     progressStatus: c.progressStatus,
                     blockerDescription: c.blockerDescription,
                   }}
+                />
+                <CommentThread
+                  checkInId={c.id}
+                  comments={c.comments.map((cm) => ({
+                    id: cm.id,
+                    body: cm.body,
+                    createdAt: cm.createdAt.toISOString(),
+                    authorName: cm.author?.fullName ?? null,
+                    authorRole: cm.author?.role ?? null,
+                  }))}
                 />
               </CardContent>
             </Card>

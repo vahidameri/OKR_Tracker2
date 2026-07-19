@@ -19,6 +19,7 @@ import {
   tkrProgress,
 } from '@/lib/okr-data';
 import { METRIC_LABELS, weightedProgress } from '@/lib/progress';
+import { CommentThread } from '@/components/comment-thread';
 import { LeaderboardTable } from '@/components/leaderboard-table';
 import { getLeaderboard } from '@/lib/leaderboard';
 import { getUserTeams, resolveActiveTeam } from '@/lib/team-access';
@@ -239,6 +240,20 @@ export default async function TeamHomePage({
                     <p className="mt-2 text-xs text-amber-700">
                       ✎ این چک‌این توسط {latest.editedBy?.fullName ?? 'ادمین'} ویرایش شده است.
                     </p>
+                  )}
+                  {latest && (
+                    <div className="mt-2">
+                      <CommentThread
+                        checkInId={latest.id}
+                        comments={latest.comments.map((cm) => ({
+                          id: cm.id,
+                          body: cm.body,
+                          createdAt: cm.createdAt.toISOString(),
+                          authorName: cm.author?.fullName ?? null,
+                          authorRole: cm.author?.role ?? null,
+                        }))}
+                      />
+                    </div>
                   )}
                 </div>
               );

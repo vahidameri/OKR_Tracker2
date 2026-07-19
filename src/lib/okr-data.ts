@@ -15,6 +15,10 @@ const tkrInclude = {
       feedback: true,
       submittedBy: { select: { fullName: true } },
       editedBy: { select: { fullName: true } },
+      comments: {
+        orderBy: { createdAt: 'asc' as const },
+        include: { author: { select: { fullName: true, role: true } } },
+      },
     },
   },
 };

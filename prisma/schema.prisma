@@ -42,6 +42,7 @@ model User {
   pushSubscriptions  PushSubscription[]
   editedCheckIns     WeeklyCheckIn[]    @relation("CheckInEditor")
   auditLogs          OkrAuditLog[]
+  checkInComments    CheckInComment[]
 }
 
 model UserTeam {
@@ -153,8 +154,22 @@ model WeeklyCheckIn {
   editedBy           User?            @relation("CheckInEditor", fields: [editedById], references: [id], onDelete: SetNull)
   editedAt           DateTime?
   feedback           CheckInFeedback?
+  comments           CheckInComment[]
 
   @@unique([teamKeyResultId, weekStartDate])
+}
+
+// گفتگوی روی چک‌این: هم ثبت‌کننده (عضو تیم) و هم مدیر می‌توانند کامنت بگذارند
+model CheckInComment {
+  id        String        @id @default(cuid())
+  checkInId String
+  checkIn   WeeklyCheckIn @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    User?         @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  body      String
+  createdAt DateTime      @default(now())
+
+  @@index([checkInId, createdAt])
 }
 
 // تاریخچه‌ی تغییرات تعریف OKR (وزن، تارگت، حداقل و...) توسط ادمین

@@ -53,3 +53,30 @@ export function currentJalaliQuarter(date: Date = new Date()): string {
   const q = Math.ceil(jm / 3);
   return `Q${q}-${jy}`;
 }
+
+export const SEASON_NAMES = ['بهار', 'تابستان', 'پاییز', 'زمستان'];
+
+/** اطلاعات فصل جاری برای هدر: «هفته ۳ تابستان ۱۴۰۵ (۱ تیر تا ۳۱ شهریور)» */
+export function currentQuarterInfo(date: Date = new Date()): {
+  label: string;
+  quarterKey: string;
+} {
+  const { jy, jm } = jalaali.toJalaali(date.getFullYear(), date.getMonth() + 1, date.getDate());
+  const q = Math.ceil(jm / 3);
+  const startMonth = (q - 1) * 3 + 1;
+  const endMonth = startMonth + 2;
+  const endDay = jalaali.jalaaliMonthLength(jy, endMonth);
+
+  const s = jalaali.toGregorian(jy, startMonth, 1);
+  const quarterStart = new Date(s.gy, s.gm - 1, s.gd);
+  // شماره هفته بر مبنای شنبه‌های سپری‌شده از ابتدای فصل
+  const startWeek = getWeekStart(quarterStart);
+  const nowWeek = getWeekStart(date);
+  const weekNo = Math.floor((nowWeek.getTime() - startWeek.getTime()) / (7 * 86400000)) + 1;
+
+  const monthName = (m: number) => JALALI_MONTHS[m - 1];
+  return {
+    quarterKey: `Q${q}-${jy}`,
+    label: `هفته ${weekNo} ${SEASON_NAMES[q - 1]} ${jy} (۱ ${monthName(startMonth)} تا ${endDay} ${monthName(endMonth)})`,
+  };
+}

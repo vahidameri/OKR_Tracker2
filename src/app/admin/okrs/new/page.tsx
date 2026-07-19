@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { KrForm, type KrFormValue, type TeamOption } from '@/components/admin/kr-form';
+import { PeriodSelect } from '@/components/admin/period-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,7 +70,7 @@ export default function NewObjectivePage() {
           </div>
           <div>
             <Label>دوره (شمسی) *</Label>
-            <Input placeholder="مثلاً Q2-1405" value={period} onChange={(e) => setPeriod(e.target.value)} />
+            <PeriodSelect value={period} onChange={setPeriod} />
           </div>
           <div className="md:col-span-3">
             <Label>توضیحات</Label>

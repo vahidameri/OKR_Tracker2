@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { KrForm, type KrFormValue, type TeamOption } from '@/components/admin/kr-form';
+import { PeriodSelect } from '@/components/admin/period-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,6 +61,17 @@ function krToFormValue(kr: Kr): KrFormValue {
 }
 
 export default function OkrManagementPage() {
+  return (
+    <Suspense fallback={<p className="py-10 text-center text-muted-foreground">در حال بارگذاری…</p>}>
+      <OkrManagement />
+    </Suspense>
+  );
+}
+
+function OkrManagement() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const teamFilter = searchParams.get('team');
   const [objectives, setObjectives] = useState<Objective[]>([]);
   const [teams, setTeams] = useState<TeamOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,10 +150,19 @@ export default function OkrManagementPage() {
 
   if (loading) return <p className="py-10 text-center text-muted-foreground">در حال بارگذاری…</p>;
 
+  // فیلتر بر اساس تیم انتخابی: فقط اهدافی که KRی تخصیص‌یافته به آن تیم دارند
+  const krBelongsToFilter = (kr: Kr) => !teamFilter || kr.teams.some((t) => t.team.id === teamFilter);
+  const visibleObjectives = objectives.filter(
+    (obj) => !teamFilter || obj.keyResults.some(krBelongsToFilter)
+  );
+  const filterName = teams.find((t) => t.id === teamFilter)?.name;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-black">تعریف و مدیریت OKR</h1>
+        <h1 className="text-xl font-black">
+          تعریف و مدیریت OKR{filterName ? ` — تیم ${filterName}` : ''}
+        </h1>
         <Link
           href="/admin/okrs/new"
           className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
@@ -149,15 +171,36 @@ export default function OkrManagementPage() {
         </Link>
       </div>
 
-      {objectives.length === 0 && (
+      {/* صفحه‌ی هر تیم: فقط OKRهای همان تیم؛ KR مشترک در صفحه‌ی همه‌ی تیم‌هایش دیده می‌شود */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => router.replace('/admin/okrs')}
+          className={`rounded-full px-3 py-1 text-sm ${!teamFilter ? 'bg-primary text-primary-foreground' : 'border border-border bg-card hover:bg-muted'}`}
+        >
+          همه تیم‌ها
+        </button>
+        {teams.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => router.replace(`/admin/okrs?team=${t.id}`)}
+            className={`rounded-full px-3 py-1 text-sm ${teamFilter === t.id ? 'bg-primary text-primary-foreground' : 'border border-border bg-card hover:bg-muted'}`}
+          >
+            {t.name}
+          </button>
+        ))}
+      </div>
+
+      {visibleObjectives.length === 0 && (
         <Card>
           <CardContent className="pt-5 text-center text-muted-foreground">
-            هنوز هدفی تعریف نشده است. از «هدف جدید» یا «آپلود اکسل» شروع کنید.
+            {teamFilter
+              ? 'برای این تیم هنوز OKRی تخصیص داده نشده است. از «هدف جدید» یک KR با تخصیص به این تیم بسازید.'
+              : 'هنوز هدفی تعریف نشده است. از «هدف جدید» یا «آپلود اکسل» شروع کنید.'}
           </CardContent>
         </Card>
       )}
 
-      {objectives.map((obj) => (
+      {visibleObjectives.map((obj) => (
         <Card key={obj.id}>
           <CardHeader>
             {editingObjectiveId === obj.id ? (
@@ -178,7 +221,10 @@ export default function OkrManagementPage() {
                 </div>
                 <div>
                   <Label>دوره</Label>
-                  <Input value={objDraft.period} onChange={(e) => setObjDraft({ ...objDraft, period: e.target.value })} />
+                  <PeriodSelect
+                    value={objDraft.period}
+                    onChange={(period) => setObjDraft({ ...objDraft, period })}
+                  />
                 </div>
                 <div className="md:col-span-4">
                   <Label>توضیحات</Label>
@@ -225,7 +271,7 @@ export default function OkrManagementPage() {
             )}
           </CardHeader>
           <CardContent className="space-y-3">
-            {obj.keyResults.map((kr) =>
+            {obj.keyResults.filter(krBelongsToFilter).map((kr) =>
               editingKrId === kr.id ? (
                 <KrForm
                   key={kr.id}

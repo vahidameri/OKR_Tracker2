@@ -12,10 +12,12 @@ export interface NavLink {
 
 export function AppNav({
   title,
+  subtitle,
   links,
   userName,
 }: {
   title: string;
+  subtitle?: string;
   links: NavLink[];
   userName: string;
 }) {
@@ -24,7 +26,10 @@ export function AppNav({
   return (
     <header className="no-print sticky top-0 z-20 border-b border-border bg-card">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
-        <span className="text-sm font-black text-primary">{title}</span>
+        <span className="flex flex-col">
+          <span className="text-sm font-black text-primary">{title}</span>
+          {subtitle && <span className="text-xs text-muted-foreground">{subtitle}</span>}
+        </span>
         <nav className="flex flex-wrap items-center gap-1">
           {links.map((link) => {
             const active =

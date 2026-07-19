@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { AppNav } from '@/components/nav';
 import { PasswordBanner } from '@/components/password-banner';
 import { getSession } from '@/lib/auth';
+import { currentQuarterInfo } from '@/lib/jalali';
 
 const links = [
   { href: '/admin', label: 'داشبورد' },
@@ -23,7 +24,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-screen">
-      <AppNav title="پنل مدیریت OKR" links={links} userName={session.user.fullName} />
+      <AppNav
+        title="پنل مدیریت OKR"
+        subtitle={currentQuarterInfo().label}
+        links={links}
+        userName={session.user.fullName}
+      />
       <main className="mx-auto max-w-7xl p-4 md:p-6">
         <PasswordBanner />
         {children}

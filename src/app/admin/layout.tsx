@@ -1,20 +1,20 @@
 import { redirect } from 'next/navigation';
-import { AppNav } from '@/components/nav';
+import { AppSidebar, type SideLink } from '@/components/app-sidebar';
 import { PasswordBanner } from '@/components/password-banner';
 import { getSession } from '@/lib/auth';
 import { currentQuarterInfo } from '@/lib/jalali';
 
-const links = [
-  { href: '/admin', label: 'داشبورد' },
-  { href: '/admin/summary', label: 'خلاصه هفته' },
-  { href: '/admin/okrs', label: 'مدیریت OKR' },
-  { href: '/admin/import', label: 'آپلود اکسل' },
-  { href: '/admin/checkins', label: 'گزارش‌های هفتگی' },
-  { href: '/admin/compare', label: 'مقایسه دوره‌ها' },
-  { href: '/admin/audit', label: 'تاریخچه تغییرات' },
-  { href: '/admin/export', label: 'خروجی‌ها' },
-  { href: '/admin/users', label: 'کاربران' },
-  { href: '/admin/settings', label: 'تنظیمات' },
+const links: SideLink[] = [
+  { href: '/admin', label: 'داشبورد', icon: 'dashboard' },
+  { href: '/admin/summary', label: 'خلاصه هفته', icon: 'summary' },
+  { href: '/admin/okrs', label: 'مدیریت OKR', icon: 'okrs' },
+  { href: '/admin/import', label: 'آپلود اکسل', icon: 'import' },
+  { href: '/admin/checkins', label: 'گزارش‌های هفتگی', icon: 'checkins' },
+  { href: '/admin/compare', label: 'مقایسه دوره‌ها', icon: 'compare' },
+  { href: '/admin/audit', label: 'تاریخچه تغییرات', icon: 'audit' },
+  { href: '/admin/export', label: 'خروجی‌ها', icon: 'export' },
+  { href: '/admin/users', label: 'کاربران', icon: 'users' },
+  { href: '/admin/settings', label: 'تنظیمات', icon: 'settings' },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -23,17 +23,20 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (session.user.role !== 'ADMIN') redirect('/team');
 
   return (
-    <div className="min-h-screen">
-      <AppNav
+    <div className="flex min-h-screen flex-col md:flex-row">
+      <AppSidebar
         title="پنل مدیریت OKR"
-        subtitle={currentQuarterInfo().label}
+        quarterLabel={currentQuarterInfo().label}
         links={links}
         userName={session.user.fullName}
+        roleLabel="ادمین"
       />
-      <main className="mx-auto max-w-7xl p-4 md:p-6">
-        <PasswordBanner />
-        {children}
-      </main>
+      <div className="min-w-0 flex-1">
+        <main className="mx-auto max-w-7xl p-4 md:p-6">
+          <PasswordBanner />
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

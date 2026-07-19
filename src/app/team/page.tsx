@@ -181,48 +181,86 @@ export default async function TeamHomePage({
       )}
 
       {view === 'cards' &&
-        okrs.map(({ objective, items }) => (
-        <Card key={objective.id}>
-          <CardHeader>
-            <CardTitle>{objective.title}</CardTitle>
-            <CardDescription>دوره: {objective.period}</CardDescription>
+        okrs.map(({ objective, items }) => {
+          const objectiveProgress = weightedProgress(
+            items.map((t) => ({ weight: t.weight, progress: tkrProgress(t) }))
+          );
+          return (
+        <Card key={objective.id} className="overflow-hidden">
+          <CardHeader className="pb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="rounded-full border border-primary/40 bg-primary/5 px-2.5 py-0.5 text-xs font-bold text-primary">
+                  {activeTeam.name}
+                </span>
+                <span className="text-xs text-muted-foreground">{objective.period}</span>
+              </div>
+              <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] font-black text-white">
+                  {(activeTeam.leadName ?? '؟').trim().charAt(0)}
+                </span>
+                {activeTeam.leadName ?? '—'}
+              </span>
+            </div>
+            <CardTitle className="text-lg">{objective.title}</CardTitle>
+            <ProgressBar value={objectiveProgress} />
           </CardHeader>
           <CardContent className="space-y-3">
-            {items.map((tkr) => {
+            {items.map((tkr, idx) => {
               const latest = tkr.checkIns[0];
               const target = tkr.targetValueOverride ?? tkr.keyResult.targetValue;
+              const progress = tkrProgress(tkr);
+              const expected = tkrExpected(tkr);
+              const pace = expected === null ? null : progress - expected;
               return (
-                <div key={tkr.id} className="rounded-md border border-border p-3">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
+                <div key={tkr.id} className="rounded-lg border border-border bg-card p-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-black text-muted-foreground">
+                      {idx + 1}
+                    </span>
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium">
+                      <p className="font-bold">
                         {tkr.keyResult.title}
                         {tkr.keyResult.isShared && (
-                          <span className="mr-2 text-xs text-violet-600">(مشترک — سهم تیم شما)</span>
+                          <span className="mr-2 text-xs font-normal text-violet-600">(مشترک — سهم تیم شما)</span>
                         )}
                       </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {METRIC_LABELS[tkr.keyResult.metricType]} · وزن تیمی: {tkr.weight}
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {METRIC_LABELS[tkr.keyResult.metricType]} · وزن: {tkr.weight}
                         {tkr.keyResult.metricType === 'NUMERIC' &&
                           ` · تارگت: ${formatCompact(target)} ${tkr.keyResult.unit ?? ''}`}
                         {tkr.keyResult.metricType === 'BOOLEAN' &&
                           tkr.milestones.length > 0 &&
                           ` · مایل‌استون: ${tkr.milestones.filter((m) => m.isDone).length} از ${tkr.milestones.length}`}
                       </p>
-                      {tkr.keyResult.description && (
-                        <p className="mt-1 text-xs text-muted-foreground">{tkr.keyResult.description}</p>
+                    </div>
+                    <div className="w-full sm:w-52">
+                      <ProgressBar value={progress} size="sm" />
+                      {pace !== null && (
+                        <p
+                          className={`mt-0.5 text-[11px] font-bold ${pace >= 0 ? 'text-primary' : 'text-amber-700'}`}
+                        >
+                          {pace >= 0 ? '↑ جلوتر از برنامه' : '↓ عقب از برنامه'} ({pace >= 0 ? '+' : ''}
+                          {pace})
+                        </p>
                       )}
                     </div>
-                    <div className="flex flex-col items-end gap-1 text-left">
-                      {latest ? <StatusBadge status={latest.progressStatus} /> : <span className="text-xs text-muted-foreground">بدون چک‌این</span>}
-                      <AutoStatusBadge status={tkrAutoStatus(tkr)} expected={tkrExpected(tkr)} />
-                      <p className="mt-1 text-xs text-muted-foreground">
+                    <div className="flex flex-col items-end gap-1">
+                      {latest ? (
+                        <StatusBadge status={latest.progressStatus} />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">بدون چک‌این</span>
+                      )}
+                      <span className="text-[11px] text-muted-foreground">
                         {latest ? `آخرین ثبت: ${formatJalali(latest.weekStartDate)}` : ''}
-                      </p>
+                      </span>
                     </div>
-                  </div>
-                  <div className="mt-3">
-                    <ProgressBar value={tkrProgress(tkr)} />
+                    <Link
+                      href={`/team/checkin?team=${activeTeam.id}`}
+                      className="rounded-lg bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90"
+                    >
+                      ثبت چک‌این
+                    </Link>
                   </div>
                   {latest?.feedback && (latest.feedback.score !== null || latest.feedback.comment) && (
                     <div className="mt-2 rounded-md bg-blue-50 p-2 text-xs text-blue-900">
@@ -260,7 +298,8 @@ export default async function TeamHomePage({
             })}
           </CardContent>
         </Card>
-      ))}
+          );
+        })}
     </div>
   );
 }

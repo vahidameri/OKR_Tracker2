@@ -1,26 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
- * لوگوی شاد: اول public/logo.png را امتحان می‌کند (فایل اصلی سازمان را با این نام
- * در پوشه public بگذارید)؛ اگر نبود از بازسازی SVG استفاده می‌کند.
+ * لوگوی شاد: پیش‌فرض بازسازی SVG داخلی؛ اگر فایل اصلی public/logo.png موجود باشد،
+ * پس از بارگذاری صفحه خودکار جایگزین می‌شود (بدون ریسک خطای هیدریشن).
  */
 export function Logo({ className }: { className?: string }) {
-  const [src, setSrc] = useState('/logo.png');
-  const [hidden, setHidden] = useState(false);
+  const [src, setSrc] = useState('/logo.svg');
 
-  if (hidden) return null;
+  useEffect(() => {
+    const probe = new Image();
+    probe.onload = () => setSrc('/logo.png');
+    probe.src = '/logo.png';
+  }, []);
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={src}
-      alt="شاد — مدرسه‌ای به وسعت ایران"
-      className={className}
-      onError={() => {
-        if (src === '/logo.png') setSrc('/logo.svg');
-        else setHidden(true);
-      }}
-    />
+    <img src={src} alt="شاد" className={className} />
   );
 }

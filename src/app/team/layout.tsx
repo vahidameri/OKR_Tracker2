@@ -1,12 +1,12 @@
 import { redirect } from 'next/navigation';
-import { AppNav } from '@/components/nav';
+import { AppSidebar, type SideLink } from '@/components/app-sidebar';
 import { PasswordBanner } from '@/components/password-banner';
 import { getSession } from '@/lib/auth';
 import { currentQuarterInfo } from '@/lib/jalali';
 
-const links = [
-  { href: '/team', label: 'OKRهای من' },
-  { href: '/team/checkin', label: 'ثبت وضعیت هفتگی' },
+const links: SideLink[] = [
+  { href: '/team', label: 'OKRهای من', icon: 'myokrs' },
+  { href: '/team/checkin', label: 'ثبت وضعیت هفتگی', icon: 'checkin' },
 ];
 
 export default async function TeamLayout({ children }: { children: React.ReactNode }) {
@@ -14,17 +14,20 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
   if (!session?.user) redirect('/login');
 
   return (
-    <div className="min-h-screen">
-      <AppNav
+    <div className="flex min-h-screen flex-col md:flex-row">
+      <AppSidebar
         title="پنل تیم — OKR"
-        subtitle={currentQuarterInfo().label}
+        quarterLabel={currentQuarterInfo().label}
         links={links}
         userName={session.user.fullName}
+        roleLabel={session.user.role === 'ADMIN' ? 'ادمین' : 'عضو تیم'}
       />
-      <main className="mx-auto max-w-6xl p-4 md:p-6">
-        <PasswordBanner />
-        {children}
-      </main>
+      <div className="min-w-0 flex-1">
+        <main className="mx-auto max-w-6xl p-4 md:p-6">
+          <PasswordBanner />
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

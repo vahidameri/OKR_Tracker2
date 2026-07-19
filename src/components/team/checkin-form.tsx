@@ -129,25 +129,34 @@ export function CheckInForm({ teamKeyResultId, metricType, unit, milestones = []
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <Label>وضعیت پیشرفت</Label>
-          <Select
-            value={progressStatus}
-            onChange={(e) =>
-              setProgressStatus(e.target.value as 'ON_TRACK' | 'AT_RISK' | 'BLOCKED' | 'COMPLETED')
-            }
-          >
-            <option value="ON_TRACK">در مسیر</option>
-            <option value="AT_RISK">در ریسک</option>
-            <option value="BLOCKED">بلاک‌شده</option>
-            <option value="COMPLETED">تکمیل‌شده</option>
-          </Select>
+      <div>
+        <Label>چه وضعیتی دارد؟</Label>
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              ['ON_TRACK', 'در مسیر', 'border-emerald-600 bg-emerald-600 text-white', 'border-border text-emerald-700 hover:border-emerald-400'],
+              ['AT_RISK', 'در ریسک', 'border-amber-500 bg-amber-500 text-white', 'border-border text-amber-700 hover:border-amber-400'],
+              ['BLOCKED', '🔒 بلاک‌شده', 'border-[#D03B3B] bg-[#D03B3B] text-white', 'border-border text-[#D03B3B] hover:border-red-400'],
+              ['COMPLETED', '✔ تکمیل‌شده', 'border-primary bg-primary text-white', 'border-border text-primary hover:border-primary/50'],
+            ] as const
+          ).map(([key, label, activeCls, idleCls]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setProgressStatus(key)}
+              className={`rounded-full border px-4 py-1.5 text-sm font-bold transition-colors ${
+                progressStatus === key ? activeCls : `bg-card ${idleCls}`
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
-        <div>
-          <Label>توضیح بلاکر / مشکل (در صورت وجود)</Label>
-          <Input value={blockerDescription} onChange={(e) => setBlockerDescription(e.target.value)} />
-        </div>
+      </div>
+
+      <div>
+        <Label>توضیح بلاکر / مشکل (در صورت وجود)</Label>
+        <Input value={blockerDescription} onChange={(e) => setBlockerDescription(e.target.value)} />
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}

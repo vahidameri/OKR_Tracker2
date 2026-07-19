@@ -4,7 +4,7 @@
  */
 export const chartTheme = {
   /** رنگ سری اصلی (تک‌سری) */
-  primary: '#2a78d6',
+  primary: '#0E7C86',
   grid: '#e1e0d9',
   axisInk: '#898781',
   baseline: '#c3c2b7',

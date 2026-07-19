@@ -1,11 +1,15 @@
 import { redirect } from 'next/navigation';
-import { AppNav } from '@/components/nav';
+import { AppShell, type NavGroup } from '@/components/app-shell';
 import { PasswordBanner } from '@/components/password-banner';
 import { getSession } from '@/lib/auth';
 
-const links = [
-  { href: '/team', label: 'OKRهای من' },
-  { href: '/team/checkin', label: 'ثبت وضعیت هفتگی' },
+const groups: NavGroup[] = [
+  {
+    links: [
+      { href: '/team', label: 'OKRهای من', icon: 'compass' },
+      { href: '/team/checkin', label: 'ثبت وضعیت هفتگی', icon: 'refresh-cw' },
+    ],
+  },
 ];
 
 export default async function TeamLayout({ children }: { children: React.ReactNode }) {
@@ -13,12 +17,15 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
   if (!session?.user) redirect('/login');
 
   return (
-    <div className="min-h-screen">
-      <AppNav title="پنل تیم — OKR" links={links} userName={session.user.fullName} />
-      <main className="mx-auto max-w-6xl p-4 md:p-6">
-        <PasswordBanner />
-        {children}
-      </main>
-    </div>
+    <AppShell
+      title="سامانه OKR"
+      subtitle="پنل تیم"
+      groups={groups}
+      userName={session.user.fullName}
+      userRole="عضو تیم"
+    >
+      <PasswordBanner />
+      {children}
+    </AppShell>
   );
 }

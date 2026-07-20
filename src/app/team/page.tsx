@@ -1,3 +1,4 @@
+import { AlertTriangle, ClipboardCheck } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { AutoStatusBadge, StatusBadge } from '@/components/ui/badge';
@@ -74,6 +75,32 @@ export default async function TeamHomePage({
     .map(({ objective, items }) => ({ objective, items: items.filter((t) => matchTkr(t, objective.title)) }))
     .filter((o) => o.items.length > 0);
 
+  // ابزار مدیریت تیم (لید): پیگیری چک‌این این هفته + بلاکرهای فعال + شمارش وضعیت‌ها
+  const weekStartIso = getWeekStart().toISOString();
+  const pendingKrs = allTkrs.filter(
+    (t) => !t.checkIns.some((c) => c.weekStartDate.toISOString() === weekStartIso)
+  );
+  const doneThisWeek = allTkrs.length - pendingKrs.length;
+  const coverage = allTkrs.length ? Math.round((doneThisWeek / allTkrs.length) * 100) : 0;
+  const activeBlockers = allTkrs
+    .filter((t) => t.checkIns[0]?.progressStatus === 'BLOCKED')
+    .map((t) => ({
+      id: t.id,
+      title: t.keyResult.title,
+      blocker: t.checkIns[0]?.blockerDescription ?? null,
+    }));
+  const statusTally = allTkrs.reduce(
+    (acc, t) => {
+      const s = t.checkIns[0]?.progressStatus;
+      if (s === 'ON_TRACK') acc.onTrack += 1;
+      else if (s === 'AT_RISK') acc.atRisk += 1;
+      else if (s === 'BLOCKED') acc.blocked += 1;
+      else if (s === 'COMPLETED') acc.completed += 1;
+      return acc;
+    },
+    { onTrack: 0, atRisk: 0, blocked: 0, completed: 0 }
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -92,6 +119,95 @@ export default async function TeamHomePage({
       </div>
 
       <TeamSwitcher teams={teams} activeTeamId={activeTeam.id} basePath="/team" />
+
+      {/* ابزار مدیریت تیم (لید) */}
+      <section className="space-y-3">
+        <h2 className="flex items-center gap-2 text-sm font-black text-muted-foreground">
+          <ClipboardCheck className="h-4 w-4" /> ابزار مدیریت تیم
+        </h2>
+
+        {/* شمارش وضعیت‌ها */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { label: 'در مسیر', value: statusTally.onTrack, cls: 'bg-emerald-50 text-emerald-700' },
+            { label: 'در ریسک', value: statusTally.atRisk, cls: 'bg-amber-50 text-amber-700' },
+            { label: 'بلاک‌شده', value: statusTally.blocked, cls: 'bg-red-50 text-red-600' },
+            { label: 'تکمیل‌شده', value: statusTally.completed, cls: 'bg-blue-50 text-blue-600' },
+          ].map((s) => (
+            <div key={s.label} className={`rounded-xl p-3 text-center ${s.cls}`}>
+              <p className="text-2xl font-black tabular-nums">{s.value}</p>
+              <p className="mt-0.5 text-[11px] font-bold">{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          {/* پیگیری چک‌این این هفته */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center justify-between">
+                <span>چک‌این این هفته</span>
+                <span className="text-sm font-black text-primary">{coverage}٪</span>
+              </CardTitle>
+              <CardDescription>
+                {doneThisWeek} از {allTkrs.length} نتیجه کلیدی این هفته ثبت شده است.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <ProgressBar value={coverage} />
+              {pendingKrs.length > 0 ? (
+                <div>
+                  <p className="mb-1.5 text-xs font-bold text-amber-700">
+                    {pendingKrs.length} مورد باقی‌مانده — نیازمند ثبت:
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {pendingKrs.slice(0, 8).map((t) => (
+                      <span
+                        key={t.id}
+                        className="max-w-full truncate rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] text-amber-800"
+                        title={t.keyResult.title}
+                      >
+                        {t.keyResult.title}
+                      </span>
+                    ))}
+                    {pendingKrs.length > 8 && (
+                      <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] text-muted-foreground">
+                        +{pendingKrs.length - 8} مورد دیگر
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs font-bold text-emerald-700">✓ همه‌ی موارد این هفته ثبت شده‌اند.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* بلاکرهای فعال */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-red-600" /> بلاکرهای فعال
+              </CardTitle>
+              <CardDescription>نتایج کلیدی‌ای که آخرین وضعیتشان «بلاک‌شده» است.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {activeBlockers.length > 0 ? (
+                <ul className="space-y-2">
+                  {activeBlockers.map((b) => (
+                    <li key={b.id} className="rounded-lg border border-red-100 bg-red-50/60 p-2.5 text-sm">
+                      <p className="font-bold text-red-800">{b.title}</p>
+                      {b.blocker && <p className="mt-0.5 text-justify text-xs text-red-700">{b.blocker}</p>}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="py-4 text-center text-xs font-bold text-emerald-700">✓ هیچ بلاکر فعالی وجود ندارد.</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </section>
 
       <div className="grid gap-4 lg:grid-cols-5">
         <Card className="lg:col-span-3">

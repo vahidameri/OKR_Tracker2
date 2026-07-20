@@ -15,8 +15,7 @@ import { TrendChart } from '@/components/charts/trend-chart';
 import { CycleTimeBar } from '@/components/cycle-time-bar';
 import { JalaliCalendar } from '@/components/jalali-calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ProgressBar } from '@/components/ui/progress-bar';
-import { formatJalali, formatJalaliLong } from '@/lib/jalali';
+import { formatJalaliLong } from '@/lib/jalali';
 import { LeaderboardTable } from '@/components/leaderboard-table';
 import { computeStandings } from '@/lib/leaderboard';
 import { computePersistentBlockers, computeTrend, getDepartmentOverview } from '@/lib/okr-data';
@@ -48,7 +47,6 @@ export default async function AdminDashboard() {
   );
   const withCheckIn = totals.onTrack + totals.atRisk + totals.blocked + totals.completed;
   const noCheckIn = totalTkrs - withCheckIn;
-  const coverage = totalTkrs > 0 ? Math.round((withCheckIn / totalTkrs) * 100) : 0;
   const trendDelta =
     trend.length >= 2 ? trend[trend.length - 1].progress - trend[trend.length - 2].progress : null;
 
@@ -68,12 +66,6 @@ export default async function AdminDashboard() {
           <p className="text-sm text-muted-foreground">{formatJalaliLong(new Date())}</p>
         </div>
         <div className="no-print flex gap-2">
-          <Link
-            href="/admin/export"
-            className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            خروجی‌ها
-          </Link>
           <Link
             href="/admin/report"
             className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-bold transition-colors hover:bg-muted"
@@ -190,42 +182,21 @@ export default async function AdminDashboard() {
             <LeaderboardTable standings={standings} />
           </CardContent>
         </Card>
-        <Card className="rounded-2xl">
+        <Card className="flex h-full flex-col rounded-2xl">
           <CardHeader>
             <CardTitle>تقویم</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="flex flex-1 flex-col">
             <JalaliCalendar />
             {currentCycle && (
-              <CycleTimeBar
-                name={currentCycle.name}
-                start={currentCycle.startDate.toISOString()}
-                end={currentCycle.endDate.toISOString()}
-              />
+              <div className="mt-auto border-t border-border pt-5">
+                <CycleTimeBar
+                  name={currentCycle.name}
+                  start={currentCycle.startDate.toISOString()}
+                  end={currentCycle.endDate.toISOString()}
+                />
+              </div>
             )}
-
-            {/* خلاصه سریع — پرکردن فضای خالی زیر تقویم */}
-            <div className="space-y-3 rounded-xl border border-border bg-muted/30 p-4">
-              <p className="text-xs font-bold text-muted-foreground">خلاصه سریع</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-card p-3 text-center shadow-sm">
-                  <p className="text-2xl font-black text-primary">{overviews.length}</p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">تیم فعال</p>
-                </div>
-                <div className="rounded-lg bg-card p-3 text-center shadow-sm">
-                  <p className="text-2xl font-black text-primary">{totalTkrs}</p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">نتیجه کلیدی</p>
-                </div>
-              </div>
-              <div>
-                <p className="mb-1 text-xs text-muted-foreground">پوشش چک‌این این هفته</p>
-                <ProgressBar value={coverage} />
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  {withCheckIn} از {totalTkrs} KR ثبت شده
-                  {noCheckIn > 0 && ` · ${noCheckIn} بدون چک‌این`}
-                </p>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>

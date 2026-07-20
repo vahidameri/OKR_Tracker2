@@ -3,6 +3,7 @@
 import {
   CalendarDays,
   CalendarRange,
+  ChevronDown,
   ClipboardList,
   Download,
   FileClock,
@@ -19,6 +20,7 @@ import {
 import { signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
 
@@ -44,6 +46,16 @@ export interface SideLink {
   icon: keyof typeof ICONS;
 }
 
+export interface SideGroup {
+  label: string;
+  icon: keyof typeof ICONS;
+  children: SideLink[];
+}
+
+export type SideEntry = SideLink | SideGroup;
+
+const isGroup = (e: SideEntry): e is SideGroup => 'children' in e;
+
 function NavItem({ link, active }: { link: SideLink; active: boolean }) {
   const Icon = ICONS[link.icon] ?? Target;
   return (
@@ -62,6 +74,46 @@ function NavItem({ link, active }: { link: SideLink; active: boolean }) {
   );
 }
 
+function NavGroup({
+  group,
+  isActive,
+}: {
+  group: SideGroup;
+  isActive: (href: string) => boolean;
+}) {
+  const Icon = ICONS[group.icon] ?? Settings;
+  const hasActiveChild = group.children.some((c) => isActive(c.href));
+  const [open, setOpen] = useState(hasActiveChild);
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={cn(
+          'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors',
+          hasActiveChild
+            ? 'font-bold text-white'
+            : 'text-sidebar-foreground hover:bg-sidebar-hover hover:text-white'
+        )}
+      >
+        <Icon className="h-[18px] w-[18px] shrink-0" />
+        <span className="flex-1 text-right">{group.label}</span>
+        <ChevronDown
+          className={cn('h-4 w-4 shrink-0 transition-transform', open && 'rotate-180')}
+        />
+      </button>
+      {open && (
+        <div className="mt-1 space-y-1 border-r border-white/10 pr-3">
+          {group.children.map((child) => (
+            <NavItem key={child.href} link={child} active={isActive(child.href)} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AppSidebar({
   title,
   quarterLabel,
@@ -72,7 +124,7 @@ export function AppSidebar({
 }: {
   title: string;
   quarterLabel: string;
-  links: SideLink[];
+  links: SideEntry[];
   userName: string;
   roleLabel: string;
   homeHref: string;
@@ -81,6 +133,9 @@ export function AppSidebar({
   const isActive = (href: string) =>
     href === pathname ||
     (href !== '/admin' && href !== '/team' && pathname.startsWith(href));
+
+  // فهرست تخت برای نوار موبایل (گروه‌ها باز می‌شوند)
+  const flatLinks = links.flatMap((e) => (isGroup(e) ? e.children : [e]));
 
   // خروج به همان مبدأ فعلی (پورت/دامنه) تا روی 3000 نپرد
   const logout = () =>
@@ -99,9 +154,13 @@ export function AppSidebar({
         </Link>
 
         <nav className="no-scrollbar flex-1 space-y-1 overflow-y-auto p-3">
-          {links.map((link) => (
-            <NavItem key={link.href} link={link} active={isActive(link.href)} />
-          ))}
+          {links.map((entry) =>
+            isGroup(entry) ? (
+              <NavGroup key={entry.label} group={entry} isActive={isActive} />
+            ) : (
+              <NavItem key={entry.href} link={entry} active={isActive(entry.href)} />
+            )
+          )}
         </nav>
 
         <div className="border-t border-white/10 p-3">
@@ -135,7 +194,7 @@ export function AppSidebar({
         <Link href={homeHref} className="shrink-0">
           <Logo className="h-7 w-auto rounded bg-white p-0.5" />
         </Link>
-        {links.map((link) => (
+        {flatLinks.map((link) => (
           <Link
             key={link.href}
             href={link.href}

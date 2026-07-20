@@ -11,18 +11,26 @@ import { formatCompact } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
+const VALID_STATUS = ['ON_TRACK', 'AT_RISK', 'BLOCKED', 'COMPLETED'] as const;
+
 export default async function CheckInsReviewPage({
   searchParams,
 }: {
-  searchParams: { team?: string; view?: string };
+  searchParams: { team?: string; view?: string; status?: string };
 }) {
   const teams = await prisma.team.findMany({ orderBy: { name: 'asc' } });
   const teamFilter = searchParams.team;
+  const statusFilter = (VALID_STATUS as readonly string[]).includes(searchParams.status ?? '')
+    ? (searchParams.status as (typeof VALID_STATUS)[number])
+    : undefined;
   const view: 'cards' | 'table' = searchParams.view === 'table' ? 'table' : 'cards';
   const teamQuery = teamFilter ? `team=${teamFilter}&` : '';
 
   const checkIns = await prisma.weeklyCheckIn.findMany({
-    where: teamFilter ? { teamKeyResult: { teamId: teamFilter } } : undefined,
+    where: {
+      ...(teamFilter ? { teamKeyResult: { teamId: teamFilter } } : {}),
+      ...(statusFilter ? { progressStatus: statusFilter } : {}),
+    },
     orderBy: [{ weekStartDate: 'desc' }, { submittedAt: 'desc' }],
     take: 100,
     include: {

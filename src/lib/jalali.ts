@@ -56,7 +56,16 @@ export function currentJalaliQuarter(date: Date = new Date()): string {
 
 export const SEASON_NAMES = ['بهار', 'تابستان', 'پاییز', 'زمستان'];
 
-/** اطلاعات فصل جاری برای هدر: «هفته ۳ تابستان ۱۴۰۵ (۱ تیر تا ۳۱ شهریور)» */
+/** روز و ماه شمسی یک تاریخ UTC، مثل «۲۷ تیر» */
+function dayMonthLabel(d: Date): string {
+  const { jm, jd } = jalaali.toJalaali(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
+  return `${jd} ${JALALI_MONTHS[jm - 1]}`;
+}
+
+/**
+ * اطلاعات هفته‌ی جاری برای هدر:
+ * «هفته ۵ تابستان ۱۴۰۵ (۲۷ تیر تا ۲ مرداد)» — بازه، بازه‌ی همان هفته (شنبه تا جمعه) است.
+ */
 export function currentQuarterInfo(date: Date = new Date()): {
   label: string;
   quarterKey: string;
@@ -64,19 +73,18 @@ export function currentQuarterInfo(date: Date = new Date()): {
   const { jy, jm } = jalaali.toJalaali(date.getFullYear(), date.getMonth() + 1, date.getDate());
   const q = Math.ceil(jm / 3);
   const startMonth = (q - 1) * 3 + 1;
-  const endMonth = startMonth + 2;
-  const endDay = jalaali.jalaaliMonthLength(jy, endMonth);
 
   const s = jalaali.toGregorian(jy, startMonth, 1);
-  const quarterStart = new Date(s.gy, s.gm - 1, s.gd);
-  // شماره هفته بر مبنای شنبه‌های سپری‌شده از ابتدای فصل
+  const quarterStart = new Date(Date.UTC(s.gy, s.gm - 1, s.gd));
   const startWeek = getWeekStart(quarterStart);
-  const nowWeek = getWeekStart(date);
+  const nowWeek = getWeekStart(date); // شنبه‌ی هفته‌ی جاری (UTC)
   const weekNo = Math.floor((nowWeek.getTime() - startWeek.getTime()) / (7 * 86400000)) + 1;
 
-  const monthName = (m: number) => JALALI_MONTHS[m - 1];
+  // پایان هفته = جمعه = شنبه + ۶ روز
+  const weekEnd = new Date(nowWeek.getTime() + 6 * 86400000);
+
   return {
     quarterKey: `Q${q}-${jy}`,
-    label: `هفته ${weekNo} ${SEASON_NAMES[q - 1]} ${jy} (۱ ${monthName(startMonth)} تا ${endDay} ${monthName(endMonth)})`,
+    label: `هفته ${weekNo} ${SEASON_NAMES[q - 1]} ${jy} (${dayMonthLabel(nowWeek)} تا ${dayMonthLabel(weekEnd)})`,
   };
 }

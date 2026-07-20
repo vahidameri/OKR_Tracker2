@@ -1,3 +1,4 @@
+import { Activity, AlertTriangle, CheckCircle2, Circle, Gauge, TrendingDown, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { AutoStatusBadge } from '@/components/ui/badge';
 import { CheckinHeatmap } from '@/components/charts/checkin-heatmap';
@@ -45,183 +46,202 @@ export default async function AdminDashboard() {
   const trendDelta =
     trend.length >= 2 ? trend[trend.length - 1].progress - trend[trend.length - 2].progress : null;
 
+  const tiles = [
+    { label: 'در مسیر', value: totals.onTrack, Icon: Circle, accent: 'text-emerald-600', bar: 'bg-emerald-500', ring: 'bg-emerald-50 text-emerald-600' },
+    { label: 'در ریسک', value: totals.atRisk, Icon: AlertTriangle, accent: 'text-amber-600', bar: 'bg-amber-500', ring: 'bg-amber-50 text-amber-600' },
+    { label: 'بلاک‌شده', value: totals.blocked, Icon: Activity, accent: 'text-[#D03B3B]', bar: 'bg-[#D03B3B]', ring: 'bg-red-50 text-[#D03B3B]' },
+    { label: 'تکمیل‌شده', value: totals.completed, Icon: CheckCircle2, accent: 'text-[#2a78d6]', bar: 'bg-[#2a78d6]', ring: 'bg-blue-50 text-[#2a78d6]' },
+  ];
+
   return (
     <div className="space-y-6">
+      {/* سرصفحه */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-black">داشبورد دپارتمان</h1>
+          <h1 className="text-2xl font-black">داشبورد دپارتمان</h1>
           <p className="text-sm text-muted-foreground">{formatJalaliLong(new Date())}</p>
         </div>
         <div className="no-print flex gap-2">
           <Link
             href="/admin/export"
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90"
           >
             خروجی‌ها
           </Link>
           <Link
             href="/admin/report"
-            className="rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted"
+            className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-bold hover:bg-muted"
           >
             گزارش چاپی / PDF
           </Link>
         </div>
       </div>
 
-      {/* ردیف اعداد کلیدی */}
+      {/* ۱) اعداد کلیدی — مهم‌ترین، بالای صفحه */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <Card>
-          <CardContent className="pt-5 text-center">
-            <p className="text-4xl font-black text-primary">{departmentProgress}٪</p>
-            <p className="mt-1 text-sm text-muted-foreground">پیشرفت وزنی دپارتمان</p>
+        {/* هیرو: پیشرفت دپارتمان */}
+        <Card className="relative overflow-hidden bg-gradient-to-bl from-primary/10 to-transparent lg:col-span-1">
+          <CardContent className="pt-5">
+            <div className="flex items-center gap-2 text-primary">
+              <Gauge className="h-5 w-5" />
+              <span className="text-xs font-bold">پیشرفت دپارتمان</span>
+            </div>
+            <p className="mt-2 text-4xl font-black text-primary">{departmentProgress}٪</p>
             {trendDelta !== null && (
-              <p className={`mt-1 text-xs font-bold ${trendDelta >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
-                {trendDelta >= 0 ? `▲ ${trendDelta}` : `▼ ${Math.abs(trendDelta)}`} واحد نسبت به هفته قبل
+              <p
+                className={`mt-1 flex items-center gap-1 text-xs font-bold ${
+                  trendDelta >= 0 ? 'text-emerald-700' : 'text-red-700'
+                }`}
+              >
+                {trendDelta >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                {Math.abs(trendDelta)} واحد نسبت به هفته قبل
               </p>
             )}
           </CardContent>
         </Card>
-        {[
-          { label: 'در مسیر', icon: '●', value: totals.onTrack, color: 'text-[#0ca30c]' },
-          { label: 'در ریسک', icon: '▲', value: totals.atRisk, color: 'text-amber-600' },
-          { label: 'بلاک‌شده', icon: '■', value: totals.blocked, color: 'text-[#d03b3b]' },
-          { label: 'تکمیل‌شده', icon: '✔', value: totals.completed, color: 'text-[#2a78d6]' },
-        ].map((s) => (
-          <Card key={s.label}>
-            <CardContent className="pt-5 text-center">
-              <p className={`text-4xl font-black ${s.color}`}>{s.value}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {s.icon} KR {s.label}
-              </p>
+
+        {tiles.map((t) => (
+          <Card key={t.label} className="relative overflow-hidden">
+            <span className={`absolute inset-y-0 right-0 w-1 ${t.bar}`} />
+            <CardContent className="flex items-center justify-between pt-5">
+              <div>
+                <p className={`text-4xl font-black ${t.accent}`}>{t.value}</p>
+                <p className="mt-1 text-sm text-muted-foreground">KR {t.label}</p>
+              </div>
+              <span className={`flex h-10 w-10 items-center justify-center rounded-full ${t.ring}`}>
+                <t.Icon className="h-5 w-5" />
+              </span>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* هشدار بلاکرهای پایدار */}
+      {/* ۲) هشدارها — نیازمند اقدام فوری */}
       {persistentBlockers.length > 0 && (
         <Card className="border-red-300 bg-red-50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-red-800">🔁 بلاکرهای پایدار — نیازمند مداخله</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-red-800">
+              <AlertTriangle className="h-5 w-5" /> بلاکرهای پایدار — نیازمند مداخله
+            </CardTitle>
             <CardDescription className="text-red-700">
               این KRها دو هفته‌ی متوالی یا بیشتر در وضعیت «بلاک‌شده» گزارش شده‌اند.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="grid gap-2 sm:grid-cols-2">
             {persistentBlockers.map((b, i) => (
-              <div key={i} className="rounded-md bg-white/70 p-2 text-sm">
-                <p className="font-medium">
+              <div key={i} className="rounded-lg bg-white/70 p-3 text-sm">
+                <p className="flex flex-wrap items-center gap-2 font-bold">
                   {b.teamName} — {b.krTitle}
-                  <span className="mr-2 rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">
+                  <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">
                     {b.weeks} هفته متوالی
                   </span>
                 </p>
-                {b.blocker && <p className="mt-1 text-xs text-red-800">آخرین بلاکر: {b.blocker}</p>}
+                {b.blocker && <p className="mt-1 text-justify text-xs text-red-800">آخرین بلاکر: {b.blocker}</p>}
               </div>
             ))}
           </CardContent>
         </Card>
       )}
 
-      {/* لیدربورد ماهانه */}
-      <Card>
-        <CardHeader>
-          <CardTitle>🏆 لیدربورد تیم‌ها (pacing)</CardTitle>
-          <CardDescription>
-            رتبه‌بندی بر اساس فاصله‌ی پیشرفت واقعی از پیشرفت مورد انتظار زمان — پایان هر ماه شمسی خودکار
-            اسنپ‌شات می‌شود.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <LeaderboardTable standings={standings} />
-          <div>
-            <p className="mb-2 text-sm font-bold">تاریخچه‌ی ماه‌های قبل</p>
-            <LeaderboardHistory historyByMonth={historyByMonth} />
-          </div>
-        </CardContent>
-      </Card>
+      {/* ۳) چیدمان دوستونه بر اساس اهمیت — ستون اصلی (چپ/عریض) و کناری (راست) */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* ستون اصلی: نمودارهای عملکرد */}
+        <div className="space-y-6 lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>پیشرفت تیم‌ها</CardTitle>
+              <CardDescription>میانگین وزنی پیشرفت KRهای هر تیم ({totalTkrs} رکورد KR-تیم)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TeamBarChart data={overviews.map((o) => ({ name: o.teamName, progress: o.progress }))} />
+            </CardContent>
+          </Card>
 
-      {/* نمودارها: میله‌ای تیم‌ها + دونات وضعیت */}
-      <div className="grid gap-4 lg:grid-cols-5">
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle>پیشرفت تیم‌ها</CardTitle>
-            <CardDescription>میانگین وزنی پیشرفت KRهای هر تیم ({totalTkrs} رکورد KR-تیم)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TeamBarChart data={overviews.map((o) => ({ name: o.teamName, progress: o.progress }))} />
-          </CardContent>
-        </Card>
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>توزیع وضعیت KRها</CardTitle>
-            <CardDescription>بر اساس آخرین چک‌این هر KR-تیم</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <StatusDonut
-              counts={{
-                ON_TRACK: totals.onTrack,
-                AT_RISK: totals.atRisk,
-                BLOCKED: totals.blocked,
-                COMPLETED: totals.completed,
-              }}
-              noCheckIn={noCheckIn}
-            />
-          </CardContent>
-        </Card>
-      </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>روند هفتگی دپارتمان</CardTitle>
+              <CardDescription>پیشرفت وزنی تجمیعی هفته‌به‌هفته</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TrendChart data={trend} />
+            </CardContent>
+          </Card>
 
-      {/* روند هفتگی + تقویم */}
-      <div className="grid gap-4 lg:grid-cols-5">
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle>روند هفتگی دپارتمان</CardTitle>
-            <CardDescription>پیشرفت وزنی تجمیعی هفته‌به‌هفته</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TrendChart data={trend} />
-          </CardContent>
-        </Card>
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>تقویم</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <JalaliCalendar />
-          </CardContent>
-        </Card>
-      </div>
+          {objectives.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>پیشرفت اهداف</CardTitle>
+                <CardDescription>میانگین وزنی سهم‌های تیمی هر هدف</CardDescription>
+              </CardHeader>
+              <CardContent className="divide-y divide-border">
+                {objectives.map((o) => (
+                  <div key={o.id} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
+                    <div className="min-w-52 flex-1">
+                      <p className="flex flex-wrap items-center gap-2 text-sm font-bold">
+                        {o.title}
+                        <AutoStatusBadge status={o.autoStatus} expected={o.expected} />
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {o.period} · وزن {o.weight} · {o.krCount} نتیجه کلیدی
+                        {o.expected !== null && ` · انتظار زمانی: ${o.expected}٪`}
+                      </p>
+                    </div>
+                    <div className="w-full sm:w-64">
+                      <ProgressBar value={o.progress} />
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
-      {/* پیشرفت اهداف */}
-      {objectives.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>پیشرفت اهداف (Objectives)</CardTitle>
-            <CardDescription>میانگین وزنی سهم‌های تیمی هر هدف</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {objectives.map((o) => (
-              <div key={o.id} className="flex flex-wrap items-center gap-3">
-                <div className="min-w-52 flex-1">
-                  <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
-                    {o.title}
-                    <AutoStatusBadge status={o.autoStatus} expected={o.expected} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {o.period} · وزن {o.weight} · {o.krCount} نتیجه کلیدی
-                    {o.expected !== null && ` · انتظار زمانی تا امروز: ${o.expected}٪`}
-                  </p>
-                </div>
-                <div className="w-full sm:w-72">
-                  <ProgressBar value={o.progress} />
-                </div>
+        {/* ستون کناری: توزیع وضعیت، لیدربورد، تقویم */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>توزیع وضعیت KRها</CardTitle>
+              <CardDescription>بر اساس آخرین چک‌این هر KR-تیم</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <StatusDonut
+                counts={{
+                  ON_TRACK: totals.onTrack,
+                  AT_RISK: totals.atRisk,
+                  BLOCKED: totals.blocked,
+                  COMPLETED: totals.completed,
+                }}
+                noCheckIn={noCheckIn}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>🏆 لیدربورد تیم‌ها</CardTitle>
+              <CardDescription>رتبه‌بندی بر اساس فاصله از برنامه (pacing)</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <LeaderboardTable standings={standings} />
+              <div className="border-t border-border pt-3">
+                <p className="mb-2 text-sm font-bold">تاریخچه‌ی ماه‌های قبل</p>
+                <LeaderboardHistory historyByMonth={historyByMonth} />
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
 
-      {/* هیت‌مپ تیم × هفته */}
+          <Card>
+            <CardHeader>
+              <CardTitle>تقویم</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <JalaliCalendar />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* ۴) هیت‌مپ کل فصل — عریض */}
       <Card>
         <CardHeader>
           <CardTitle>هیت‌مپ هفتگی تیم × هفته</CardTitle>
@@ -234,48 +254,51 @@ export default async function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* کارت تیم‌ها با اسپارک‌لاین */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {overviews.map((o) => {
-          const teamTrend = computeTrend(tkrs.filter((t) => t.teamId === o.teamId));
-          return (
-            <Link key={o.teamId} href={`/admin/teams/${o.teamId}`}>
-              <Card className="h-full transition-shadow hover:shadow-md">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{o.teamName}</span>
-                    <span className="text-xs font-normal text-muted-foreground">{o.krCount} KR</span>
-                  </CardTitle>
-                  <CardDescription className="flex flex-wrap items-center gap-2">
-                    مسئول: {o.leadName ?? '—'}
-                    <AutoStatusBadge status={o.autoStatus} expected={o.expected} />
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <ProgressBar value={o.progress} />
-                  <Sparkline data={teamTrend.map((t) => ({ progress: t.progress }))} />
-                  <div className="flex flex-wrap gap-2 text-xs">
-                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-800">
-                      در مسیر: {o.statusCounts.ON_TRACK}
-                    </span>
-                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">
-                      ریسک: {o.statusCounts.AT_RISK}
-                    </span>
-                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-red-800">
-                      بلاک: {o.statusCounts.BLOCKED}
-                    </span>
-                    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-blue-800">
-                      تکمیل: {o.statusCounts.COMPLETED}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    آخرین چک‌این: {o.lastCheckInAt ? formatJalali(o.lastCheckInAt) : 'ثبت نشده'}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
+      {/* ۵) کارت تیم‌ها (drill-down) */}
+      <div>
+        <h2 className="mb-3 text-lg font-black">تیم‌ها</h2>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {overviews.map((o) => {
+            const teamTrend = computeTrend(tkrs.filter((t) => t.teamId === o.teamId));
+            return (
+              <Link key={o.teamId} href={`/admin/teams/${o.teamId}`}>
+                <Card className="h-full transition-all hover:-translate-y-0.5 hover:shadow-md">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center justify-between">
+                      <span>{o.teamName}</span>
+                      <span className="text-xs font-normal text-muted-foreground">{o.krCount} KR</span>
+                    </CardTitle>
+                    <CardDescription className="flex flex-wrap items-center gap-2">
+                      مسئول: {o.leadName ?? '—'}
+                      <AutoStatusBadge status={o.autoStatus} expected={o.expected} />
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <ProgressBar value={o.progress} />
+                    <Sparkline data={teamTrend.map((t) => ({ progress: t.progress }))} />
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-800">
+                        در مسیر: {o.statusCounts.ON_TRACK}
+                      </span>
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">
+                        ریسک: {o.statusCounts.AT_RISK}
+                      </span>
+                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-red-800">
+                        بلاک: {o.statusCounts.BLOCKED}
+                      </span>
+                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-blue-800">
+                        تکمیل: {o.statusCounts.COMPLETED}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      آخرین چک‌این: {o.lastCheckInAt ? formatJalali(o.lastCheckInAt) : 'ثبت نشده'}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

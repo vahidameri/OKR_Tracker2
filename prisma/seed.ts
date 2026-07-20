@@ -24,6 +24,9 @@ function currentCycle() {
 }
 
 const DEFAULT_PASSWORD = process.env.SEED_DEFAULT_PASSWORD ?? 'okr405@TPD';
+// اگر true (پیش‌فرض)، در هر seed پسورد همه‌ی کاربران به مقدار پیش‌فرض ریست می‌شود.
+// برای حفظ پسوردهای تغییریافته، در .env مقدار SEED_RESET_PASSWORDS=false بگذارید.
+const RESET_PASSWORDS = (process.env.SEED_RESET_PASSWORDS ?? 'true').toLowerCase() !== 'false';
 
 const TEAMS: { name: string; leadName: string; description: string }[] = [
   { name: 'تکنولوژی', leadName: 'مرتضی صفری شاهی', description: 'تیم تکنولوژی' },
@@ -74,7 +77,13 @@ async function main() {
         passwordHash,
         mustChangePassword: true,
       },
-      update: { fullName: user.fullName, title: user.title ?? null, role: user.role },
+      // با SEED_RESET_PASSWORDS=true (پیش‌فرض) پسورد همه به مقدار پیش‌فرض ریست می‌شود
+      update: {
+        fullName: user.fullName,
+        title: user.title ?? null,
+        role: user.role,
+        ...(RESET_PASSWORDS ? { passwordHash } : {}),
+      },
     });
 
     for (const teamName of user.teamNames) {

@@ -110,6 +110,10 @@ export function checkInProgress(tkr: TkrLike, checkIn: CheckInLike | null | unde
   }
 
   if (metricType === 'BOOLEAN') {
+    // درصد پیشرفت (۰/۵۰/۱۰۰ یا نسبت تسک‌ها) در currentValue است؛ در نبودش از booleanValue
+    if (checkIn.currentValue !== null && checkIn.currentValue !== undefined) {
+      return Math.round(Math.min(Math.max(checkIn.currentValue, 0), 100));
+    }
     return checkIn.booleanValue ? 100 : 0;
   }
 

@@ -8,6 +8,7 @@ import { formatCompact } from '@/lib/utils';
 const tkrInclude = {
   team: true,
   keyResult: { include: { objective: true } },
+  tasks: { orderBy: { order: 'asc' as const } },
   checkIns: {
     orderBy: { weekStartDate: 'desc' as const },
     include: {
@@ -27,7 +28,8 @@ export type TkrWithData = Awaited<ReturnType<typeof fetchAllTkrs>>[number];
 export async function fetchAllTkrs(teamId?: string) {
   // آستانه‌های وضعیت خودکار را قبل از هر محاسبه تازه کن (کش ۳۰ ثانیه‌ای)
   const { loadAutoThresholds } = await import('@/lib/settings');
-  await loadAutoThresholds();
+  const { loadCycles } = await import('@/lib/cycles');
+  await Promise.all([loadAutoThresholds(), loadCycles()]);
   return prisma.teamKeyResult.findMany({
     where: teamId ? { teamId } : undefined,
     include: tkrInclude,
@@ -97,7 +99,12 @@ export function latestValueLabel(tkr: TkrWithData): string {
     return `${formatCompact(latest.currentValue)} ${kr.unit ?? ''}`.trim();
   }
   if (kr.metricType === 'BOOLEAN') {
-    return latest.booleanValue ? 'بله' : 'خیر';
+    if (tkr.tasks.length > 0) {
+      return `${tkr.tasks.filter((t) => t.isDone).length} از ${tkr.tasks.length} تسک`;
+    }
+    const pct = latest.currentValue;
+    if (pct !== null && pct > 0 && pct < 100) return 'در حال انجام';
+    return latest.booleanValue || pct === 100 ? 'بله' : 'خیر';
   }
   return latest.textValue ?? '—';
 }

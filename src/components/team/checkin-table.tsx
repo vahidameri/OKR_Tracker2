@@ -31,8 +31,18 @@ export interface CheckinTableRow {
 function Row({ row }: { row: CheckinTableRow }) {
   const router = useRouter();
   const [currentValue, setCurrentValue] = useState(row.existing?.currentValue?.toString() ?? '');
-  const [booleanValue, setBooleanValue] = useState<string>(
-    row.existing?.booleanValue === true ? 'yes' : row.existing?.booleanValue === false ? 'no' : ''
+  const [boolState, setBoolState] = useState<string>(
+    row.existing?.currentValue != null
+      ? row.existing.currentValue >= 100
+        ? 'yes'
+        : row.existing.currentValue <= 0
+          ? 'no'
+          : 'progress'
+      : row.existing?.booleanValue === true
+        ? 'yes'
+        : row.existing?.booleanValue === false
+          ? 'no'
+          : ''
   );
   const [textValue, setTextValue] = useState(row.existing?.textValue ?? '');
   const [status, setStatus] = useState<Status>(row.existing?.progressStatus ?? 'ON_TRACK');
@@ -45,18 +55,19 @@ function Row({ row }: { row: CheckinTableRow }) {
     const numeric = currentValue.trim() === '' ? null : Number(currentValue.replace(/[,،\s]/g, ''));
     if (row.metricType === 'NUMERIC' && (numeric === null || !Number.isFinite(numeric)))
       return setError('عدد معتبر وارد کنید');
-    if (row.metricType === 'BOOLEAN' && booleanValue === '') return setError('بله/خیر را انتخاب کنید');
+    if (row.metricType === 'BOOLEAN' && boolState === '') return setError('وضعیت را انتخاب کنید');
     if (row.metricType === 'TEXT' && !textValue.trim()) return setError('متن گزارش الزامی است');
     if (status === 'BLOCKED' && !blocker.trim()) return setError('توضیح بلاکر الزامی است');
 
+    const boolPct = boolState === 'yes' ? 100 : boolState === 'progress' ? 50 : boolState === 'no' ? 0 : null;
     setState('busy');
     const res = await fetch('/api/team/checkins', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         teamKeyResultId: row.teamKeyResultId,
-        currentValue: numeric,
-        booleanValue: booleanValue === '' ? null : booleanValue === 'yes',
+        currentValue: row.metricType === 'BOOLEAN' ? boolPct : numeric,
+        booleanValue: row.metricType === 'BOOLEAN' ? boolPct === 100 : null,
         textValue: textValue || null,
         progressStatus: status,
         blockerDescription: blocker || null,
@@ -94,10 +105,11 @@ function Row({ row }: { row: CheckinTableRow }) {
           />
         )}
         {row.metricType === 'BOOLEAN' && (
-          <Select className="h-9 w-24" value={booleanValue} onChange={(e) => setBooleanValue(e.target.value)}>
+          <Select className="h-9 w-28" value={boolState} onChange={(e) => setBoolState(e.target.value)}>
             <option value="">—</option>
-            <option value="yes">بله</option>
             <option value="no">خیر</option>
+            <option value="progress">در حال انجام</option>
+            <option value="yes">بله</option>
           </Select>
         )}
         {row.metricType === 'TEXT' && (

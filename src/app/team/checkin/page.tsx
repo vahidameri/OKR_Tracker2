@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckInForm } from '@/components/team/checkin-form';
+import { CheckinModalButton } from '@/components/team/checkin-modal';
 import { CheckinTable, type CheckinTableRow } from '@/components/team/checkin-table';
 import { TeamSwitcher } from '@/components/team/team-switcher';
 import { ViewToggle } from '@/components/view-toggle';
@@ -110,8 +110,8 @@ export default async function CheckInPage({
               const thisWeek = tkr.checkIns.find((c) => c.weekStartDate.toISOString() === weekStartIso) ?? null;
               const target = tkr.targetValueOverride ?? tkr.keyResult.targetValue;
               return (
-                <div key={tkr.id} className="rounded-lg border border-border p-4">
-                  <div className="mb-3">
+                <div key={tkr.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-4">
+                  <div className="min-w-0 flex-1">
                     <p className="font-medium">
                       {tkr.keyResult.title}
                       {tkr.keyResult.isShared && (
@@ -122,12 +122,16 @@ export default async function CheckInPage({
                       {METRIC_LABELS[tkr.keyResult.metricType]} · وزن تیمی: {tkr.weight}
                       {tkr.keyResult.metricType === 'NUMERIC' &&
                         ` · تارگت تیم شما: ${formatCompact(target)} ${tkr.keyResult.unit ?? ''}`}
+                      {thisWeek && <span className="mr-1 text-primary"> · ✔ این هفته ثبت شده</span>}
                     </p>
                   </div>
-                  <CheckInForm
+                  <CheckinModalButton
                     teamKeyResultId={tkr.id}
                     metricType={tkr.keyResult.metricType}
                     unit={tkr.keyResult.unit}
+                    krTitle={tkr.keyResult.title}
+                    objectiveTitle={objective.title}
+                    tasks={tkr.tasks.map((t) => ({ id: t.id, title: t.title, isDone: t.isDone }))}
                     existing={
                       thisWeek
                         ? {

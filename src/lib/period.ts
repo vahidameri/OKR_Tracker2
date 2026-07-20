@@ -9,6 +9,13 @@ const SEASONS = ['بهار', 'تابستان', 'پاییز', 'زمستان'];
 /** مقدار ویژه‌ی «همه‌ی دوره‌ها» — بدون بازه‌ی زمانی مشخص */
 export const ALL_CYCLES = 'ALL';
 
+// کش دوره‌های تعریف‌شده‌ی ادمین (نام → بازه). سمت سرور با setCycleCache پر می‌شود.
+const cycleCache = new Map<string, { start: Date; end: Date }>();
+export function setCycleCache(entries: [string, { start: Date; end: Date }][]) {
+  cycleCache.clear();
+  for (const [name, range] of entries) cycleCache.set(name, range);
+}
+
 /** برچسب نمایشی یک دوره، مثل «تابستان ۱۴۰۵ · ۱ تیر تا ۳۱ شهریور» */
 export function periodLabel(period: string): string {
   if (period === ALL_CYCLES) return 'همه‌ی دوره‌ها';
@@ -34,6 +41,10 @@ export function periodLabel(period: string): string {
 export function parsePeriod(period: string): { start: Date; end: Date } | null {
   const p = period.trim();
   if (p === ALL_CYCLES) return null;
+
+  // اول دوره‌های تعریف‌شده‌ی ادمین (از کش) — نام دقیق مثل «تابستان ۱۴۰۵»
+  const fromCycle = cycleCache.get(p);
+  if (fromCycle) return fromCycle;
 
   const quarterMatch = p.match(/^Q([1-4])[-\s]?(\d{4})$/i);
   if (quarterMatch) {

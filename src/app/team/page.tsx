@@ -276,6 +276,7 @@ export default async function TeamHomePage({
                       unit={tkr.keyResult.unit}
                       krTitle={tkr.keyResult.title}
                       objectiveTitle={objective.title}
+                      tasks={tkr.tasks.map((t) => ({ id: t.id, title: t.title, isDone: t.isDone }))}
                       existing={
                         thisWeekCheckIn
                           ? {

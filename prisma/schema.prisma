@@ -30,6 +30,7 @@ model User {
   username           String            @unique
   passwordHash       String
   fullName           String
+  title              String? // عنوان شغلی نمایشی، مثل «مدیر پروژه»
   role               Role              @default(TEAM_MEMBER)
   isActive           Boolean           @default(true)
   mustChangePassword Boolean           @default(true)
@@ -116,8 +117,34 @@ model TeamKeyResult {
   targetValueOverride Float?
   minValueOverride    Float?
   checkIns            WeeklyCheckIn[]
+  tasks               KrTask[]
 
   @@unique([teamId, keyResultId])
+}
+
+// تسک‌های سهم یک تیم از یک KR (چک‌لیست ریز-کارها که مسئول تیم تعریف می‌کند)
+model KrTask {
+  id              String        @id @default(cuid())
+  teamKeyResultId String
+  teamKeyResult   TeamKeyResult @relation(fields: [teamKeyResultId], references: [id], onDelete: Cascade)
+  title           String
+  isDone          Boolean       @default(false)
+  order           Int           @default(0)
+  createdAt       DateTime      @default(now())
+
+  @@index([teamKeyResultId, order])
+}
+
+// دوره/سایکل OKR که ادمین تعریف می‌کند (نام + بازه‌ی تاریخ شمسی)
+model Cycle {
+  id        String   @id @default(cuid())
+  name      String   @unique // مثل «تابستان ۱۴۰۵»
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([isActive])
 }
 
 model WeeklyCheckIn {

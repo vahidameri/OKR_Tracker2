@@ -2,7 +2,6 @@
 
 import * as jalaali from 'jalaali-js';
 import { useMemo, useState } from 'react';
-import { getHoliday } from '@/lib/holidays';
 import { cn } from '@/lib/utils';
 
 const MONTHS = [
@@ -142,17 +141,17 @@ export function JalaliCalendar() {
         ))}
         {cells.map((day, i) => {
           if (day === null) return <span key={`e${i}`} />;
-          const holiday = getHoliday(view.jy, view.jm, day);
+          const col = i % 7; // ۵ = پنج‌شنبه، ۶ = جمعه
+          const isWeekend = col === 5 || col === 6;
           return (
             <span
               key={day}
-              title={holiday ?? undefined}
               className={cn(
                 'rounded-md py-1.5 tabular-nums',
                 isTodayMonth && day === today.jd
                   ? 'bg-primary font-black text-primary-foreground'
-                  : holiday
-                    ? 'bg-red-100 font-bold text-[#D03B3B]'
+                  : isWeekend
+                    ? 'bg-red-50 font-bold text-[#D03B3B]'
                     : isCheckinDay(view.jy, view.jm, day)
                       ? 'bg-amber-100 font-medium text-amber-900'
                       : 'text-foreground'
@@ -164,24 +163,6 @@ export function JalaliCalendar() {
         })}
       </div>
 
-      {/* عنوان تعطیلات ماه جاری */}
-      {(() => {
-        const monthHolidays = cells
-          .filter((d): d is number => d !== null)
-          .map((d) => ({ d, name: getHoliday(view.jy, view.jm, d) }))
-          .filter((h) => h.name);
-        if (monthHolidays.length === 0) return null;
-        return (
-          <ul className="mt-3 space-y-0.5 border-t border-border pt-2 text-[11px] text-[#D03B3B]">
-            {monthHolidays.map((h) => (
-              <li key={h.d}>
-                {h.d} {MONTHS[view.jm - 1]} — {h.name}
-              </li>
-            ))}
-          </ul>
-        );
-      })()}
-
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         <div className="space-y-1 text-xs text-muted-foreground">
           <p>
@@ -189,7 +170,7 @@ export function JalaliCalendar() {
             <span className="mx-1.5">·</span>
             <span className="ml-1 inline-block h-3 w-3 rounded-sm bg-amber-100 align-middle" /> بازه‌ی چک‌این
             <span className="mx-1.5">·</span>
-            <span className="ml-1 inline-block h-3 w-3 rounded-sm bg-red-100 align-middle" /> تعطیل رسمی
+            <span className="ml-1 inline-block h-3 w-3 rounded-sm bg-red-50 align-middle" /> پنج‌شنبه و جمعه
           </p>
         </div>
         {!isTodayMonth && (

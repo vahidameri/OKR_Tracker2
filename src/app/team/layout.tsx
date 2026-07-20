@@ -3,6 +3,7 @@ import { AppSidebar, type SideLink } from '@/components/app-sidebar';
 import { PasswordBanner } from '@/components/password-banner';
 import { getSession } from '@/lib/auth';
 import { currentQuarterInfo } from '@/lib/jalali';
+import { prisma } from '@/lib/prisma';
 
 const links: SideLink[] = [
   { href: '/team', label: 'OKRهای من', icon: 'myokrs' },
@@ -13,6 +14,11 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
   const session = await getSession();
   if (!session?.user) redirect('/login');
 
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { title: true },
+  });
+
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <AppSidebar
@@ -20,7 +26,7 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
         quarterLabel={currentQuarterInfo().label}
         links={links}
         userName={session.user.fullName}
-        roleLabel={session.user.role === 'ADMIN' ? 'ادمین' : 'عضو تیم'}
+        roleLabel={dbUser?.title ?? (session.user.role === 'ADMIN' ? 'ادمین' : 'عضو تیم')}
         homeHref="/team"
       />
       <div className="min-w-0 flex-1">

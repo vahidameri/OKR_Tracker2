@@ -1,32 +1,20 @@
 'use client';
 
-import * as jalaali from 'jalaali-js';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Select } from '@/components/ui/select';
 import { ALL_CYCLES, periodLabel } from '@/lib/period';
 
-/** دوره‌ی فصل جاری بر اساس تاریخ امروز، مثل «Q2-1405» */
-export function currentPeriod(): string {
-  const now = new Date();
-  const { jy, jm } = jalaali.toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
-  return `Q${Math.ceil(jm / 3)}-${jy}`;
+interface CycleOption {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
 }
 
-/** گزینه‌های دوره: فصل‌های سال قبل تا سال بعد + کل سال، همراه با گزینه‌ی «همه‌ی دوره‌ها» */
-function buildOptions(): { value: string; label: string }[] {
-  const now = new Date();
-  const { jy } = jalaali.toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
-  const options: { value: string; label: string }[] = [];
-  for (const year of [jy - 1, jy, jy + 1]) {
-    for (let q = 1; q <= 4; q++) {
-      const value = `Q${q}-${year}`;
-      options.push({ value, label: periodLabel(value) });
-    }
-    options.push({ value: `${year}`, label: periodLabel(`${year}`) });
-  }
-  return options;
-}
-
+/**
+ * انتخابگر دوره: فقط دوره‌های فعالِ تعریف‌شده توسط ادمین را نشان می‌دهد.
+ * اگر دوره‌ای تعریف نشده باشد، پیام راهنما نمایش داده می‌شود.
+ */
 export function PeriodSelect({
   value,
   onChange,
@@ -36,25 +24,39 @@ export function PeriodSelect({
   onChange: (value: string) => void;
   includeAll?: boolean;
 }) {
-  const options = buildOptions();
+  const [cycles, setCycles] = useState<CycleOption[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
-  // شناسایی خودکار فصل جاری: اگر مقداری انتخاب نشده، پیش‌فرض فصل جاری
   useEffect(() => {
-    if (!value) onChange(currentPeriod());
+    fetch('/api/cycles')
+      .then((r) => r.json())
+      .then((data: CycleOption[]) => {
+        setCycles(data);
+        setLoaded(true);
+        // پیش‌فرض: اولین دوره‌ی فعال (جدیدترین)
+        if (!value && data.length > 0) onChange(data[0].name);
+      })
+      .catch(() => setLoaded(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const known = options.some((o) => o.value === value) || value === ALL_CYCLES;
-  const current = currentPeriod();
+  if (loaded && cycles.length === 0) {
+    return (
+      <p className="text-xs text-amber-700">
+        هیچ دوره‌ای تعریف نشده — ابتدا از «تعریف دوره‌ها» یک دوره بسازید.
+      </p>
+    );
+  }
+
+  const known = cycles.some((c) => c.name === value) || value === ALL_CYCLES;
 
   return (
     <Select value={value} onChange={(e) => onChange(e.target.value)}>
       {includeAll && <option value={ALL_CYCLES}>{periodLabel(ALL_CYCLES)}</option>}
       {!known && value && <option value={value}>{value}</option>}
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-          {o.value === current ? ' — فصل جاری' : ''}
+      {cycles.map((c) => (
+        <option key={c.id} value={c.name}>
+          {c.name}
         </option>
       ))}
     </Select>

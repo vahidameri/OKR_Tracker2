@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  CalendarDays,
   CalendarRange,
   ClipboardList,
   Download,
@@ -32,6 +33,7 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   export: Download,
   users: Users,
   settings: Settings,
+  cycles: CalendarDays,
   myokrs: ListChecks,
   checkin: CalendarRange,
 };

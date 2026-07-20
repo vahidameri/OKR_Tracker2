@@ -73,6 +73,7 @@ function OkrManagement() {
   const searchParams = useSearchParams();
   const teamFilter = searchParams.get('team');
   const [objectives, setObjectives] = useState<Objective[]>([]);
+  const [query, setQuery] = useState('');
   const [teams, setTeams] = useState<TeamOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingKrId, setEditingKrId] = useState<string | null>(null);
@@ -150,10 +151,15 @@ function OkrManagement() {
 
   if (loading) return <p className="py-10 text-center text-muted-foreground">در حال بارگذاری…</p>;
 
-  // فیلتر بر اساس تیم انتخابی: فقط اهدافی که KRی تخصیص‌یافته به آن تیم دارند
-  const krBelongsToFilter = (kr: Kr) => !teamFilter || kr.teams.some((t) => t.team.id === teamFilter);
+  // فیلتر بر اساس تیم انتخابی + جستجو
+  const qlc = query.trim().toLowerCase();
+  const krBelongsToFilter = (kr: Kr) =>
+    (!teamFilter || kr.teams.some((t) => t.team.id === teamFilter)) &&
+    (!qlc || kr.title.toLowerCase().includes(qlc));
   const visibleObjectives = objectives.filter(
-    (obj) => !teamFilter || obj.keyResults.some(krBelongsToFilter)
+    (obj) =>
+      (!teamFilter || obj.keyResults.some((kr) => kr.teams.some((t) => t.team.id === teamFilter))) &&
+      (!qlc || obj.title.toLowerCase().includes(qlc) || obj.keyResults.some((kr) => kr.title.toLowerCase().includes(qlc)))
   );
   const filterName = teams.find((t) => t.id === teamFilter)?.name;
 
@@ -184,6 +190,13 @@ function OkrManagement() {
           </button>
         ))}
       </div>
+
+      <Input
+        placeholder="جستجوی هدف یا نتیجه کلیدی…"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        className="max-w-md"
+      />
 
       {visibleObjectives.length === 0 && (
         <Card>

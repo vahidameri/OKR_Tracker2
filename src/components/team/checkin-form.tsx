@@ -7,12 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { TaskChecklist, type TaskItem } from '@/components/team/task-checklist';
 import { formatCompact } from '@/lib/utils';
 
 export interface CheckInFormProps {
   teamKeyResultId: string;
   metricType: 'NUMERIC' | 'BOOLEAN' | 'TEXT';
   unit: string | null;
+  tasks?: TaskItem[];
   existing: {
     currentValue: number | null;
     booleanValue: boolean | null;
@@ -23,13 +25,30 @@ export interface CheckInFormProps {
   onSaved?: () => void;
 }
 
+// حالت سه‌گانه‌ی KR بله/خیر
+type BoolState = 'NO' | 'IN_PROGRESS' | 'YES';
+const BOOL_PERCENT: Record<BoolState, number> = { NO: 0, IN_PROGRESS: 50, YES: 100 };
+
 const MAX_FILES = 3;
 const MAX_SIZE = 10 * 1024 * 1024;
 
-export function CheckInForm({ teamKeyResultId, metricType, unit, existing, onSaved }: CheckInFormProps) {
+function initialBoolState(existing: CheckInFormProps['existing']): BoolState | null {
+  if (!existing) return null;
+  if (existing.currentValue !== null) {
+    if (existing.currentValue >= 100) return 'YES';
+    if (existing.currentValue <= 0) return 'NO';
+    return 'IN_PROGRESS';
+  }
+  if (existing.booleanValue === true) return 'YES';
+  if (existing.booleanValue === false) return 'NO';
+  return null;
+}
+
+export function CheckInForm({ teamKeyResultId, metricType, unit, tasks = [], existing, onSaved }: CheckInFormProps) {
   const router = useRouter();
   const [currentValue, setCurrentValue] = useState(existing?.currentValue?.toString() ?? '');
-  const [booleanValue, setBooleanValue] = useState<boolean | null>(existing?.booleanValue ?? null);
+  const [boolState, setBoolState] = useState<BoolState | null>(initialBoolState(existing));
+  const [taskItems, setTaskItems] = useState<TaskItem[]>(tasks);
   const [textValue, setTextValue] = useState(existing?.textValue ?? '');
   const [progressStatus, setProgressStatus] = useState(existing?.progressStatus ?? 'ON_TRACK');
   const [blockerDescription, setBlockerDescription] = useState(existing?.blockerDescription ?? '');
@@ -41,6 +60,20 @@ export function CheckInForm({ teamKeyResultId, metricType, unit, existing, onSav
   const [saved, setSaved] = useState(!!existing);
 
   const numericValue = currentValue.trim() === '' ? null : Number(currentValue.replace(/[,،\s]/g, ''));
+  const hasTasks = metricType === 'BOOLEAN' && taskItems.length > 0;
+
+  // درصد و مقدار بولین برای KR بله/خیر: از تسک‌ها یا از حالت سه‌گانه
+  function boolPayload(): { currentValue: number | null; booleanValue: boolean | null } {
+    if (metricType !== 'BOOLEAN') return { currentValue: numericValue, booleanValue: null };
+    if (hasTasks) {
+      const done = taskItems.filter((t) => t.isDone).length;
+      const pct = Math.round((done / taskItems.length) * 100);
+      return { currentValue: pct, booleanValue: pct >= 100 };
+    }
+    if (boolState === null) return { currentValue: null, booleanValue: null };
+    const pct = BOOL_PERCENT[boolState];
+    return { currentValue: pct, booleanValue: pct >= 100 };
+  }
 
   function addFiles(list: FileList | null) {
     if (!list) return;
@@ -56,8 +89,8 @@ export function CheckInForm({ teamKeyResultId, metricType, unit, existing, onSav
     if (metricType === 'NUMERIC' && (numericValue === null || !Number.isFinite(numericValue))) {
       return setError('مقدار عددی معتبر وارد کنید.');
     }
-    if (metricType === 'BOOLEAN' && booleanValue === null) {
-      return setError('بله یا خیر را انتخاب کنید.');
+    if (metricType === 'BOOLEAN' && !hasTasks && boolState === null) {
+      return setError('وضعیت (خیر / در حال انجام / بله) را انتخاب کنید.');
     }
     if (metricType === 'TEXT' && !textValue.trim()) {
       return setError('متن گزارش را بنویسید.');
@@ -66,14 +99,15 @@ export function CheckInForm({ teamKeyResultId, metricType, unit, existing, onSav
       return setError('برای وضعیت بلاک‌شده، توضیح بلاکر الزامی است.');
     }
 
+    const bool = boolPayload();
     setSaving(true);
     const res = await fetch('/api/team/checkins', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         teamKeyResultId,
-        currentValue: numericValue,
-        booleanValue,
+        currentValue: metricType === 'BOOLEAN' ? bool.currentValue : numericValue,
+        booleanValue: bool.booleanValue,
         textValue: textValue || null,
         progressStatus,
         blockerDescription: blockerDescription || null,
@@ -122,28 +156,38 @@ export function CheckInForm({ teamKeyResultId, metricType, unit, existing, onSav
       )}
 
       {metricType === 'BOOLEAN' && (
-        <div>
-          <Label>انجام شد؟</Label>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setBooleanValue(true)}
-              className={`rounded-full border px-5 py-1.5 text-sm font-bold transition-colors ${
-                booleanValue === true ? 'border-primary bg-primary text-white' : 'border-border bg-card text-primary hover:border-primary/50'
-              }`}
-            >
-              بله
-            </button>
-            <button
-              type="button"
-              onClick={() => setBooleanValue(false)}
-              className={`rounded-full border px-5 py-1.5 text-sm font-bold transition-colors ${
-                booleanValue === false ? 'border-[#D03B3B] bg-[#D03B3B] text-white' : 'border-border bg-card text-[#D03B3B] hover:border-red-400'
-              }`}
-            >
-              خیر
-            </button>
-          </div>
+        <div className="space-y-3">
+          <TaskChecklist teamKeyResultId={teamKeyResultId} tasks={taskItems} onChange={setTaskItems} />
+          {hasTasks ? (
+            <p className="text-xs text-muted-foreground">
+              پیشرفت این KR از نسبت تسک‌های انجام‌شده محاسبه می‌شود (
+              {taskItems.filter((t) => t.isDone).length} از {taskItems.length}).
+            </p>
+          ) : (
+            <div>
+              <Label>وضعیت این هفته؟</Label>
+              <div className="flex flex-wrap gap-2">
+                {(
+                  [
+                    ['NO', 'خیر', 'border-[#D03B3B] bg-[#D03B3B] text-white', 'border-border bg-card text-[#D03B3B] hover:border-red-400'],
+                    ['IN_PROGRESS', 'در حال انجام', 'border-amber-500 bg-amber-500 text-white', 'border-border bg-card text-amber-700 hover:border-amber-400'],
+                    ['YES', 'بله', 'border-primary bg-primary text-white', 'border-border bg-card text-primary hover:border-primary/50'],
+                  ] as const
+                ).map(([key, label, activeCls, idleCls]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setBoolState(key)}
+                    className={`rounded-full border px-5 py-1.5 text-sm font-bold transition-colors ${
+                      boolState === key ? activeCls : idleCls
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

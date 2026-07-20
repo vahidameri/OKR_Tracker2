@@ -30,8 +30,12 @@ export async function POST(req: Request) {
   if (metricType === 'NUMERIC' && (parsed.data.currentValue === null || parsed.data.currentValue === undefined)) {
     return NextResponse.json({ error: 'برای KR عددی، مقدار فعلی الزامی است' }, { status: 400 });
   }
-  if (metricType === 'BOOLEAN' && (parsed.data.booleanValue === null || parsed.data.booleanValue === undefined)) {
-    return NextResponse.json({ error: 'برای KR بله/خیر، انتخاب بله یا خیر الزامی است' }, { status: 400 });
+  if (
+    metricType === 'BOOLEAN' &&
+    (parsed.data.currentValue === null || parsed.data.currentValue === undefined) &&
+    (parsed.data.booleanValue === null || parsed.data.booleanValue === undefined)
+  ) {
+    return NextResponse.json({ error: 'برای KR بله/خیر، وضعیت را انتخاب کنید' }, { status: 400 });
   }
   if (metricType === 'TEXT' && !parsed.data.textValue?.trim()) {
     return NextResponse.json({ error: 'برای KR محتوایی، متن گزارش الزامی است' }, { status: 400 });
@@ -39,8 +43,10 @@ export async function POST(req: Request) {
 
   const weekStartDate = getWeekStart();
   const data = {
-    currentValue: metricType === 'NUMERIC' ? parsed.data.currentValue : null,
-    booleanValue: metricType === 'BOOLEAN' ? parsed.data.booleanValue : null,
+    // برای BOOLEAN، currentValue درصد پیشرفت (۰/۵۰/۱۰۰ یا نسبت تسک‌ها) را نگه می‌دارد
+    currentValue:
+      metricType === 'NUMERIC' || metricType === 'BOOLEAN' ? parsed.data.currentValue ?? null : null,
+    booleanValue: metricType === 'BOOLEAN' ? parsed.data.booleanValue ?? null : null,
     textValue: metricType === 'TEXT' ? (parsed.data.textValue ?? null) : null,
     progressStatus: parsed.data.progressStatus,
     blockerDescription: parsed.data.blockerDescription?.trim() || null,

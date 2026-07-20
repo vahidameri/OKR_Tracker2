@@ -30,7 +30,7 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
         homeHref="/team"
       />
       <div className="min-w-0 flex-1">
-        <main className="mx-auto max-w-6xl p-4 md:p-6">
+        <main className="mx-auto max-w-6xl p-5 md:p-8">
           <PasswordBanner />
           {children}
         </main>

@@ -12,6 +12,7 @@ import { AutoStatusBadge } from '@/components/ui/badge';
 import { Sparkline } from '@/components/charts/sparkline';
 import { StatusDonut } from '@/components/charts/status-donut';
 import { TrendChart } from '@/components/charts/trend-chart';
+import { CycleTimeBar } from '@/components/cycle-time-bar';
 import { JalaliCalendar } from '@/components/jalali-calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProgressBar } from '@/components/ui/progress-bar';
@@ -19,6 +20,7 @@ import { formatJalali, formatJalaliLong } from '@/lib/jalali';
 import { LeaderboardTable } from '@/components/leaderboard-table';
 import { computeStandings } from '@/lib/leaderboard';
 import { computePersistentBlockers, computeTrend, getDepartmentOverview } from '@/lib/okr-data';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +30,12 @@ export default async function AdminDashboard() {
   const trend = computeTrend(tkrs);
   const persistentBlockers = computePersistentBlockers(tkrs);
   const standings = computeStandings(overviews);
+
+  // دوره‌ی جاری برای نوار زمانی: دوره‌ی فعالی که امروز داخل بازه‌اش است، وگرنه جدیدترین
+  const now = new Date();
+  const activeCycles = await prisma.cycle.findMany({ where: { isActive: true }, orderBy: { startDate: 'desc' } });
+  const currentCycle =
+    activeCycles.find((c) => c.startDate <= now && c.endDate >= now) ?? activeCycles[0] ?? null;
 
   const totals = overviews.reduce(
     (acc, o) => ({
@@ -184,8 +192,15 @@ export default async function AdminDashboard() {
           <CardHeader>
             <CardTitle>تقویم</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <JalaliCalendar />
+            {currentCycle && (
+              <CycleTimeBar
+                name={currentCycle.name}
+                start={currentCycle.startDate.toISOString()}
+                end={currentCycle.endDate.toISOString()}
+              />
+            )}
           </CardContent>
         </Card>
       </div>
@@ -196,36 +211,87 @@ export default async function AdminDashboard() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {overviews.map((o) => {
             const teamTrend = computeTrend(tkrs.filter((t) => t.teamId === o.teamId));
+            const ring =
+              o.progress >= 60 ? 'text-primary' : o.progress >= 30 ? 'text-amber-500' : 'text-[#D03B3B]';
             return (
               <Link key={o.teamId} href={`/admin/teams/${o.teamId}`} className="group">
-                <Card className="h-full rounded-2xl transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="flex items-center justify-between">
-                      <span>{o.teamName}</span>
-                      <span className="text-xs font-normal text-muted-foreground">{o.krCount} KR</span>
-                    </CardTitle>
-                    <CardDescription className="flex flex-wrap items-center gap-2">
-                      مسئول: {o.leadName ?? '—'}
-                      <AutoStatusBadge status={o.autoStatus} expected={o.expected} />
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <ProgressBar value={o.progress} />
-                    <Sparkline data={teamTrend.map((t) => ({ progress: t.progress }))} />
-                    <div className="flex flex-wrap gap-1.5 text-xs">
-                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-800">مسیر {o.statusCounts.ON_TRACK}</span>
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">ریسک {o.statusCounts.AT_RISK}</span>
-                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-red-800">بلاک {o.statusCounts.BLOCKED}</span>
-                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-blue-800">تکمیل {o.statusCounts.COMPLETED}</span>
+                <Card className="relative h-full overflow-hidden rounded-2xl transition-all group-hover:-translate-y-1 group-hover:shadow-xl">
+                  {/* نوار رنگی بالای کارت */}
+                  <span
+                    className={`absolute inset-x-0 top-0 h-1 ${
+                      o.progress >= 60 ? 'bg-primary' : o.progress >= 30 ? 'bg-amber-500' : 'bg-[#D03B3B]'
+                    }`}
+                  />
+                  <CardContent className="space-y-4 pt-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-base font-black">{o.teamName}</p>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                          {o.leadName ?? '—'}
+                        </p>
+                      </div>
+                      {/* حلقه‌ی درصد */}
+                      <div className="relative h-14 w-14 shrink-0">
+                        <svg viewBox="0 0 36 36" className="h-14 w-14 -rotate-90">
+                          <circle cx="18" cy="18" r="15.5" fill="none" stroke="#eef2f2" strokeWidth="3.5" />
+                          <circle
+                            cx="18"
+                            cy="18"
+                            r="15.5"
+                            fill="none"
+                            className={ring}
+                            stroke="currentColor"
+                            strokeWidth="3.5"
+                            strokeLinecap="round"
+                            strokeDasharray={`${(o.progress / 100) * 97.4} 97.4`}
+                          />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-sm font-black tabular-nums">
+                          {o.progress}٪
+                        </span>
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      آخرین چک‌این: {o.lastCheckInAt ? formatJalali(o.lastCheckInAt) : 'ثبت نشده'}
-                    </p>
+
+                    <div className="flex items-center justify-between gap-2">
+                      <AutoStatusBadge status={o.autoStatus} expected={o.expected} />
+                      <span className="text-xs text-muted-foreground">{o.krCount} KR</span>
+                    </div>
+
+                    <Sparkline data={teamTrend.map((t) => ({ progress: t.progress }))} />
+
+                    <div className="grid grid-cols-4 gap-1.5 text-center text-[11px]">
+                      <span className="rounded-lg bg-emerald-50 py-1 font-bold text-emerald-700">
+                        {o.statusCounts.ON_TRACK}
+                        <span className="block text-[9px] font-normal">مسیر</span>
+                      </span>
+                      <span className="rounded-lg bg-amber-50 py-1 font-bold text-amber-700">
+                        {o.statusCounts.AT_RISK}
+                        <span className="block text-[9px] font-normal">ریسک</span>
+                      </span>
+                      <span className="rounded-lg bg-red-50 py-1 font-bold text-[#D03B3B]">
+                        {o.statusCounts.BLOCKED}
+                        <span className="block text-[9px] font-normal">بلاک</span>
+                      </span>
+                      <span className="rounded-lg bg-blue-50 py-1 font-bold text-[#2a78d6]">
+                        {o.statusCounts.COMPLETED}
+                        <span className="block text-[9px] font-normal">تکمیل</span>
+                      </span>
+                    </div>
                   </CardContent>
                 </Card>
               </Link>
             );
           })}
+
+          {/* دو کارت خالی برای تکمیل ردیف آخر (۷ تیم + ۲ = ۹) */}
+          {[0, 1].map((i) => (
+            <div
+              key={`ph-${i}`}
+              className="flex min-h-40 items-center justify-center rounded-2xl border border-dashed border-border bg-muted/20 text-sm text-muted-foreground"
+            >
+              —
+            </div>
+          ))}
         </div>
       </div>
     </div>

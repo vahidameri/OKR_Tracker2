@@ -1,4 +1,4 @@
-import { AutoStatusBadge, StatusBadge } from '@/components/ui/badge';
+import { KrStatusTable, type KrStatusRow } from '@/components/admin/kr-status-table';
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table';
 import { formatJalali, formatJalaliLong } from '@/lib/jalali';
 import {
@@ -21,6 +21,30 @@ export default async function ReportPage() {
     getDepartmentOverview(),
     fetchAllTkrs(),
   ]);
+
+  // تیم‌های یکتا برای فیلتر چک‌باکسی
+  const teamMap = new Map<string, string>();
+  for (const t of tkrs) teamMap.set(t.teamId, t.team.name);
+  const teamList = Array.from(teamMap, ([id, name]) => ({ id, name }));
+
+  const krRows: KrStatusRow[] = tkrs.map((tkr) => {
+    const target = tkr.targetValueOverride ?? tkr.keyResult.targetValue;
+    return {
+      id: tkr.id,
+      teamId: tkr.teamId,
+      teamName: tkr.team.name,
+      objectiveTitle: tkr.keyResult.objective.title,
+      krTitle: tkr.keyResult.title,
+      metricLabel: METRIC_LABELS[tkr.keyResult.metricType],
+      targetLabel:
+        tkr.keyResult.metricType === 'NUMERIC' ? `${formatCompact(target)} ${tkr.keyResult.unit ?? ''}` : '—',
+      valueLabel: latestValueLabel(tkr),
+      progress: tkrProgress(tkr),
+      recordedStatus: tkr.checkIns[0]?.progressStatus ?? null,
+      autoStatus: tkrAutoStatus(tkr),
+      expected: tkrExpected(tkr),
+    };
+  });
 
   return (
     <div className="space-y-6 bg-white">
@@ -68,46 +92,7 @@ export default async function ReportPage() {
 
       <section>
         <h2 className="mb-2 text-base font-bold">آخرین وضعیت نتایج کلیدی</h2>
-        <Table>
-          <THead>
-            <TR>
-              <TH>تیم</TH>
-              <TH>هدف</TH>
-              <TH>نتیجه کلیدی</TH>
-              <TH>نوع</TH>
-              <TH>تارگت</TH>
-              <TH>آخرین مقدار</TH>
-              <TH>پیشرفت</TH>
-              <TH>وضعیت ثبت‌شده</TH>
-              <TH>وضعیت زمانی</TH>
-            </TR>
-          </THead>
-          <TBody>
-            {tkrs.map((tkr) => {
-              const latest = tkr.checkIns[0];
-              const target = tkr.targetValueOverride ?? tkr.keyResult.targetValue;
-              return (
-                <TR key={tkr.id}>
-                  <TD>{tkr.team.name}</TD>
-                  <TD className="max-w-40 text-xs">{tkr.keyResult.objective.title}</TD>
-                  <TD className="max-w-52 text-xs">{tkr.keyResult.title}</TD>
-                  <TD className="text-xs">{METRIC_LABELS[tkr.keyResult.metricType]}</TD>
-                  <TD className="text-xs">
-                    {tkr.keyResult.metricType === 'NUMERIC'
-                      ? `${formatCompact(target)} ${tkr.keyResult.unit ?? ''}`
-                      : '—'}
-                  </TD>
-                  <TD className="text-xs">{latestValueLabel(tkr)}</TD>
-                  <TD className="font-bold">{tkrProgress(tkr)}٪</TD>
-                  <TD>{latest ? <StatusBadge status={latest.progressStatus} /> : '—'}</TD>
-                  <TD>
-                    <AutoStatusBadge status={tkrAutoStatus(tkr)} expected={tkrExpected(tkr)} />
-                  </TD>
-                </TR>
-              );
-            })}
-          </TBody>
-        </Table>
+        <KrStatusTable rows={krRows} teams={teamList} />
       </section>
     </div>
   );

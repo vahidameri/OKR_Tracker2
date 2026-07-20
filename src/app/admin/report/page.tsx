@@ -1,4 +1,5 @@
 import { KrStatusTable, type KrStatusRow } from '@/components/admin/kr-status-table';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table';
 import { formatJalali, formatJalaliLong } from '@/lib/jalali';
 import {
@@ -58,42 +59,52 @@ export default async function ReportPage() {
         <PrintButton />
       </div>
 
-      <section>
-        <h2 className="mb-2 text-base font-bold">خلاصه تیم‌ها</h2>
-        <Table>
-          <THead>
-            <TR>
-              <TH>تیم</TH>
-              <TH>مسئول</TH>
-              <TH>پیشرفت</TH>
-              <TH>در مسیر</TH>
-              <TH>در ریسک</TH>
-              <TH>بلاک‌شده</TH>
-              <TH>تکمیل‌شده</TH>
-              <TH>آخرین چک‌این</TH>
-            </TR>
-          </THead>
-          <TBody>
-            {overviews.map((o) => (
-              <TR key={o.teamId}>
-                <TD className="font-medium">{o.teamName}</TD>
-                <TD>{o.leadName ?? '—'}</TD>
-                <TD className="font-bold">{o.progress}٪</TD>
-                <TD>{o.statusCounts.ON_TRACK}</TD>
-                <TD>{o.statusCounts.AT_RISK}</TD>
-                <TD>{o.statusCounts.BLOCKED}</TD>
-                <TD>{o.statusCounts.COMPLETED}</TD>
-                <TD>{o.lastCheckInAt ? formatJalali(o.lastCheckInAt) : '—'}</TD>
+      <Card className="rounded-2xl">
+        <CardHeader>
+          <CardTitle>خلاصه تیم‌ها</CardTitle>
+          <CardDescription>پیشرفت و توزیع وضعیت هر تیم در یک نگاه</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <THead>
+              <TR>
+                <TH>تیم</TH>
+                <TH>مسئول</TH>
+                <TH>پیشرفت</TH>
+                <TH>در مسیر</TH>
+                <TH>در ریسک</TH>
+                <TH>بلاک‌شده</TH>
+                <TH>تکمیل‌شده</TH>
+                <TH>آخرین چک‌این</TH>
               </TR>
-            ))}
-          </TBody>
-        </Table>
-      </section>
+            </THead>
+            <TBody>
+              {overviews.map((o) => (
+                <TR key={o.teamId}>
+                  <TD className="font-medium">{o.teamName}</TD>
+                  <TD>{o.leadName ?? '—'}</TD>
+                  <TD className="font-bold">{o.progress}٪</TD>
+                  <TD>{o.statusCounts.ON_TRACK}</TD>
+                  <TD>{o.statusCounts.AT_RISK}</TD>
+                  <TD>{o.statusCounts.BLOCKED}</TD>
+                  <TD>{o.statusCounts.COMPLETED}</TD>
+                  <TD>{o.lastCheckInAt ? formatJalali(o.lastCheckInAt) : '—'}</TD>
+                </TR>
+              ))}
+            </TBody>
+          </Table>
+        </CardContent>
+      </Card>
 
-      <section>
-        <h2 className="mb-2 text-base font-bold">آخرین وضعیت نتایج کلیدی</h2>
-        <KrStatusTable rows={krRows} teams={teamList} />
-      </section>
+      <Card className="rounded-2xl">
+        <CardHeader>
+          <CardTitle>آخرین وضعیت نتایج کلیدی</CardTitle>
+          <CardDescription>جزئیات هر KR با فیلتر تیمی — قابل مرتب‌سازی با تیک تیم‌ها</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <KrStatusTable rows={krRows} teams={teamList} />
+        </CardContent>
+      </Card>
     </div>
   );
 }

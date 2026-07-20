@@ -15,7 +15,8 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
+        // whitespace-nowrap تا بج‌ها همیشه تک‌خطی و هم‌اندازه بمانند و متن‌ها هم‌راستا شوند
+        'inline-flex h-6 items-center whitespace-nowrap rounded-full px-2.5 text-xs font-bold',
         className
       )}
       {...props}

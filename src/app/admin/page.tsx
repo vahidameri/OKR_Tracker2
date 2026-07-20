@@ -48,14 +48,15 @@ export default async function AdminDashboard() {
   );
   const withCheckIn = totals.onTrack + totals.atRisk + totals.blocked + totals.completed;
   const noCheckIn = totalTkrs - withCheckIn;
+  const coverage = totalTkrs > 0 ? Math.round((withCheckIn / totalTkrs) * 100) : 0;
   const trendDelta =
     trend.length >= 2 ? trend[trend.length - 1].progress - trend[trend.length - 2].progress : null;
 
   const tiles = [
     { key: 'ON_TRACK', label: 'در مسیر', value: totals.onTrack, Icon: Circle, accent: 'text-emerald-600', bar: 'bg-emerald-500', ring: 'bg-emerald-50 text-emerald-600' },
     { key: 'AT_RISK', label: 'در ریسک', value: totals.atRisk, Icon: AlertTriangle, accent: 'text-amber-600', bar: 'bg-amber-500', ring: 'bg-amber-50 text-amber-600' },
-    { key: 'BLOCKED', label: 'بلاک‌شده', value: totals.blocked, Icon: AlertTriangle, accent: 'text-[#D03B3B]', bar: 'bg-[#D03B3B]', ring: 'bg-red-50 text-[#D03B3B]' },
-    { key: 'COMPLETED', label: 'تکمیل‌شده', value: totals.completed, Icon: CheckCircle2, accent: 'text-[#2a78d6]', bar: 'bg-[#2a78d6]', ring: 'bg-blue-50 text-[#2a78d6]' },
+    { key: 'BLOCKED', label: 'بلاک‌شده', value: totals.blocked, Icon: AlertTriangle, accent: 'text-red-600', bar: 'bg-red-500', ring: 'bg-red-50 text-red-600' },
+    { key: 'COMPLETED', label: 'تکمیل‌شده', value: totals.completed, Icon: CheckCircle2, accent: 'text-blue-600', bar: 'bg-blue-500', ring: 'bg-blue-50 text-blue-600' },
   ];
 
   return (
@@ -113,6 +114,7 @@ export default async function AdminDashboard() {
           <Link key={t.key} href={`/admin/checkins?status=${t.key}`} className="group">
             <Card className="relative h-full overflow-hidden rounded-2xl transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg">
               <span className={`absolute inset-y-0 right-0 w-1 ${t.bar}`} />
+              <ArrowUpLeft className="absolute left-3 top-3 h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
               <CardContent className="flex items-center justify-between pt-5">
                 <div>
                   <p className={`text-3xl font-black ${t.accent}`}>{t.value}</p>
@@ -201,6 +203,29 @@ export default async function AdminDashboard() {
                 end={currentCycle.endDate.toISOString()}
               />
             )}
+
+            {/* خلاصه سریع — پرکردن فضای خالی زیر تقویم */}
+            <div className="space-y-3 rounded-xl border border-border bg-muted/30 p-4">
+              <p className="text-xs font-bold text-muted-foreground">خلاصه سریع</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg bg-card p-3 text-center shadow-sm">
+                  <p className="text-2xl font-black text-primary">{overviews.length}</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">تیم فعال</p>
+                </div>
+                <div className="rounded-lg bg-card p-3 text-center shadow-sm">
+                  <p className="text-2xl font-black text-primary">{totalTkrs}</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">نتیجه کلیدی</p>
+                </div>
+              </div>
+              <div>
+                <p className="mb-1 text-xs text-muted-foreground">پوشش چک‌این این هفته</p>
+                <ProgressBar value={coverage} />
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  {withCheckIn} از {totalTkrs} KR ثبت شده
+                  {noCheckIn > 0 && ` · ${noCheckIn} بدون چک‌این`}
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -211,17 +236,31 @@ export default async function AdminDashboard() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {overviews.map((o) => {
             const teamTrend = computeTrend(tkrs.filter((t) => t.teamId === o.teamId));
+            const tone =
+              o.progress >= 60 ? 'primary' : o.progress >= 30 ? 'amber' : 'red';
             const ring =
-              o.progress >= 60 ? 'text-primary' : o.progress >= 30 ? 'text-amber-500' : 'text-[#D03B3B]';
+              tone === 'primary' ? 'text-primary' : tone === 'amber' ? 'text-amber-500' : 'text-red-500';
+            const bar =
+              tone === 'primary' ? 'bg-primary' : tone === 'amber' ? 'bg-amber-500' : 'bg-red-500';
+            const wash =
+              tone === 'primary'
+                ? 'from-primary/[0.07]'
+                : tone === 'amber'
+                ? 'from-amber-500/[0.07]'
+                : 'from-red-500/[0.07]';
+            const hoverRing =
+              tone === 'primary'
+                ? 'group-hover:ring-primary/30'
+                : tone === 'amber'
+                ? 'group-hover:ring-amber-400/40'
+                : 'group-hover:ring-red-400/40';
             return (
               <Link key={o.teamId} href={`/admin/teams/${o.teamId}`} className="group">
-                <Card className="relative h-full overflow-hidden rounded-2xl transition-all group-hover:-translate-y-1 group-hover:shadow-xl">
+                <Card
+                  className={`relative h-full overflow-hidden rounded-2xl bg-gradient-to-b ${wash} to-transparent ring-1 ring-transparent transition-all group-hover:-translate-y-1 group-hover:shadow-xl ${hoverRing}`}
+                >
                   {/* نوار رنگی بالای کارت */}
-                  <span
-                    className={`absolute inset-x-0 top-0 h-1 ${
-                      o.progress >= 60 ? 'bg-primary' : o.progress >= 30 ? 'bg-amber-500' : 'bg-[#D03B3B]'
-                    }`}
-                  />
+                  <span className={`absolute inset-x-0 top-0 h-1 ${bar}`} />
                   <CardContent className="space-y-4 pt-5">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -268,11 +307,11 @@ export default async function AdminDashboard() {
                         {o.statusCounts.AT_RISK}
                         <span className="block text-[9px] font-normal">ریسک</span>
                       </span>
-                      <span className="rounded-lg bg-red-50 py-1 font-bold text-[#D03B3B]">
+                      <span className="rounded-lg bg-red-50 py-1 font-bold text-red-600">
                         {o.statusCounts.BLOCKED}
                         <span className="block text-[9px] font-normal">بلاک</span>
                       </span>
-                      <span className="rounded-lg bg-blue-50 py-1 font-bold text-[#2a78d6]">
+                      <span className="rounded-lg bg-blue-50 py-1 font-bold text-blue-600">
                         {o.statusCounts.COMPLETED}
                         <span className="block text-[9px] font-normal">تکمیل</span>
                       </span>

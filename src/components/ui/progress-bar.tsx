@@ -11,7 +11,7 @@ export function ProgressBar({
   size?: 'sm' | 'md';
 }) {
   const clamped = Math.min(Math.max(value, 0), 100);
-  const color = clamped >= 60 ? 'bg-primary' : clamped >= 30 ? 'bg-amber-500' : 'bg-[#D03B3B]';
+  const color = clamped >= 60 ? 'bg-primary' : clamped >= 30 ? 'bg-amber-500' : 'bg-red-500';
   return (
     <div className={cn('flex items-center gap-2', className)}>
       <div

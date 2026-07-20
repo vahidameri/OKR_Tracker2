@@ -83,7 +83,7 @@ export default async function SettingsPage() {
         <CardHeader>
           <CardTitle>یادآوری چک‌این (پوش نوتیفیکیشن)</CardTitle>
           <CardDescription>
-            روزهای دوشنبه تا چهارشنبه ساعت ۱۰ صبح، اگر چک‌این هفته‌ی تیم‌تان ثبت نشده باشد، مرورگر یادآوری می‌دهد.
+            روزهای شنبه تا یک‌شنبه ساعت ۱۰ صبح، اگر چک‌این هفته‌ی تیم‌تان ثبت نشده باشد، مرورگر یادآوری می‌دهد.
           </CardDescription>
         </CardHeader>
         <CardContent>

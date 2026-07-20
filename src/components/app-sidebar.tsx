@@ -66,31 +66,37 @@ export function AppSidebar({
   links,
   userName,
   roleLabel,
+  homeHref,
 }: {
   title: string;
   quarterLabel: string;
   links: SideLink[];
   userName: string;
   roleLabel: string;
+  homeHref: string;
 }) {
   const pathname = usePathname();
   const isActive = (href: string) =>
     href === pathname ||
     (href !== '/admin' && href !== '/team' && pathname.startsWith(href));
 
+  // خروج به همان مبدأ فعلی (پورت/دامنه) تا روی 3000 نپرد
+  const logout = () =>
+    signOut({ callbackUrl: `${window.location.origin}/login` });
+
   return (
     <>
       {/* سایدبار دسکتاپ */}
       <aside className="no-print sticky top-0 hidden h-screen w-60 shrink-0 flex-col bg-sidebar md:flex">
-        <div className="border-b border-white/10 px-4 py-4 text-center">
+        <Link href={homeHref} className="block border-b border-white/10 px-4 py-4 text-center hover:bg-sidebar-hover">
           <span className="inline-block rounded-xl bg-white px-3 py-1.5">
             <Logo className="h-10 w-auto" />
           </span>
           <p className="mt-2 text-sm font-black text-white">{title}</p>
           <p className="mt-1 text-[11px] leading-5 text-sidebar-foreground">{quarterLabel}</p>
-        </div>
+        </Link>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+        <nav className="no-scrollbar flex-1 space-y-1 overflow-y-auto p-3">
           {links.map((link) => (
             <NavItem key={link.href} link={link} active={isActive(link.href)} />
           ))}
@@ -112,7 +118,7 @@ export function AppSidebar({
               </span>
             </Link>
             <button
-              onClick={() => signOut({ callbackUrl: '/login' })}
+              onClick={logout}
               className="rounded-xl p-2 text-sidebar-foreground hover:bg-sidebar-hover hover:text-white"
               title="خروج"
             >
@@ -123,8 +129,10 @@ export function AppSidebar({
       </aside>
 
       {/* نوار موبایل */}
-      <header className="no-print sticky top-0 z-20 flex items-center gap-2 overflow-x-auto bg-sidebar px-3 py-2 md:hidden">
-        <Logo className="h-7 w-auto shrink-0 rounded bg-white p-0.5" />
+      <header className="no-scrollbar no-print sticky top-0 z-20 flex items-center gap-2 overflow-x-auto bg-sidebar px-3 py-2 md:hidden">
+        <Link href={homeHref} className="shrink-0">
+          <Logo className="h-7 w-auto rounded bg-white p-0.5" />
+        </Link>
         {links.map((link) => (
           <Link
             key={link.href}
@@ -142,7 +150,7 @@ export function AppSidebar({
             ⚙ {userName}
           </Link>
           <button
-            onClick={() => signOut({ callbackUrl: '/login' })}
+            onClick={logout}
             className="rounded-lg px-2 py-1.5 text-xs text-sidebar-foreground"
           >
             خروج

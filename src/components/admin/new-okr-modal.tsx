@@ -98,7 +98,7 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
         onClick={() => setOpen(true)}
         className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90"
       >
-        + هدف جدید
+        + ایجاد OKR
       </button>
 
       <Modal
@@ -107,7 +107,7 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
           setOpen(false);
           reset();
         }}
-        title="ساخت OKR"
+        title="ایجاد OKR"
         wide
       >
         {/* استپر */}

@@ -1,17 +1,15 @@
-import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table';
 import { monthKeyLabel } from '@/lib/leaderboard';
 import type { Standing } from '@/lib/leaderboard';
 import { cn } from '@/lib/utils';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
+const PODIUM = [
+  'from-amber-300/70 to-amber-100/40 ring-amber-300',
+  'from-slate-300/60 to-slate-100/40 ring-slate-300',
+  'from-orange-300/50 to-orange-100/30 ring-orange-300',
+];
 
-function paceLabel(p: number) {
-  if (p > 0) return <span className="font-bold text-emerald-700">+{p}</span>;
-  if (p < 0) return <span className="font-bold text-red-700">{p}</span>;
-  return <span className="font-bold text-muted-foreground">۰</span>;
-}
-
-/** جدول رتبه‌بندی تیم‌ها بر اساس pacing — در پنل تیم فقط‌خواندنی است */
+/** رتبه‌بندی تیم‌ها بر اساس pacing — کارتی و جذاب، در پنل تیم فقط‌خواندنی */
 export function LeaderboardTable({
   standings,
   highlightTeamId,
@@ -22,45 +20,67 @@ export function LeaderboardTable({
   if (standings.length === 0) {
     return <p className="py-6 text-center text-sm text-muted-foreground">هنوز داده‌ای برای رتبه‌بندی نیست.</p>;
   }
+
+  const maxPace = Math.max(1, ...standings.map((s) => Math.abs(s.paceScore)));
+
   return (
-    <Table>
-      <THead>
-        <TR>
-          <TH>رتبه</TH>
-          <TH>تیم</TH>
-          <TH>پیشرفت</TH>
-          <TH>انتظار زمانی</TH>
-          <TH>فاصله از برنامه</TH>
-        </TR>
-      </THead>
-      <TBody>
-        {standings.map((s) => (
-          <TR
+    <div className="space-y-2">
+      {standings.map((s) => {
+        const mine = highlightTeamId === s.teamId;
+        const barPct = Math.round((Math.abs(s.paceScore) / maxPace) * 100);
+        const ahead = s.paceScore >= 0;
+        return (
+          <div
             key={s.teamId}
-            className={cn(highlightTeamId === s.teamId && 'bg-primary/5 font-bold')}
+            className={cn(
+              'flex items-center gap-3 rounded-xl border p-3 transition-colors',
+              s.rank <= 3 ? `bg-gradient-to-l ${PODIUM[s.rank - 1]} ring-1` : 'border-border bg-card',
+              mine && 'ring-2 ring-primary'
+            )}
           >
-            <TD className="whitespace-nowrap">
-              {MEDALS[s.rank - 1] ?? ''} {s.rank}
-            </TD>
-            <TD>
-              {s.teamName}
-              {highlightTeamId === s.teamId && <span className="mr-1 text-xs text-primary">(تیم شما)</span>}
-              {s.isLast && (
-                <span
-                  className="mr-2 inline-flex items-center rounded-full bg-pink-100 px-2 py-0.5 text-xs text-pink-800"
-                  title="تگ نمایشی برای روحیه‌ی تیمی — بدون اثر روی محاسبات"
-                >
-                  🍦 بستنی این ماه با این تیمه
+            {/* رتبه / مدال */}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/70 text-lg font-black shadow-sm">
+              {MEDALS[s.rank - 1] ?? s.rank}
+            </div>
+
+            {/* نام تیم + نوار فاصله از برنامه */}
+            <div className="min-w-0 flex-1">
+              <p className="flex flex-wrap items-center gap-2 font-bold">
+                {s.teamName}
+                {mine && <span className="text-xs font-normal text-primary">(تیم شما)</span>}
+                {s.isLast && (
+                  <span
+                    className="rounded-full bg-pink-100 px-2 py-0.5 text-xs text-pink-800"
+                    title="تگ نمایشی برای روحیه‌ی تیمی — بدون اثر روی محاسبات"
+                  >
+                    🍦 بستنی این ماه با این تیمه
+                  </span>
+                )}
+              </p>
+              <div className="mt-1.5 flex items-center gap-2">
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/5">
+                  <div
+                    className={cn('h-full rounded-full', ahead ? 'bg-primary' : 'bg-[#D03B3B]')}
+                    style={{ width: `${barPct}%` }}
+                  />
+                </div>
+                <span className={cn('text-xs font-bold tabular-nums', ahead ? 'text-primary' : 'text-[#D03B3B]')}>
+                  {ahead ? '↑' : '↓'} {ahead ? '+' : ''}{s.paceScore}
                 </span>
-              )}
-            </TD>
-            <TD className="tabular-nums">{s.progress}٪</TD>
-            <TD className="tabular-nums">{s.expected !== null ? `${s.expected}٪` : '—'}</TD>
-            <TD className="tabular-nums">{paceLabel(s.paceScore)}</TD>
-          </TR>
-        ))}
-      </TBody>
-    </Table>
+              </div>
+            </div>
+
+            {/* درصدها */}
+            <div className="shrink-0 text-left">
+              <p className="text-lg font-black tabular-nums">{s.progress}٪</p>
+              <p className="text-[11px] text-muted-foreground">
+                انتظار {s.expected !== null ? `${s.expected}٪` : '—'}
+              </p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

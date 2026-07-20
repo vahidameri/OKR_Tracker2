@@ -19,8 +19,6 @@ export interface CheckinTableRow {
   unit: string | null;
   weight: number;
   target: number | null;
-  milestoneDone: number;
-  milestoneTotal: number;
   existing: {
     currentValue: number | null;
     booleanValue: boolean | null;
@@ -47,8 +45,7 @@ function Row({ row }: { row: CheckinTableRow }) {
     const numeric = currentValue.trim() === '' ? null : Number(currentValue.replace(/[,،\s]/g, ''));
     if (row.metricType === 'NUMERIC' && (numeric === null || !Number.isFinite(numeric)))
       return setError('عدد معتبر وارد کنید');
-    if (row.metricType === 'BOOLEAN' && row.milestoneTotal === 0 && booleanValue === '')
-      return setError('بله/خیر را انتخاب کنید');
+    if (row.metricType === 'BOOLEAN' && booleanValue === '') return setError('بله/خیر را انتخاب کنید');
     if (row.metricType === 'TEXT' && !textValue.trim()) return setError('متن گزارش الزامی است');
     if (status === 'BLOCKED' && !blocker.trim()) return setError('توضیح بلاکر الزامی است');
 
@@ -96,23 +93,13 @@ function Row({ row }: { row: CheckinTableRow }) {
             onChange={(e) => setCurrentValue(e.target.value)}
           />
         )}
-        {row.metricType === 'BOOLEAN' &&
-          (row.milestoneTotal > 0 ? (
-            <span className="text-xs">
-              <b>
-                {row.milestoneDone}/{row.milestoneTotal}
-              </b>{' '}
-              مایل‌استون
-              <br />
-              <span className="text-muted-foreground">(چک‌لیست در نمای کارتی)</span>
-            </span>
-          ) : (
-            <Select className="h-9 w-24" value={booleanValue} onChange={(e) => setBooleanValue(e.target.value)}>
-              <option value="">—</option>
-              <option value="yes">بله</option>
-              <option value="no">خیر</option>
-            </Select>
-          ))}
+        {row.metricType === 'BOOLEAN' && (
+          <Select className="h-9 w-24" value={booleanValue} onChange={(e) => setBooleanValue(e.target.value)}>
+            <option value="">—</option>
+            <option value="yes">بله</option>
+            <option value="no">خیر</option>
+          </Select>
+        )}
         {row.metricType === 'TEXT' && (
           <Input className="h-9 w-40" value={textValue} onChange={(e) => setTextValue(e.target.value)} />
         )}

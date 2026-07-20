@@ -1,12 +1,39 @@
 import * as jalaali from 'jalaali-js';
 
+const JMONTHS = [
+  'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+  'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند',
+];
+const SEASONS = ['بهار', 'تابستان', 'پاییز', 'زمستان'];
+
+/** مقدار ویژه‌ی «همه‌ی دوره‌ها» — بدون بازه‌ی زمانی مشخص */
+export const ALL_CYCLES = 'ALL';
+
+/** برچسب نمایشی یک دوره، مثل «تابستان ۱۴۰۵ · ۱ تیر تا ۳۱ شهریور» */
+export function periodLabel(period: string): string {
+  if (period === ALL_CYCLES) return 'همه‌ی دوره‌ها';
+  const q = period.match(/^Q([1-4])[-\s]?(\d{4})$/i);
+  if (q) {
+    const qi = Number(q[1]);
+    const jy = Number(q[2]);
+    const sm = (qi - 1) * 3 + 1;
+    const em = sm + 2;
+    const endDay = jalaali.jalaaliMonthLength(jy, em);
+    return `${SEASONS[qi - 1]} ${jy} · ۱ ${JMONTHS[sm - 1]} تا ${endDay} ${JMONTHS[em - 1]}`;
+  }
+  const y = period.match(/^(\d{4})$/);
+  if (y) return `کل سال ${y[1]}`;
+  return period;
+}
+
 /**
  * پارس دوره‌ی شمسی به بازه‌ی زمانی میلادی.
  * فرمت‌های پشتیبانی‌شده: «Q1-1405» تا «Q4-1405» (فصل شمسی) و «1405» (کل سال).
- * اگر قابل پارس نباشد null برمی‌گردد و محاسبه‌ی خودکار برای آن دوره غیرفعال می‌شود.
+ * «ALL» یا فرمت ناشناخته → null (محاسبه‌ی زمانی برای آن دوره غیرفعال می‌شود).
  */
 export function parsePeriod(period: string): { start: Date; end: Date } | null {
   const p = period.trim();
+  if (p === ALL_CYCLES) return null;
 
   const quarterMatch = p.match(/^Q([1-4])[-\s]?(\d{4})$/i);
   if (quarterMatch) {

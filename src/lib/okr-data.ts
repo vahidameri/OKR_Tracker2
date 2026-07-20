@@ -8,7 +8,6 @@ import { formatCompact } from '@/lib/utils';
 const tkrInclude = {
   team: true,
   keyResult: { include: { objective: true } },
-  milestones: { orderBy: { order: 'asc' as const } },
   checkIns: {
     orderBy: { weekStartDate: 'desc' as const },
     include: {
@@ -89,7 +88,7 @@ export function computePersistentBlockers(tkrs: TkrWithData[]): PersistentBlocke
   return result.sort((a, b) => b.weeks - a.weeks);
 }
 
-/** برچسب متنی آخرین مقدار ثبت‌شده‌ی یک KR-تیم (با پشتیبانی مایل‌استون) */
+/** برچسب متنی آخرین مقدار ثبت‌شده‌ی یک KR-تیم */
 export function latestValueLabel(tkr: TkrWithData): string {
   const latest = tkr.checkIns[0];
   const kr = tkr.keyResult;
@@ -98,9 +97,6 @@ export function latestValueLabel(tkr: TkrWithData): string {
     return `${formatCompact(latest.currentValue)} ${kr.unit ?? ''}`.trim();
   }
   if (kr.metricType === 'BOOLEAN') {
-    if (tkr.milestones.length > 0 && latest.currentValue !== null) {
-      return `${latest.currentValue} از ${tkr.milestones.length} مایل‌استون`;
-    }
     return latest.booleanValue ? 'بله' : 'خیر';
   }
   return latest.textValue ?? '—';

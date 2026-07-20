@@ -91,8 +91,8 @@ export function PushPrompt() {
     <div className="flex flex-wrap items-center gap-3">
       <p className="text-sm">
         {state === 'on'
-          ? '🔔 یادآوری چک‌این فعال است (دوشنبه تا چهارشنبه، ساعت ۱۰ صبح)'
-          : 'با فعال‌سازی، دوشنبه تا چهارشنبه اگر چک‌این هفته ثبت نشده باشد یادآوری می‌گیرید.'}
+          ? '🔔 یادآوری چک‌این فعال است (شنبه تا یک‌شنبه، ساعت ۱۰ صبح)'
+          : 'با فعال‌سازی، شنبه تا یک‌شنبه اگر چک‌این هفته ثبت نشده باشد یادآوری می‌گیرید.'}
       </p>
       {state === 'on' ? (
         <Button size="sm" variant="outline" onClick={disable} disabled={false}>

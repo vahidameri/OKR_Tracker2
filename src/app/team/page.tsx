@@ -7,7 +7,7 @@ import { TrendChart } from '@/components/charts/trend-chart';
 import { JalaliCalendar } from '@/components/jalali-calendar';
 import { TeamSwitcher } from '@/components/team/team-switcher';
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table';
-import { ViewToggle } from '@/components/view-toggle';
+import { OkrToolbar } from '@/components/okr-toolbar';
 import { CheckinModalButton } from '@/components/team/checkin-modal';
 import { getSession } from '@/lib/auth';
 import { formatJalali, getWeekStart } from '@/lib/jalali';
@@ -31,7 +31,7 @@ export const dynamic = 'force-dynamic';
 export default async function TeamHomePage({
   searchParams,
 }: {
-  searchParams: { team?: string; view?: string };
+  searchParams: { team?: string; view?: string; q?: string; status?: string };
 }) {
   const session = await getSession();
   if (!session?.user) redirect('/login');
@@ -49,14 +49,30 @@ export default async function TeamHomePage({
     );
   }
 
-  const [okrs, trend, leaderboard] = await Promise.all([
+  const [allOkrs, trend, leaderboard] = await Promise.all([
     getTeamOkrs(activeTeam.id),
     getWeeklyTrend(activeTeam.id),
     getLeaderboard(),
   ]);
-  const allTkrs = okrs.flatMap((o) => o.items);
+  const allTkrs = allOkrs.flatMap((o) => o.items);
   const teamProgress = weightedProgress(allTkrs.map((t) => ({ weight: t.weight, progress: tkrProgress(t) })));
   const view: 'cards' | 'table' = searchParams.view === 'table' ? 'table' : 'cards';
+
+  // اعمال فیلتر جستجو و وضعیت (پیشرفت وزنی تیم از کل داده محاسبه می‌شود، نه فیلترشده)
+  const q = (searchParams.q ?? '').trim().toLowerCase();
+  const statusFilter = searchParams.status ?? '';
+  const matchTkr = (tkr: (typeof allTkrs)[number], objTitle: string) => {
+    if (q && !`${tkr.keyResult.title} ${objTitle}`.toLowerCase().includes(q)) return false;
+    if (statusFilter) {
+      const latest = tkr.checkIns[0];
+      if (statusFilter === 'NONE') return !latest;
+      if (!latest || latest.progressStatus !== statusFilter) return false;
+    }
+    return true;
+  };
+  const okrs = allOkrs
+    .map(({ objective, items }) => ({ objective, items: items.filter((t) => matchTkr(t, objective.title)) }))
+    .filter((o) => o.items.length > 0);
 
   return (
     <div className="space-y-6">
@@ -75,14 +91,7 @@ export default async function TeamHomePage({
         </Link>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <TeamSwitcher teams={teams} activeTeamId={activeTeam.id} basePath="/team" />
-        <ViewToggle
-          view={view}
-          hrefCards={`/team?team=${activeTeam.id}`}
-          hrefTable={`/team?team=${activeTeam.id}&view=table`}
-        />
-      </div>
+      <TeamSwitcher teams={teams} activeTeamId={activeTeam.id} basePath="/team" />
 
       <div className="grid gap-4 lg:grid-cols-5">
         <Card className="lg:col-span-3">
@@ -116,10 +125,15 @@ export default async function TeamHomePage({
         </CardContent>
       </Card>
 
+      {/* نوار ابزار: کارتی/جدولی + فیلتر وضعیت + جستجو */}
+      <OkrToolbar view={view} />
+
       {okrs.length === 0 && (
         <Card>
           <CardContent className="pt-5 text-center text-muted-foreground">
-            هنوز OKRی برای این تیم تعریف نشده است.
+            {allOkrs.length === 0
+              ? 'هنوز OKRی برای این تیم تعریف نشده است.'
+              : 'موردی با این فیلتر پیدا نشد.'}
           </CardContent>
         </Card>
       )}
@@ -142,7 +156,7 @@ export default async function TeamHomePage({
                 </TR>
               </THead>
               <TBody>
-                {allTkrs.map((tkr) => {
+                {okrs.flatMap((o) => o.items).map((tkr) => {
                   const latest = tkr.checkIns[0];
                   const target = tkr.targetValueOverride ?? tkr.keyResult.targetValue;
                   return (
@@ -233,9 +247,6 @@ export default async function TeamHomePage({
                         {METRIC_LABELS[tkr.keyResult.metricType]} · وزن: {tkr.weight}
                         {tkr.keyResult.metricType === 'NUMERIC' &&
                           ` · تارگت: ${formatCompact(target)} ${tkr.keyResult.unit ?? ''}`}
-                        {tkr.keyResult.metricType === 'BOOLEAN' &&
-                          tkr.milestones.length > 0 &&
-                          ` · مایل‌استون: ${tkr.milestones.filter((m) => m.isDone).length} از ${tkr.milestones.length}`}
                       </p>
                     </div>
                     <div className="w-full sm:w-52">
@@ -265,7 +276,6 @@ export default async function TeamHomePage({
                       unit={tkr.keyResult.unit}
                       krTitle={tkr.keyResult.title}
                       objectiveTitle={objective.title}
-                      milestones={tkr.milestones.map((m) => ({ id: m.id, title: m.title, isDone: m.isDone }))}
                       existing={
                         thisWeekCheckIn
                           ? {

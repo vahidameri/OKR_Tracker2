@@ -2,6 +2,7 @@
 
 import * as jalaali from 'jalaali-js';
 import { useMemo, useState } from 'react';
+import { getHoliday } from '@/lib/holidays';
 import { cn } from '@/lib/utils';
 
 const MONTHS = [
@@ -13,7 +14,7 @@ const WEEKDAYS = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
 /**
  * تقویم شمسی قابل ناوبری (کل سال و سال‌های دیگر): با فلش‌ها بین ماه‌ها جابه‌جا شوید،
  * روی نام ماه کلیک کنید تا نمای ۱۲ ماه سال باز شود. امروز پررنگ و بازه‌ی ثبت
- * چک‌این هفته‌ی جاری (دوشنبه تا چهارشنبه) کهربایی است.
+ * چک‌این هفته‌ی جاری (شنبه تا یک‌شنبه) کهربایی است.
  */
 export function JalaliCalendar() {
   const today = useMemo(() => {
@@ -47,9 +48,8 @@ export function JalaliCalendar() {
     const g = jalaali.toGregorian(jy, jm, dayNum);
     const d = new Date(g.gy, g.gm - 1, g.gd);
     const offset = Math.round((d.getTime() - today.weekStartMs) / 86400000);
-    if (offset < 0 || offset > 6) return false;
-    const dow = d.getDay();
-    return dow >= 1 && dow <= 3; // دوشنبه تا چهارشنبه
+    // شنبه (offset ۰) و یک‌شنبه (offset ۱) هفته‌ی جاری
+    return offset === 0 || offset === 1;
   };
 
   function monthCells(jy: number, jm: number): (number | null)[] {
@@ -140,34 +140,56 @@ export function JalaliCalendar() {
             {w}
           </span>
         ))}
-        {cells.map((day, i) =>
-          day === null ? (
-            <span key={`e${i}`} />
-          ) : (
+        {cells.map((day, i) => {
+          if (day === null) return <span key={`e${i}`} />;
+          const holiday = getHoliday(view.jy, view.jm, day);
+          return (
             <span
               key={day}
+              title={holiday ?? undefined}
               className={cn(
                 'rounded-md py-1.5 tabular-nums',
                 isTodayMonth && day === today.jd
                   ? 'bg-primary font-black text-primary-foreground'
-                  : isCheckinDay(view.jy, view.jm, day)
-                    ? 'bg-amber-100 font-medium text-amber-900'
-                    : 'text-foreground'
+                  : holiday
+                    ? 'bg-red-100 font-bold text-[#D03B3B]'
+                    : isCheckinDay(view.jy, view.jm, day)
+                      ? 'bg-amber-100 font-medium text-amber-900'
+                      : 'text-foreground'
               )}
             >
               {day}
             </span>
-          )
-        )}
+          );
+        })}
       </div>
+
+      {/* عنوان تعطیلات ماه جاری */}
+      {(() => {
+        const monthHolidays = cells
+          .filter((d): d is number => d !== null)
+          .map((d) => ({ d, name: getHoliday(view.jy, view.jm, d) }))
+          .filter((h) => h.name);
+        if (monthHolidays.length === 0) return null;
+        return (
+          <ul className="mt-3 space-y-0.5 border-t border-border pt-2 text-[11px] text-[#D03B3B]">
+            {monthHolidays.map((h) => (
+              <li key={h.d}>
+                {h.d} {MONTHS[view.jm - 1]} — {h.name}
+              </li>
+            ))}
+          </ul>
+        );
+      })()}
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         <div className="space-y-1 text-xs text-muted-foreground">
           <p>
             <span className="ml-1 inline-block h-3 w-3 rounded-sm bg-primary align-middle" /> امروز
-            <span className="mx-2">·</span>
-            <span className="ml-1 inline-block h-3 w-3 rounded-sm bg-amber-100 align-middle" /> بازه‌ی چک‌این این
-            هفته
+            <span className="mx-1.5">·</span>
+            <span className="ml-1 inline-block h-3 w-3 rounded-sm bg-amber-100 align-middle" /> بازه‌ی چک‌این
+            <span className="mx-1.5">·</span>
+            <span className="ml-1 inline-block h-3 w-3 rounded-sm bg-red-100 align-middle" /> تعطیل رسمی
           </p>
         </div>
         {!isTodayMonth && (

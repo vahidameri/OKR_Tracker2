@@ -43,6 +43,7 @@ model User {
   editedCheckIns     WeeklyCheckIn[]    @relation("CheckInEditor")
   auditLogs          OkrAuditLog[]
   checkInComments    CheckInComment[]
+  attachments        CheckInAttachment[]
 }
 
 model UserTeam {
@@ -115,24 +116,8 @@ model TeamKeyResult {
   targetValueOverride Float?
   minValueOverride    Float?
   checkIns            WeeklyCheckIn[]
-  milestones          Milestone[]
 
   @@unique([teamId, keyResultId])
-}
-
-// مایل‌استون‌های سهم یک تیم از KRهای بله/خیر (چک‌لیستی)
-// تارگت این KRها = تعداد کل مایل‌استون‌ها و پیشرفت = نسبت انجام‌شده‌ها
-model Milestone {
-  id              String        @id @default(cuid())
-  teamKeyResultId String
-  teamKeyResult   TeamKeyResult @relation(fields: [teamKeyResultId], references: [id], onDelete: Cascade)
-  title           String
-  isDone          Boolean       @default(false)
-  doneAt          DateTime?
-  order           Int           @default(0)
-  createdAt       DateTime      @default(now())
-
-  @@index([teamKeyResultId, order])
 }
 
 model WeeklyCheckIn {
@@ -155,8 +140,25 @@ model WeeklyCheckIn {
   editedAt           DateTime?
   feedback           CheckInFeedback?
   comments           CheckInComment[]
+  attachments        CheckInAttachment[]
 
   @@unique([teamKeyResultId, weekStartDate])
+}
+
+// ضمیمه‌ی فایل روی چک‌این — خودمیزبان: بایت‌ها داخل دیتابیس ذخیره می‌شوند
+model CheckInAttachment {
+  id           String        @id @default(cuid())
+  checkInId    String
+  checkIn      WeeklyCheckIn @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+  filename     String
+  mimeType     String
+  size         Int
+  data         Bytes
+  uploadedById String?
+  uploadedBy   User?         @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime      @default(now())
+
+  @@index([checkInId])
 }
 
 // گفتگوی روی چک‌این: هم ثبت‌کننده (عضو تیم) و هم مدیر می‌توانند کامنت بگذارند

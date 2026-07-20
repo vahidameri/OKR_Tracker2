@@ -16,7 +16,7 @@ export const STATUS_COLORS: Record<ProgressStatus, string> = {
 
 export const METRIC_LABELS: Record<MetricType, string> = {
   NUMERIC: 'عددی',
-  BOOLEAN: 'بله/خیر (مایل‌استونی)',
+  BOOLEAN: 'بله/خیر',
   TEXT: 'محتوایی',
 };
 
@@ -110,11 +110,6 @@ export function checkInProgress(tkr: TkrLike, checkIn: CheckInLike | null | unde
   }
 
   if (metricType === 'BOOLEAN') {
-    // حالت مایل‌استونی: currentValue = تعداد انجام‌شده و تارگت = تعداد کل مایل‌استون‌ها
-    const target = tkr.targetValueOverride ?? tkr.keyResult.targetValue;
-    if (checkIn.currentValue !== null && checkIn.currentValue !== undefined && target && target > 0) {
-      return Math.round(Math.min(Math.max(checkIn.currentValue / target, 0), 1) * 100);
-    }
     return checkIn.booleanValue ? 100 : 0;
   }
 

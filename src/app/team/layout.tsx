@@ -21,6 +21,7 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
         links={links}
         userName={session.user.fullName}
         roleLabel={session.user.role === 'ADMIN' ? 'ادمین' : 'عضو تیم'}
+        homeHref="/team"
       />
       <div className="min-w-0 flex-1">
         <main className="mx-auto max-w-6xl p-4 md:p-6">

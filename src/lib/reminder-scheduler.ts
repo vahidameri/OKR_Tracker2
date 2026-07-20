@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { sendCheckinReminders } from '@/lib/push';
 
 const REMINDER_HOUR = 10; // ساعت ارسال به وقت تهران
-const REMINDER_DAYS = new Set(['Mon', 'Tue', 'Wed']); // دوشنبه تا چهارشنبه
+const REMINDER_DAYS = new Set(['Sat', 'Sun']); // شنبه تا یک‌شنبه (بازه‌ی ثبت چک‌این)
 
 function tehranNow() {
   const parts = new Intl.DateTimeFormat('en-US', {

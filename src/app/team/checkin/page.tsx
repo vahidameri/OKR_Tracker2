@@ -51,8 +51,6 @@ export default async function CheckInPage({
         unit: tkr.keyResult.unit,
         weight: tkr.weight,
         target: tkr.targetValueOverride ?? tkr.keyResult.targetValue,
-        milestoneDone: tkr.milestones.filter((m) => m.isDone).length,
-        milestoneTotal: tkr.milestones.length,
         existing: thisWeek
           ? {
               currentValue: thisWeek.currentValue,
@@ -130,7 +128,6 @@ export default async function CheckInPage({
                     teamKeyResultId={tkr.id}
                     metricType={tkr.keyResult.metricType}
                     unit={tkr.keyResult.unit}
-                    milestones={tkr.milestones.map((m) => ({ id: m.id, title: m.title, isDone: m.isDone }))}
                     existing={
                       thisWeek
                         ? {

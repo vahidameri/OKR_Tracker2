@@ -9,8 +9,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fa" dir="rtl">
-      <body>
+    // dir ریشه ltr است تا اسکرول‌بار مرورگر سمت راست بیفتد؛ کل محتوا با body راست‌به‌چپ می‌شود
+    <html lang="fa" dir="ltr">
+      <body dir="rtl">
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -22,9 +22,10 @@ export interface CheckInFormProps {
     progressStatus: 'ON_TRACK' | 'AT_RISK' | 'BLOCKED' | 'COMPLETED';
     blockerDescription: string | null;
   } | null;
+  onSaved?: () => void;
 }
 
-export function CheckInForm({ teamKeyResultId, metricType, unit, milestones = [], existing }: CheckInFormProps) {
+export function CheckInForm({ teamKeyResultId, metricType, unit, milestones = [], existing, onSaved }: CheckInFormProps) {
   const router = useRouter();
   const [currentValue, setCurrentValue] = useState(existing?.currentValue?.toString() ?? '');
   const [booleanValue, setBooleanValue] = useState<boolean | null>(existing?.booleanValue ?? null);
@@ -74,6 +75,7 @@ export function CheckInForm({ teamKeyResultId, metricType, unit, milestones = []
     }
     setSaved(true);
     router.refresh();
+    onSaved?.();
   }
 
   return (

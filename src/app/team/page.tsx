@@ -8,8 +8,9 @@ import { JalaliCalendar } from '@/components/jalali-calendar';
 import { TeamSwitcher } from '@/components/team/team-switcher';
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table';
 import { ViewToggle } from '@/components/view-toggle';
+import { CheckinModalButton } from '@/components/team/checkin-modal';
 import { getSession } from '@/lib/auth';
-import { formatJalali } from '@/lib/jalali';
+import { formatJalali, getWeekStart } from '@/lib/jalali';
 import {
   getTeamOkrs,
   getWeeklyTrend,
@@ -208,6 +209,9 @@ export default async function TeamHomePage({
           <CardContent className="space-y-3">
             {items.map((tkr, idx) => {
               const latest = tkr.checkIns[0];
+              const weekStartIso = getWeekStart().toISOString();
+              const thisWeekCheckIn =
+                tkr.checkIns.find((c) => c.weekStartDate.toISOString() === weekStartIso) ?? null;
               const target = tkr.targetValueOverride ?? tkr.keyResult.targetValue;
               const progress = tkrProgress(tkr);
               const expected = tkrExpected(tkr);
@@ -255,12 +259,25 @@ export default async function TeamHomePage({
                         {latest ? `آخرین ثبت: ${formatJalali(latest.weekStartDate)}` : ''}
                       </span>
                     </div>
-                    <Link
-                      href={`/team/checkin?team=${activeTeam.id}`}
-                      className="rounded-lg bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90"
-                    >
-                      ثبت چک‌این
-                    </Link>
+                    <CheckinModalButton
+                      teamKeyResultId={tkr.id}
+                      metricType={tkr.keyResult.metricType}
+                      unit={tkr.keyResult.unit}
+                      krTitle={tkr.keyResult.title}
+                      objectiveTitle={objective.title}
+                      milestones={tkr.milestones.map((m) => ({ id: m.id, title: m.title, isDone: m.isDone }))}
+                      existing={
+                        thisWeekCheckIn
+                          ? {
+                              currentValue: thisWeekCheckIn.currentValue,
+                              booleanValue: thisWeekCheckIn.booleanValue,
+                              textValue: thisWeekCheckIn.textValue,
+                              progressStatus: thisWeekCheckIn.progressStatus,
+                              blockerDescription: thisWeekCheckIn.blockerDescription,
+                            }
+                          : null
+                      }
+                    />
                   </div>
                   {latest?.feedback && (latest.feedback.score !== null || latest.feedback.comment) && (
                     <div className="mt-2 rounded-md bg-blue-50 p-2 text-xs text-blue-900">

@@ -1,9 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { KrForm, type KrFormValue, type TeamOption } from '@/components/admin/kr-form';
+import { NewOkrModal } from '@/components/admin/new-okr-modal';
 import { PeriodSelect } from '@/components/admin/period-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -163,12 +163,7 @@ function OkrManagement() {
         <h1 className="text-xl font-black">
           تعریف و مدیریت OKR{filterName ? ` — تیم ${filterName}` : ''}
         </h1>
-        <Link
-          href="/admin/okrs/new"
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          + هدف جدید
-        </Link>
+        <NewOkrModal defaultTeamId={teamFilter ?? undefined} />
       </div>
 
       {/* صفحه‌ی هر تیم: فقط OKRهای همان تیم؛ KR مشترک در صفحه‌ی همه‌ی تیم‌هایش دیده می‌شود */}

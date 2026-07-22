@@ -1,0 +1,863 @@
+/* ---------- متغیرهای پالت ---------- */
+:root {
+  --navy: #1b2a4a;
+  --blue: #3e5f9e;
+  --ice: #e9eef8;
+  --ice-2: #f4f6fa;
+  --green: #2f7d5c;
+  --red: #a83f36;
+  --amber: #d99a2b;
+  --text: #1b2a4a;
+  --text-soft: #647190;
+}
+
+/* ---------- پایه ---------- */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Vazirmatn', Tahoma, sans-serif;
+  color: var(--text);
+  background: linear-gradient(180deg, #ffffff 0%, #f4f6fa 100%);
+  min-height: 100vh;
+  line-height: 1.8;
+}
+
+button,
+input,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ---------- چیدمان اپ ---------- */
+.app {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 16px 120px; /* جای نوار چسبان پایین */
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.form-code {
+  font-size: 12px;
+  color: #7383a3;
+  letter-spacing: 0.02em;
+  margin: 0 0 12px;
+}
+
+.step-counter {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--blue);
+  margin: 0 0 8px;
+}
+
+.progress {
+  display: flex;
+  gap: 6px;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.progress-seg {
+  flex: 1;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--ice);
+  transition: background 0.3s ease;
+}
+
+.progress-seg.filled {
+  background: var(--navy);
+}
+
+/* ---------- کارت اصلی ---------- */
+.card {
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: 0 20px 60px rgba(27, 42, 74, 0.08);
+  padding: clamp(24px, 6vw, 52px);
+}
+
+.step-container {
+  animation: step-in 0.35s ease both;
+}
+
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- مراحل ---------- */
+.step-title {
+  font-size: clamp(24px, 5vw, 32px);
+  font-weight: 800;
+  margin: 0 0 8px;
+  color: var(--navy);
+}
+
+.step-subtitle {
+  margin: 0 0 24px;
+  color: var(--text-soft);
+  font-size: 14px;
+}
+
+.step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* ---------- فیلدها ---------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-label-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.field-label {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.field-optional {
+  font-size: 11px;
+  color: #8a94ad;
+  background: var(--ice-2);
+  border-radius: 999px;
+  padding: 1px 10px;
+}
+
+.field-hint {
+  margin: -4px 0 0;
+  font-size: 12.5px;
+  color: #7a86a5;
+}
+
+.text-input,
+.text-area {
+  width: 100%;
+  border: 1.5px solid #d7deed;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 15px;
+  background: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.text-area {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.text-input:focus,
+.text-area:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(62, 95, 158, 0.15);
+}
+
+.text-input + .text-input {
+  margin-top: 8px;
+}
+
+.word-counter {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #8a94ad;
+}
+
+.word-counter.over {
+  color: var(--red);
+  font-weight: 600;
+}
+
+/* ---------- chipها ---------- */
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: right;
+  background: #fff;
+  border: 1.5px solid #d7deed;
+  border-radius: 14px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+
+.chip:hover {
+  border-color: var(--blue);
+  transform: translateY(-1px);
+}
+
+.chip.selected {
+  background: var(--ice);
+  border-color: var(--navy);
+}
+
+.chip-label {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--navy);
+}
+
+.chip-hint {
+  font-size: 11.5px;
+  color: #7a86a5;
+}
+
+/* ---------- دراپ‌داون اشخاص ---------- */
+.person-select {
+  position: relative;
+  max-width: 460px;
+}
+
+.person-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fff;
+  border: 1.5px solid #d7deed;
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.person-trigger:hover {
+  border-color: var(--blue);
+}
+
+.person-trigger.placeholder {
+  color: #8a94ad;
+}
+
+.person-trigger-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.person-caret {
+  color: #8a94ad;
+  font-size: 12px;
+}
+
+.person-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  left: 0;
+  z-index: 30;
+  background: #fff;
+  border: 1px solid #e2e8f4;
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(27, 42, 74, 0.14);
+  padding: 10px;
+  animation: step-in 0.2s ease both;
+}
+
+.person-search {
+  width: 100%;
+  border: 1.5px solid #d7deed;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.person-search:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+.person-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.person-option {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  text-align: right;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.person-option.active {
+  background: var(--ice-2);
+}
+
+.person-option.selected {
+  background: var(--ice);
+}
+
+.person-name {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--navy);
+}
+
+.person-role {
+  font-size: 12px;
+  color: #8a94ad;
+}
+
+.person-empty {
+  padding: 12px;
+  font-size: 13px;
+  color: #8a94ad;
+  text-align: center;
+}
+
+.person-confirm {
+  margin: 14px 2px 0;
+  font-size: 13.5px;
+  color: var(--green);
+}
+
+/* ---------- سازندهٔ معیار ---------- */
+.criteria-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.criterion-card {
+  background: var(--ice-2);
+  border: 1px solid #e2e8f4;
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.criterion-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.criterion-number {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--blue);
+}
+
+.criterion-remove {
+  background: none;
+  border: none;
+  color: var(--red);
+  font-size: 12.5px;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 4px 8px;
+  transition: background 0.15s ease;
+}
+
+.criterion-remove:hover {
+  background: rgba(168, 63, 54, 0.08);
+}
+
+.criterion-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.criterion-prefix {
+  display: flex;
+  flex-direction: column;
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--navy);
+}
+
+.criterion-prefix small {
+  font-weight: 400;
+  font-size: 10.5px;
+  color: #8a94ad;
+}
+
+.criterion-row input {
+  width: 100%;
+  border: 1.5px solid #d7deed;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.criterion-row input:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+.criterion-preview {
+  margin: 4px 0 0;
+  font-style: italic;
+  font-size: 13.5px;
+  color: var(--green);
+  border-top: 1px dashed #d7deed;
+  padding-top: 10px;
+}
+
+.add-criterion {
+  align-self: flex-start;
+}
+
+/* ---------- مسیر سریع ---------- */
+.fasttrack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fasttrack-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--ice-2);
+  border-radius: 14px;
+  padding: 12px 16px;
+}
+
+.fasttrack-question {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.toggle-pair {
+  display: flex;
+  gap: 6px;
+}
+
+.toggle {
+  border: 1.5px solid #d7deed;
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.toggle.yes.on {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+  font-weight: 700;
+}
+
+.toggle.no.on {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+  font-weight: 700;
+}
+
+.fasttrack-badge {
+  background: #eaf5ef;
+  border: 1.5px solid var(--green);
+  color: var(--green);
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 14px;
+  padding: 12px 16px;
+  animation: step-in 0.3s ease both;
+}
+
+/* ---------- مرور ---------- */
+.score-box {
+  text-align: center;
+  padding: 8px 0 4px;
+}
+
+.score-number {
+  font-size: 64px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.score-number.good {
+  color: var(--green);
+}
+
+.score-number.bad {
+  color: var(--red);
+}
+
+.score-caption {
+  font-size: 13px;
+  color: #7a86a5;
+}
+
+.improve-box {
+  background: #fdf6e9;
+  border: 1.5px solid var(--amber);
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-size: 13.5px;
+}
+
+.improve-box strong {
+  color: #a37015;
+}
+
+.improve-box ul {
+  margin: 8px 0 0;
+  padding-right: 18px;
+}
+
+.improve-box li {
+  margin-bottom: 4px;
+}
+
+.summary-card {
+  border: 1px solid #e2e8f4;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.summary-row {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 12px;
+  padding: 10px 16px;
+  font-size: 13.5px;
+}
+
+.summary-row:nth-child(odd) {
+  background: var(--ice-2);
+}
+
+.summary-label {
+  color: #7a86a5;
+  font-weight: 500;
+}
+
+.summary-value {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.big-print {
+  align-self: center;
+  font-size: 17px;
+  padding: 16px 48px;
+}
+
+.print-note {
+  text-align: center;
+  font-size: 12.5px;
+  color: #8a94ad;
+  margin: -8px 0 0;
+}
+
+/* ---------- خطا ---------- */
+.step-error {
+  margin: 20px 0 0;
+  background: rgba(168, 63, 54, 0.07);
+  border: 1px solid rgba(168, 63, 54, 0.35);
+  color: var(--red);
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 13.5px;
+}
+
+/* ---------- نوار ناوبری چسبان ---------- */
+.navbar {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid #e6ebf5;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  z-index: 20;
+}
+
+.navbar-inner {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ---------- دکمه‌ها ---------- */
+.btn {
+  border: none;
+  border-radius: 999px;
+  padding: 12px 30px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.btn.primary {
+  background: var(--navy);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(27, 42, 74, 0.25);
+}
+
+.btn.primary:hover {
+  transform: translateY(-1px);
+  background: #24365c;
+}
+
+.btn.ghost {
+  background: transparent;
+  color: var(--navy);
+}
+
+.btn.ghost:hover:not(:disabled) {
+  background: var(--ice-2);
+}
+
+.btn.ghost:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.btn.subtle {
+  background: var(--ice);
+  color: var(--blue);
+  padding: 9px 20px;
+  font-size: 13.5px;
+}
+
+.btn.subtle:hover {
+  background: #dde6f5;
+}
+
+/* ---------- موبایل ---------- */
+@media (max-width: 560px) {
+  .criterion-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .summary-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .fasttrack-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ---------- سند چاپی ---------- */
+#print-doc {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  #app-root {
+    display: none !important;
+  }
+
+  #print-doc {
+    display: block;
+    font-family: 'Vazirmatn', Tahoma, sans-serif;
+    color: #1b2a4a;
+    font-size: 11px;
+    line-height: 1.9;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .doc-header {
+    background: #1b2a4a;
+    color: #fff;
+    border-radius: 8px;
+    padding: 14px 18px;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .doc-fa {
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .doc-org {
+    font-size: 10.5px;
+    opacity: 0.85;
+    margin-top: 2px;
+  }
+
+  .doc-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    background: #e9eef8;
+    border-radius: 6px;
+    padding: 7px 14px;
+    margin: 10px 0 14px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  .doc-section {
+    margin-bottom: 12px;
+    break-inside: avoid;
+  }
+
+  .doc-section-title {
+    background: #3e5f9e;
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 700;
+    border-radius: 5px 5px 0 0;
+    padding: 5px 12px;
+    margin: 0;
+  }
+
+  /* نوار عنوان بخش مدیر برنامه: خاکستری-قهوه‌ای متمایز */
+  .doc-section-title.pm {
+    background: #6e6257;
+  }
+
+  .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #d7deed;
+  }
+
+  .doc-table th,
+  .doc-table td {
+    border: 1px solid #d7deed;
+    padding: 5px 10px;
+    vertical-align: top;
+    text-align: right;
+  }
+
+  .doc-table th {
+    background: #f4f6fa;
+    color: #5c6a8a;
+    font-weight: 600;
+    width: 30%;
+    white-space: nowrap;
+  }
+
+  .doc-table td {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .doc-table tr {
+    break-inside: avoid;
+  }
+
+  .pm-table td {
+    height: 26px;
+  }
+
+  .doc-criteria {
+    margin: 0;
+    padding-right: 16px;
+  }
+
+  .doc-criteria li {
+    margin-bottom: 3px;
+  }
+
+  .doc-fasttrack {
+    display: inline-block;
+    background: #eaf5ef;
+    border: 1px solid #2f7d5c;
+    color: #2f7d5c;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 1px 12px;
+  }
+
+  .doc-footer {
+    margin-top: 14px;
+    text-align: center;
+    font-size: 9.5px;
+    color: #7a86a5;
+    border-top: 1px solid #e2e8f4;
+    padding-top: 8px;
+  }
+}

@@ -29,6 +29,14 @@ services:
       # پورت بیرونی از .env قابل تغییر است (APP_PORT)؛ پیش‌فرض 3000
       - '${APP_PORT:-3000}:3000'
 
+  # فرم ثبت درخواست کار — FRM-TPD-01 (کاملاً استاتیک؛ بدون دیتابیس و بک‌اند)
+  frm:
+    build: ./frm-tpd-01
+    restart: unless-stopped
+    ports:
+      # پورت بیرونی از .env قابل تغییر است (FRM_PORT)؛ پیش‌فرض 8080
+      - '${FRM_PORT:-8080}:80'
+
   # اختیاری: reverse proxy برای دیپلوی روی سرور داخلی (پورت ۸۰)
   # برای فعال‌سازی: docker compose --profile proxy up -d
   nginx:

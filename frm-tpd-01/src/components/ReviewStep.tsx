@@ -1,7 +1,7 @@
 import StepShell from './StepShell';
 import type { FormState } from '../state';
 import {
-  criteriaLines,
+  filledItems,
   isBug,
   isFastTrack,
   priorityLabel,
@@ -41,7 +41,7 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 export default function ReviewStep({ state }: Props) {
   const score = computeScore(state);
   const requester = requesterInfo(state);
-  const criteria = criteriaLines(state.criteria);
+  const criteria = filledItems(state.criteria);
   const fastTrack = isFastTrack(state);
 
   return (
@@ -88,6 +88,10 @@ export default function ReviewStep({ state }: Props) {
           }
         />
         <SummaryRow label="تاریخ ثبت" value={todayJalaliLabel()} />
+        <SummaryRow
+          label="مسیر بررسی"
+          value={fastTrack ? '✓ مسیر سریع (Fast-Track)' : 'مسیر عادی'}
+        />
         <SummaryRow label="نوع درخواست" value={requestTypesLabel(state.requestTypes)} />
         <SummaryRow label="عنوان" value={state.title} />
         <SummaryRow label="محصول هدف" value={state.product ?? ''} />
@@ -101,10 +105,6 @@ export default function ReviewStep({ state }: Props) {
           <SummaryRow label="شدت باگ" value={severityLabel(state.bugSeverity)} />
         )}
         <SummaryRow label="اولویت پیشنهادی" value={priorityLabel(state.priority)} />
-        <SummaryRow
-          label="مسیر بررسی"
-          value={fastTrack ? '✓ مسیر سریع (Fast-Track)' : 'مسیر عادی'}
-        />
       </div>
 
       <button

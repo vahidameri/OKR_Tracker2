@@ -4,18 +4,31 @@ import type { StepId } from '../state';
 import { missingMessage, stepMissing } from '../lib/validate';
 import { toFaDigits } from '../lib/jalali';
 import StepPerson from './steps/StepPerson';
-import StepType from './steps/StepType';
+import StepTriage from './steps/StepTriage';
 import StepProblem from './steps/StepProblem';
 import StepCriteria from './steps/StepCriteria';
 import StepBug from './steps/StepBug';
-import StepSchedule from './steps/StepSchedule';
+import StepPriority from './steps/StepPriority';
 import ReviewStep from './ReviewStep';
 import PrintDocument from './PrintDocument';
+
+/** نام کوتاه هر مرحله برای نوار پیشرفت */
+const STEP_NAMES: Record<StepId, string> = {
+  person: 'درخواست‌دهنده',
+  triage: 'مسیر و مشخصات',
+  problem: 'شرح مسئله',
+  criteria: 'معیارها و دامنه',
+  bug: 'جزئیات باگ',
+  priority: 'اولویت',
+  review: 'مرور و دریافت',
+};
 
 export default function Wizard() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [stepIndex, setStepIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  /** بیشترین مرحله‌ای که کاربر به آن رسیده — برای برگشت سریع از نوار پیشرفت */
+  const [maxReached, setMaxReached] = useState(0);
 
   const steps = useMemo(() => visibleSteps(state), [state]);
   // اگر مرحلهٔ باگ حذف شد و index از انتها گذشت، به آخرین مرحله برگرد
@@ -23,19 +36,23 @@ export default function Wizard() {
   const current: StepId = steps[index];
   const isLast = index === steps.length - 1;
 
+  const goTo = (next: number) => {
+    setError(null);
+    setStepIndex(next);
+    setMaxReached((m) => Math.max(m, next));
+  };
+
   const goNext = () => {
     const missing = stepMissing(current, state);
     if (missing.length > 0) {
       setError(missingMessage(missing));
       return;
     }
-    setError(null);
-    if (!isLast) setStepIndex(index + 1);
+    if (!isLast) goTo(index + 1);
   };
 
   const goPrev = () => {
-    setError(null);
-    if (index > 0) setStepIndex(index - 1);
+    if (index > 0) goTo(index - 1);
   };
 
   // Enter = مرحلهٔ بعد (وقتی معتبر است)؛ داخل textarea یا دراپ‌داون باز نه
@@ -48,7 +65,11 @@ export default function Wizard() {
       const missing = stepMissing(current, state);
       if (missing.length === 0) {
         setError(null);
-        setStepIndex((i) => Math.min(i + 1, steps.length - 1));
+        setStepIndex((i) => {
+          const next = Math.min(i + 1, steps.length - 1);
+          setMaxReached((m) => Math.max(m, next));
+          return next;
+        });
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -57,7 +78,7 @@ export default function Wizard() {
 
   // با تعویض مرحله، به بالای صفحه برگرد
   useEffect(() => {
-    window.scrollTo({ top: 0 });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [index]);
 
   // به‌محض اینکه کاربر چیزی را تغییر داد، پیام خطای قبلی پاک شود
@@ -72,31 +93,39 @@ export default function Wizard() {
           <p className="form-code">
             FRM-TPD-01 · نسخهٔ ۲٫۰ — دپارتمان فناوری و محصول (CPTO)
           </p>
-          <p className="step-counter" aria-live="polite">
-            مرحله {toFaDigits(index + 1)} از {toFaDigits(steps.length)}
-          </p>
-          <div
+
+          <nav
             className="progress"
-            role="progressbar"
-            aria-valuemin={1}
-            aria-valuemax={steps.length}
-            aria-valuenow={index + 1}
+            aria-label={`مرحله ${index + 1} از ${steps.length}`}
           >
             {steps.map((s, i) => (
-              <span key={s} className={`progress-seg${i <= index ? ' filled' : ''}`} />
+              <button
+                key={s}
+                type="button"
+                className={`progress-step${i === index ? ' current' : ''}${
+                  i < index ? ' done' : ''
+                }`}
+                // فقط به مراحلی که قبلاً دیده شده‌اند می‌شود پرید
+                disabled={i > maxReached}
+                aria-current={i === index ? 'step' : undefined}
+                onClick={() => goTo(i)}
+              >
+                <span className="progress-dot">{toFaDigits(i + 1)}</span>
+                <span className="progress-name">{STEP_NAMES[s]}</span>
+              </button>
             ))}
-          </div>
+          </nav>
         </header>
 
         <main className="card">
           {/* key باعث اجرای انیمیشن fade+slide هنگام تعویض مرحله می‌شود */}
           <div className="step-container" key={current}>
             {current === 'person' && <StepPerson state={state} dispatch={dispatch} />}
-            {current === 'type' && <StepType state={state} dispatch={dispatch} />}
+            {current === 'triage' && <StepTriage state={state} dispatch={dispatch} />}
             {current === 'problem' && <StepProblem state={state} dispatch={dispatch} />}
             {current === 'criteria' && <StepCriteria state={state} dispatch={dispatch} />}
             {current === 'bug' && <StepBug state={state} dispatch={dispatch} />}
-            {current === 'schedule' && <StepSchedule state={state} dispatch={dispatch} />}
+            {current === 'priority' && <StepPriority state={state} dispatch={dispatch} />}
             {current === 'review' && <ReviewStep state={state} />}
           </div>
           {error && (
@@ -116,6 +145,9 @@ export default function Wizard() {
             >
               → قبلی
             </button>
+            <span className="navbar-status">
+              مرحله {toFaDigits(index + 1)} از {toFaDigits(steps.length)}
+            </span>
             {!isLast && (
               <button type="button" className="btn primary" onClick={goNext}>
                 بعدی ←

@@ -12,6 +12,7 @@ interface Props {
 const OTHER_OPTION: Person = {
   id: OTHER_PERSON_ID,
   name: 'نام من در فهرست نیست',
+  family: '',
   role: 'نام و سمت را خودم وارد می‌کنم',
 };
 

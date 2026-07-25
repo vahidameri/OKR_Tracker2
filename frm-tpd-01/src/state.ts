@@ -14,18 +14,22 @@ export type RequestType =
 
 export type Severity = 'high' | 'medium' | 'low';
 export type Priority = 'critical' | 'high' | 'medium' | 'low';
-/** پاسخ گزاره‌های مسیر سریع: «بله» یا «خیر یا نمی‌دانم» */
+/** پاسخ گزاره‌های مسیر بررسی: «بله» یا «خیر یا نمی‌دانم» */
 export type YesNo = 'yes' | 'no' | null;
 
 /** شناسهٔ ویژه برای درخواست‌دهنده‌ای که در فهرست نیست */
 export const OTHER_PERSON_ID = '__other__';
+
+/** کلیدهای فهرست‌های تکرارشونده */
+export type ListKey = 'criteria' | 'outOfScope' | 'successMetrics';
 
 export interface FormState {
   personId: string | null;
   /** نام و سمت دستی — فقط وقتی personId برابر OTHER_PERSON_ID است */
   customName: string;
   customRole: string;
-  /** نوع درخواست چندانتخابی است */
+  /** مسیر بررسی — اول از همه پرسیده می‌شود و ادامهٔ فرم را فیلتر می‌کند */
+  fastTrack: [YesNo, YesNo, YesNo, YesNo];
   requestTypes: RequestType[];
   title: string;
   product: Product | null;
@@ -35,17 +39,14 @@ export interface FormState {
   currentState: string;
   desiredState: string;
   businessValue: string;
-  /** معیارهای پذیرش به‌صورت متن آزاد، هر معیار در یک خط */
-  criteria: string;
-  outOfScope1: string;
-  outOfScope2: string;
-  successMetric: string;
+  criteria: string[];
+  outOfScope: string[];
+  successMetrics: string[];
   bugSteps: string;
   bugObserved: string;
   bugExpected: string;
   bugEnv: string;
   bugSeverity: Severity | null;
-  fastTrack: [YesNo, YesNo, YesNo, YesNo];
   priority: Priority | null;
   neededDate: string;
   dependencies: string;
@@ -55,6 +56,7 @@ export const initialState: FormState = {
   personId: null,
   customName: '',
   customRole: '',
+  fastTrack: [null, null, null, null],
   requestTypes: [],
   title: '',
   product: null,
@@ -63,16 +65,14 @@ export const initialState: FormState = {
   currentState: '',
   desiredState: '',
   businessValue: '',
-  criteria: '',
-  outOfScope1: '',
-  outOfScope2: '',
-  successMetric: '',
+  criteria: ['', ''],
+  outOfScope: ['', ''],
+  successMetrics: [''],
   bugSteps: '',
   bugObserved: '',
   bugExpected: '',
   bugEnv: '',
   bugSeverity: null,
-  fastTrack: [null, null, null, null],
   priority: null,
   neededDate: '',
   dependencies: '',
@@ -83,7 +83,10 @@ export type Action =
   | { type: 'selectPerson'; id: string }
   | { type: 'selectProduct'; product: Product }
   | { type: 'toggleRequestType'; value: RequestType }
-  | { type: 'setFastTrack'; index: number; value: YesNo };
+  | { type: 'setFastTrack'; index: number; value: YesNo }
+  | { type: 'listAdd'; key: ListKey }
+  | { type: 'listRemove'; key: ListKey; index: number }
+  | { type: 'listChange'; key: ListKey; index: number; value: string };
 
 export function reducer(state: FormState, action: Action): FormState {
   switch (action.type) {
@@ -114,6 +117,20 @@ export function reducer(state: FormState, action: Action): FormState {
       fastTrack[action.index] = action.value;
       return { ...state, fastTrack };
     }
+    case 'listAdd':
+      return { ...state, [action.key]: [...state[action.key], ''] };
+    case 'listRemove':
+      return {
+        ...state,
+        [action.key]: state[action.key].filter((_, i) => i !== action.index),
+      };
+    case 'listChange':
+      return {
+        ...state,
+        [action.key]: state[action.key].map((v, i) =>
+          i === action.index ? action.value : v,
+        ),
+      };
   }
 }
 
@@ -122,17 +139,36 @@ export function isBug(state: FormState): boolean {
   return state.requestTypes.includes('bug');
 }
 
-/** خطوط غیرخالی معیارهای پذیرش */
-export function criteriaLines(criteria: string): string[] {
-  return criteria
-    .split('\n')
-    .map((line) => line.replace(/^\s*[-•*]\s*/, '').trim())
-    .filter(Boolean);
-}
-
 /** آیا درخواست واجد شرایط مسیر سریع است؟ (هر چهار پاسخ «بله») */
 export function isFastTrack(state: FormState): boolean {
   return state.fastTrack.every((a) => a === 'yes');
+}
+
+/** آیا هر چهار گزارهٔ مسیر بررسی پاسخ داده شده است؟ */
+export function triageAnswered(state: FormState): boolean {
+  return state.fastTrack.every((a) => a !== null);
+}
+
+/**
+ * فیلد‌هایی که برای درخواست‌های مسیر سریع لازم نیستند و غیرفعال می‌شوند.
+ * کار کمتر از ۴ ساعت بدون وابستگی، به تحلیل ارزش و مرزبندی دامنه نیاز ندارد.
+ */
+export const FAST_TRACK_SKIPPED = [
+  'businessValue',
+  'outOfScope',
+  'successMetrics',
+  'dependencies',
+] as const;
+
+export type SkippableField = (typeof FAST_TRACK_SKIPPED)[number];
+
+export function isSkipped(state: FormState, field: SkippableField): boolean {
+  return isFastTrack(state) && FAST_TRACK_SKIPPED.includes(field);
+}
+
+/** موارد غیرخالی یک فهرست تکرارشونده */
+export function filledItems(items: string[]): string[] {
+  return items.map((i) => i.trim()).filter(Boolean);
 }
 
 /** نام و سمت درخواست‌دهنده، چه از فهرست چه دستی */
@@ -174,7 +210,7 @@ export const PRIORITIES: { value: Priority; label: string; hint: string }[] = [
   { value: 'low', label: 'پایین', hint: 'بهبود مطلوب؛ هر زمان ظرفیت آزاد شد' },
 ];
 
-/** گزاره‌های مسیر سریع — همه مثبت نوشته شده‌اند تا «بله» همیشه یک معنا بدهد */
+/** گزاره‌های مسیر بررسی — همه مثبت نوشته شده‌اند تا «بله» همیشه یک معنا بدهد */
 export const FAST_TRACK_QUESTIONS = [
   'برآورد شما از کل کار — تحلیل، پیاده‌سازی و تست — کمتر از ۴ ساعت است.',
   'انجام آن فقط به تیم فناوری و محصول نیاز دارد و منتظر تیم دیگری نمی‌ماند.',
@@ -203,17 +239,17 @@ export function priorityLabel(p: Priority | null): string {
 
 export type StepId =
   | 'person'
-  | 'type'
+  | 'triage'
   | 'problem'
   | 'criteria'
   | 'bug'
-  | 'schedule'
+  | 'priority'
   | 'review';
 
 /** فهرست مراحل قابل‌نمایش؛ مرحلهٔ باگ فقط وقتی «باگ» بین نوع‌ها باشد */
 export function visibleSteps(state: FormState): StepId[] {
-  const steps: StepId[] = ['person', 'type', 'problem', 'criteria'];
+  const steps: StepId[] = ['person', 'triage', 'problem', 'criteria'];
   if (isBug(state)) steps.push('bug');
-  steps.push('schedule', 'review');
+  steps.push('priority', 'review');
   return steps;
 }

@@ -1,6 +1,6 @@
 import type { FormState } from '../state';
 import {
-  criteriaLines,
+  filledItems,
   isBug,
   isFastTrack,
   priorityLabel,
@@ -29,11 +29,9 @@ export default function PrintDocument({ state }: Props) {
   const requester = requesterInfo(state);
   const score = computeScore(state);
   const fastTrack = isFastTrack(state);
-  const criteria = criteriaLines(state.criteria);
-  const outOfScope = [state.outOfScope1, state.outOfScope2]
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .join(' · ');
+  const criteria = filledItems(state.criteria);
+  const outOfScope = filledItems(state.outOfScope).join(' · ');
+  const successMetrics = filledItems(state.successMetrics).join(' · ');
 
   return (
     <div id="print-doc" dir="rtl">
@@ -115,7 +113,7 @@ export default function PrintDocument({ state }: Props) {
               </td>
             </tr>
             <Row label="خارج از دامنه" value={outOfScope} />
-            <Row label="سنجهٔ موفقیت" value={state.successMetric} />
+            <Row label="سنجهٔ موفقیت" value={successMetrics} />
             <Row label="اولویت پیشنهادی" value={priorityLabel(state.priority)} />
             <Row label="تاریخ نیاز و دلیل" value={state.neededDate} />
             <Row label="وابستگی‌ها و پیوست‌ها" value={state.dependencies} />

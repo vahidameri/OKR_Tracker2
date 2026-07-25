@@ -12,6 +12,7 @@ import StepBug from './steps/StepBug';
 import StepPriority from './steps/StepPriority';
 import ReviewStep from './ReviewStep';
 import PrintDocument from './PrintDocument';
+import Logo from './Logo';
 import { openPrintDialog } from '../lib/print';
 
 /** نام کوتاه هر مرحله برای نوار پیشرفت */
@@ -110,9 +111,15 @@ export default function Wizard() {
     <>
       <div id="app-root" className="app">
         <header className="app-header">
-          <p className="form-code">
-            FRM-TPD-01 · نسخهٔ ۲٫۰ — دپارتمان فناوری و محصول (CPTO)
-          </p>
+          <div className="brand">
+            <Logo size={44} />
+            <div className="brand-text">
+              <span className="brand-title">فرم ثبت درخواست کار</span>
+              <span className="brand-sub">
+                FRM-TPD-01 · نسخهٔ ۲٫۰ — دپارتمان فناوری و محصول (CPTO)
+              </span>
+            </div>
+          </div>
 
           <nav
             className="progress"
@@ -131,7 +138,9 @@ export default function Wizard() {
                 aria-current={i === index ? 'step' : undefined}
                 onClick={() => goTo(i)}
               >
-                <span className="progress-dot">{toFaDigits(i + 1)}</span>
+                <span className="progress-dot-wrap">
+                  <span className="progress-dot">{toFaDigits(i + 1)}</span>
+                </span>
                 <span className="progress-name">{STEP_NAMES[s]}</span>
               </button>
             ))}
@@ -184,7 +193,7 @@ export default function Wizard() {
                 onClick={goNext}
                 disabled={!canAdvance}
               >
-                بعدی ←
+                {index === 0 ? 'شروع فرآیند ←' : 'بعدی ←'}
               </button>
             )}
           </div>

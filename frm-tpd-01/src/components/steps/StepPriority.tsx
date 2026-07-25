@@ -2,7 +2,7 @@ import StepShell from '../StepShell';
 import ChipGroup from '../ChipGroup';
 import Field from '../Field';
 import type { Action, FormState } from '../../state';
-import { PRIORITIES, isFastTrack, isSkipped } from '../../state';
+import { PRIORITIES, disabledReason, fieldEnabled, isFastTrack } from '../../state';
 
 interface Props {
   state: FormState;
@@ -26,6 +26,7 @@ export default function StepPriority({ state, dispatch }: Props) {
       >
         <ChipGroup
           ariaLabel="اولویت پیشنهادی"
+          columns={4}
           options={PRIORITIES}
           value={state.priority}
           onChange={(priority) => dispatch({ type: 'patch', patch: { priority } })}
@@ -53,8 +54,8 @@ export default function StepPriority({ state, dispatch }: Props) {
         number={3}
         label="وابستگی‌ها و پیوست‌ها"
         optional
-        disabled={isSkipped(state, 'dependencies')}
-        disabledNote="در مسیر سریع تأیید کرده‌اید که این کار منتظر تیم دیگری نمی‌ماند، پس این سؤال لازم نیست."
+        disabled={!fieldEnabled(state, 'dependencies')}
+        disabledNote={disabledReason(state, 'dependencies')}
         help="هر چیزی که انجام این کار به آن گره خورده: تیم یا سرویس دیگری که باید کاری انجام دهد، تصمیمی که هنوز گرفته نشده، یا مستند و اسکرین‌شاتی که به فهم مسئله کمک می‌کند. فایل را مستقیم اینجا نگذارید؛ فقط لینک درایو سازمانی بدهید و از درج دادهٔ محرمانه یا اطلاعات شخصی کاربران خودداری کنید."
       >
         <input

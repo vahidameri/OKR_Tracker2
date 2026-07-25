@@ -1,7 +1,7 @@
 import StepShell from '../StepShell';
 import Field from '../Field';
 import type { Action, FormState } from '../../state';
-import { isSkipped } from '../../state';
+import { disabledReason, fieldEnabled } from '../../state';
 
 interface Props {
   state: FormState;
@@ -48,7 +48,10 @@ export default function StepProblem({ state, dispatch }: Props) {
   return (
     <StepShell title="شرح مسئله">
       {FIELDS.map((f, i) => {
-        const skipped = f.key === 'businessValue' && isSkipped(state, 'businessValue');
+        // فقط این دو فیلد بسته به نوع درخواست غیرفعال می‌شوند
+        const gated =
+          f.key === 'currentState' || f.key === 'businessValue' ? f.key : null;
+        const skipped = gated !== null && !fieldEnabled(state, gated);
         return (
           <Field
             key={f.key}
@@ -56,7 +59,7 @@ export default function StepProblem({ state, dispatch }: Props) {
             label={f.label}
             help={f.help}
             disabled={skipped}
-            disabledNote="چون این درخواست در مسیر سریع قرار گرفته، تحلیل ارزش کسب‌وکاری لازم نیست."
+            disabledNote={gated !== null ? disabledReason(state, gated) : undefined}
           >
             <textarea
               className="text-area"

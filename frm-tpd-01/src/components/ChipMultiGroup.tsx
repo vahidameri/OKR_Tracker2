@@ -6,6 +6,7 @@ interface Props<T extends string> {
   values: readonly T[];
   onToggle: (value: T) => void;
   ariaLabel: string;
+  columns?: number;
 }
 
 /**
@@ -17,6 +18,7 @@ export default function ChipMultiGroup<T extends string>({
   values,
   onToggle,
   ariaLabel,
+  columns,
 }: Props<T>) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const firstSelected = options.findIndex((o) => values.includes(o.value));
@@ -28,7 +30,12 @@ export default function ChipMultiGroup<T extends string>({
   };
 
   return (
-    <div className="chip-group" role="group" aria-label={ariaLabel}>
+    <div
+      className={`chip-group${columns ? ' chip-grid' : ''}`}
+      style={columns ? { gridTemplateColumns: `repeat(${columns}, 1fr)` } : undefined}
+      role="group"
+      aria-label={ariaLabel}
+    >
       {options.map((opt, i) => {
         const selected = values.includes(opt.value);
         return (

@@ -182,21 +182,65 @@ export function triageAnswered(state: FormState): boolean {
   return state.fastTrack.every((a) => a !== null);
 }
 
+/** فیلدهایی که بسته به نوع درخواست و مسیر بررسی ممکن است لازم نباشند */
+export type GatedField =
+  | 'currentState'
+  | 'businessValue'
+  | 'criteria'
+  | 'outOfScope'
+  | 'successMetrics'
+  | 'dependencies';
+
 /**
- * فیلد‌هایی که برای درخواست‌های مسیر سریع لازم نیستند و غیرفعال می‌شوند.
- * کار کمتر از ۴ ساعت بدون وابستگی، به تحلیل ارزش و مرزبندی دامنه نیاز ندارد.
+ * هر نوع درخواست فقط اطلاعاتی را می‌خواهد که واقعاً به آن نیاز دارد.
+ * وقتی چند نوع انتخاب شده، اجتماع نیازها ملاک است.
  */
-export const FAST_TRACK_SKIPPED = [
+const TYPE_NEEDS: Record<RequestType, GatedField[]> = {
+  feature: ['currentState', 'businessValue', 'criteria', 'outOfScope', 'successMetrics', 'dependencies'],
+  improvement: ['currentState', 'businessValue', 'criteria', 'outOfScope', 'successMetrics', 'dependencies'],
+  // جزئیات باگ در مرحلهٔ اختصاصی خودش گرفته می‌شود
+  bug: ['currentState', 'criteria', 'dependencies'],
+  tech: ['currentState', 'businessValue', 'criteria', 'outOfScope', 'dependencies'],
+  // خروجی گزارش خودش سند پذیرش است؛ تحلیل دامنه و سنجه معنا ندارد
+  data: ['currentState', 'dependencies'],
+  // هنوز نمی‌دانیم شدنی است، پس معیار پذیرش و سنجه هنوز قابل تعریف نیست
+  feasibility: ['currentState', 'businessValue', 'outOfScope', 'dependencies'],
+  other: ['currentState', 'businessValue', 'criteria', 'outOfScope', 'successMetrics', 'dependencies'],
+};
+
+/** فیلدهایی که مسیر سریع آنها را غیرضروری می‌کند */
+const FAST_TRACK_SKIPPED: GatedField[] = [
   'businessValue',
   'outOfScope',
   'successMetrics',
   'dependencies',
-] as const;
+];
 
-export type SkippableField = (typeof FAST_TRACK_SKIPPED)[number];
+/** آیا این فیلد برای وضعیت فعلی فرم فعال است؟ */
+export function fieldEnabled(state: FormState, field: GatedField): boolean {
+  if (isFastTrack(state) && FAST_TRACK_SKIPPED.includes(field)) return false;
+  if (state.requestTypes.length === 0) return true;
+  return state.requestTypes.some((t) => TYPE_NEEDS[t].includes(field));
+}
 
-export function isSkipped(state: FormState, field: SkippableField): boolean {
-  return isFastTrack(state) && FAST_TRACK_SKIPPED.includes(field);
+/** توضیح اینکه چرا این فیلد غیرفعال شده است */
+export function disabledReason(state: FormState, field: GatedField): string {
+  if (isFastTrack(state) && FAST_TRACK_SKIPPED.includes(field)) {
+    return 'چون این درخواست در مسیر سریع قرار گرفته، این بخش لازم نیست.';
+  }
+  const labels = state.requestTypes
+    .map((t) => REQUEST_TYPES.find((r) => r.value === t)?.label ?? t)
+    .join(' و ');
+  return `برای نوع درخواست «${labels}» این بخش لازم نیست.`;
+}
+
+/** آیا مرحلهٔ معیارها اصلاً فیلد فعالی دارد؟ */
+export function criteriaStepNeeded(state: FormState): boolean {
+  return (
+    fieldEnabled(state, 'criteria') ||
+    fieldEnabled(state, 'outOfScope') ||
+    fieldEnabled(state, 'successMetrics')
+  );
 }
 
 /** موارد غیرخالی یک فهرست تکرارشونده */
@@ -230,17 +274,29 @@ export const REQUEST_TYPES: {
   { value: 'other', label: 'سایر', hint: 'مدیر برنامه دسته‌بندی می‌کند' },
 ];
 
-export const SEVERITIES: { value: Severity; label: string; hint: string }[] = [
-  { value: 'high', label: 'بالا', hint: 'مسیر اصلی مختل و بدون راه دور زدن' },
-  { value: 'medium', label: 'متوسط', hint: 'راه جایگزین هست' },
-  { value: 'low', label: 'پایین', hint: 'ظاهری یا موردی' },
+export type Tone = 'critical' | 'high' | 'medium' | 'low';
+
+export const SEVERITIES: {
+  value: Severity;
+  label: string;
+  hint: string;
+  tone: Tone;
+}[] = [
+  { value: 'high', label: 'بالا', hint: 'مسیر اصلی مختل و بدون راه دور زدن', tone: 'critical' },
+  { value: 'medium', label: 'متوسط', hint: 'راه جایگزین هست', tone: 'medium' },
+  { value: 'low', label: 'پایین', hint: 'ظاهری یا موردی', tone: 'low' },
 ];
 
-export const PRIORITIES: { value: Priority; label: string; hint: string }[] = [
-  { value: 'critical', label: 'بحرانی', hint: 'کار جاری متوقف شده و راه دور زدنی ندارد' },
-  { value: 'high', label: 'بالا', hint: 'مستقیماً روی یکی از OKRهای فصل جاری اثر دارد' },
-  { value: 'medium', label: 'متوسط', hint: 'لازم است، اما تاریخ الزام‌آور ندارد' },
-  { value: 'low', label: 'پایین', hint: 'بهبود مطلوب؛ هر زمان ظرفیت آزاد شد' },
+export const PRIORITIES: {
+  value: Priority;
+  label: string;
+  hint: string;
+  tone: Tone;
+}[] = [
+  { value: 'critical', label: 'بحرانی', hint: 'کار جاری متوقف شده و راه دور زدنی ندارد', tone: 'critical' },
+  { value: 'high', label: 'بالا', hint: 'مستقیماً روی یکی از OKRهای فصل جاری اثر دارد', tone: 'high' },
+  { value: 'medium', label: 'متوسط', hint: 'لازم است، اما تاریخ الزام‌آور ندارد', tone: 'medium' },
+  { value: 'low', label: 'پایین', hint: 'بهبود مطلوب؛ هر زمان ظرفیت آزاد شد', tone: 'low' },
 ];
 
 /** گزاره‌های مسیر بررسی — همه مثبت نوشته شده‌اند تا «بله» همیشه یک معنا بدهد */
@@ -281,7 +337,8 @@ export type StepId =
 
 /** فهرست مراحل قابل‌نمایش؛ مرحلهٔ باگ فقط وقتی «باگ» بین نوع‌ها باشد */
 export function visibleSteps(state: FormState): StepId[] {
-  const steps: StepId[] = ['start', 'request', 'problem', 'criteria'];
+  const steps: StepId[] = ['start', 'request', 'problem'];
+  if (criteriaStepNeeded(state)) steps.push('criteria');
   if (isBug(state)) steps.push('bug');
   steps.push('priority', 'review');
   return steps;

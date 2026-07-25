@@ -7,6 +7,8 @@ export interface ChipOption<T extends string> {
   /** گزینه‌ای که هنوز فعال نیست (مثلاً سند PRD) */
   disabled?: boolean;
   disabledNote?: string;
+  /** رنگ سطح: از قرمز (critical) تا سبز (low) */
+  tone?: 'critical' | 'high' | 'medium' | 'low';
 }
 
 interface Props<T extends string> {
@@ -17,6 +19,8 @@ interface Props<T extends string> {
   ariaLabel: string;
   /** chipهای بزرگ‌تر با توضیح دو خطی — برای انتخاب نوع سند */
   variant?: 'default' | 'card';
+  /** تعداد ستون‌های گرید؛ همهٔ خانه‌ها هم‌عرض می‌شوند */
+  columns?: number;
 }
 
 /**
@@ -29,6 +33,7 @@ export default function ChipGroup<T extends string>({
   onChange,
   ariaLabel,
   variant = 'default',
+  columns,
 }: Props<T>) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const enabled = options.map((o, i) => (o.disabled ? -1 : i)).filter((i) => i >= 0);
@@ -45,7 +50,10 @@ export default function ChipGroup<T extends string>({
 
   return (
     <div
-      className={`chip-group${variant === 'card' ? ' chip-cards' : ''}`}
+      className={`chip-group${variant === 'card' ? ' chip-cards' : ''}${
+        columns ? ' chip-grid' : ''
+      }`}
+      style={columns ? { gridTemplateColumns: `repeat(${columns}, 1fr)` } : undefined}
       role="radiogroup"
       aria-label={ariaLabel}
     >
@@ -62,7 +70,7 @@ export default function ChipGroup<T extends string>({
           tabIndex={i === tabbable ? 0 : -1}
           className={`chip${value === opt.value ? ' selected' : ''}${
             opt.disabled ? ' chip-off' : ''
-          }`}
+          }${opt.tone ? ` tone-${opt.tone}` : ''}`}
           onClick={() => onChange(opt.value)}
           onKeyDown={(e) => {
             if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
@@ -74,7 +82,10 @@ export default function ChipGroup<T extends string>({
             }
           }}
         >
-          <span className="chip-label">{opt.label}</span>
+          <span className="chip-label">
+            {opt.tone && <span className="chip-tone" aria-hidden />}
+            {opt.label}
+          </span>
           {opt.hint && <span className="chip-hint">{opt.hint}</span>}
           {opt.disabled && opt.disabledNote && (
             <span className="chip-badge">{opt.disabledNote}</span>

@@ -25,6 +25,7 @@ export default function StepRequest({ state, dispatch }: Props) {
       >
         <ChipMultiGroup
           ariaLabel="نوع درخواست"
+          columns={4}
           options={REQUEST_TYPES}
           values={state.requestTypes}
           onToggle={(value) => dispatch({ type: 'toggleRequestType', value })}
@@ -38,6 +39,7 @@ export default function StepRequest({ state, dispatch }: Props) {
       >
         <ChipGroup
           ariaLabel="محصول هدف"
+          columns={4}
           options={PRODUCTS.map((p) => ({ value: p, label: p }))}
           value={state.product}
           onChange={(product) => dispatch({ type: 'selectProduct', product })}

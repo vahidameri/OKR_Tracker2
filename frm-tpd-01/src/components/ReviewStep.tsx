@@ -12,6 +12,7 @@ import {
 } from '../state';
 import { computeScore } from '../lib/scoring';
 import { openPrintDialog } from '../lib/print';
+import ScoreRing from './ScoreRing';
 import { toFaDigits, todayJalaliLabel } from '../lib/jalali';
 
 interface Props {
@@ -38,15 +39,7 @@ export default function ReviewStep({ state }: Props) {
       title="مرور و دریافت سند"
       subtitle="پیش از دریافت PDF، خلاصهٔ سند و امتیاز آمادگی را ببینید"
     >
-      <div className="score-box">
-        <div
-          className={`score-number ${score.total >= 70 ? 'good' : 'bad'}`}
-          aria-label={`امتیاز آمادگی: ${score.total} از ۱۰۰`}
-        >
-          {toFaDigits(score.total)}
-        </div>
-        <div className="score-caption">امتیاز آمادگی از {toFaDigits(100)}</div>
-      </div>
+      <ScoreRing score={score.total} />
 
       {/* یادداشت موقت — تا زمانی که نمره‌دهی محتوا‌محور اضافه شود */}
       <p className="score-note">

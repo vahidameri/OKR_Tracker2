@@ -86,6 +86,7 @@ export default function StepBug({ state, dispatch }: Props) {
       >
         <ChipGroup
           ariaLabel="شدت پیشنهادی"
+          columns={3}
           options={SEVERITIES}
           value={state.bugSeverity}
           onChange={(bugSeverity) =>

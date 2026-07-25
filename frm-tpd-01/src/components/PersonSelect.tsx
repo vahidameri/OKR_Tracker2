@@ -19,6 +19,11 @@ const OTHER_OPTION: Person = {
 /** دراپ‌داون سفارشی انتخاب شخص با جست‌وجوی تایپی و ناوبری کیبورد */
 export default function PersonSelect({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
+  /** ارتفاع و جهت پنل بر اساس فضای واقعی صفحه محاسبه می‌شود */
+  const [panel, setPanel] = useState<{ maxHeight: number; flip: boolean }>({
+    maxHeight: 300,
+    flip: false,
+  });
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -52,12 +57,28 @@ export default function PersonSelect({ value, onChange }: Props) {
   }, [open]);
 
   useEffect(() => {
-    if (open) {
-      setQuery('');
-      setActiveIndex(0);
-      // فوکوس روی جعبهٔ جست‌وجو پس از بازشدن
-      requestAnimationFrame(() => searchRef.current?.focus());
-    }
+    if (!open) return;
+    setQuery('');
+    setActiveIndex(0);
+    // فوکوس روی جعبهٔ جست‌وجو پس از بازشدن
+    requestAnimationFrame(() => searchRef.current?.focus());
+
+    // جای پنل را با فضای موجود تطبیق بده تا فهرست نصفه بریده نشود
+    const measure = () => {
+      const rect = rootRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const below = window.innerHeight - rect.bottom - 24;
+      const above = rect.top - 24;
+      const flip = below < 240 && above > below;
+      setPanel({ maxHeight: Math.max(200, Math.floor(flip ? above : below)), flip });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    window.addEventListener('scroll', measure, true);
+    return () => {
+      window.removeEventListener('resize', measure);
+      window.removeEventListener('scroll', measure, true);
+    };
   }, [open]);
 
   const pick = (p: Person) => {
@@ -107,7 +128,10 @@ export default function PersonSelect({ value, onChange }: Props) {
       </button>
 
       {open && (
-        <div className="person-panel">
+        <div
+          className={`person-panel${panel.flip ? ' flip' : ''}`}
+          style={{ maxHeight: panel.maxHeight }}
+        >
           <input
             ref={searchRef}
             className="person-search"

@@ -12,6 +12,8 @@ interface Props {
   /** چند مورد باید همیشه بماند (دکمهٔ حذف زیر این تعداد غیرفعال می‌شود) */
   minItems?: number;
   multiline?: boolean;
+  /** حداقل طول هر مورد */
+  minChars: number;
 }
 
 /** فهرست ورودی‌های قابل کم و زیاد کردن — برای معیارها، خارج از دامنه و سنجه‌ها */
@@ -24,6 +26,7 @@ export default function RepeatableList({
   itemName,
   minItems = 1,
   multiline = false,
+  minChars,
 }: Props) {
   return (
     <div className="repeat-list">
@@ -65,6 +68,12 @@ export default function RepeatableList({
               }
             />
           )}
+          <span
+            className={`repeat-state${
+              value.trim().length >= minChars ? ' ok' : value.trim() ? ' short' : ''
+            }`}
+            aria-hidden
+          />
           <button
             type="button"
             className="repeat-remove"
@@ -77,13 +86,18 @@ export default function RepeatableList({
           </button>
         </div>
       ))}
-      <button
-        type="button"
-        className="btn subtle repeat-add"
-        onClick={() => dispatch({ type: 'listAdd', key: listKey })}
-      >
-        + {addLabel}
-      </button>
+      <div className="repeat-foot">
+        <button
+          type="button"
+          className="btn subtle repeat-add"
+          onClick={() => dispatch({ type: 'listAdd', key: listKey })}
+        >
+          + {addLabel}
+        </button>
+        <span className="repeat-hint">
+          هر {itemName} دست‌کم {toFaDigits(minChars)} کاراکتر
+        </span>
+      </div>
     </div>
   );
 }

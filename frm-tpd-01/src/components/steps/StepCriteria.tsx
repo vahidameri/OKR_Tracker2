@@ -3,6 +3,7 @@ import Field from '../Field';
 import RepeatableList from '../RepeatableList';
 import type { Action, FormState } from '../../state';
 import { disabledReason, fieldEnabled, fieldRequired } from '../../state';
+import { MIN_CHARS } from '../../lib/limits';
 
 interface Props {
   state: FormState;
@@ -28,6 +29,7 @@ export default function StepCriteria({ state, dispatch }: Props) {
           items={state.criteria}
           dispatch={dispatch}
           itemName="معیار"
+          minChars={MIN_CHARS.criterion}
           addLabel="افزودن معیار"
           multiline
           placeholders={[
@@ -51,6 +53,7 @@ export default function StepCriteria({ state, dispatch }: Props) {
           items={state.outOfScope}
           dispatch={dispatch}
           itemName="مورد"
+          minChars={MIN_CHARS.scopeItem}
           addLabel="افزودن مورد"
           placeholders={[
             'نمونه: بازطراحی ظاهر صفحهٔ تکالیف',
@@ -73,6 +76,7 @@ export default function StepCriteria({ state, dispatch }: Props) {
           items={state.successMetrics}
           dispatch={dispatch}
           itemName="سنجه"
+          minChars={MIN_CHARS.metric}
           addLabel="افزودن سنجه"
           placeholders={[
             'نمونه: میانگین زمان ارسال تکلیف زیر ۲ ثانیه در داشبورد',

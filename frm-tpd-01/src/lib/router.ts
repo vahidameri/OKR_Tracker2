@@ -3,8 +3,11 @@
 
 import type { StepId } from '../state';
 
+/** آدرس صفحهٔ آغازین — پیش از شروع ویزارد */
+export const LANDING_PATH = '/';
+
 export const STEP_PATHS: Record<StepId, string> = {
-  start: '/start',
+  title: '/title',
   request: '/request',
   problem: '/problem',
   criteria: '/criteria',
@@ -21,6 +24,16 @@ const PATH_TO_STEP = Object.fromEntries(
 export function stepFromPath(pathname: string): StepId | null {
   const clean = pathname.replace(/\/+$/, '') || '/';
   return PATH_TO_STEP[clean] ?? null;
+}
+
+export function pushLanding() {
+  if (window.location.pathname !== LANDING_PATH) {
+    window.history.pushState({ landing: true }, '', LANDING_PATH);
+  }
+}
+
+export function replaceLanding() {
+  window.history.replaceState({ landing: true }, '', LANDING_PATH);
 }
 
 export function pushStep(step: StepId) {

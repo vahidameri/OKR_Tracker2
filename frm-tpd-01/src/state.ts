@@ -364,7 +364,7 @@ export function priorityLabel(p: Priority | null): string {
 // ---------- مراحل ویزارد (پویا بر اساس نوع درخواست) ----------
 
 export type StepId =
-  | 'start'
+  | 'title'
   | 'request'
   | 'problem'
   | 'criteria'
@@ -374,7 +374,7 @@ export type StepId =
 
 /** فهرست مراحل قابل‌نمایش؛ مرحلهٔ باگ فقط وقتی «باگ» بین نوع‌ها باشد */
 export function visibleSteps(state: FormState): StepId[] {
-  const steps: StepId[] = ['start', 'request', 'problem'];
+  const steps: StepId[] = ['title', 'request', 'problem'];
   if (criteriaStepNeeded(state)) steps.push('criteria');
   if (isBug(state)) steps.push('bug');
   steps.push('priority', 'review');

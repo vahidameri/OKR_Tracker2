@@ -2,9 +2,17 @@ import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { initialState, reducer, visibleSteps } from '../state';
 import type { StepId } from '../state';
 import { stepMissing } from '../lib/validate';
-import { pushStep, replaceStep, stepFromPath } from '../lib/router';
+import {
+  LANDING_PATH,
+  pushLanding,
+  pushStep,
+  replaceLanding,
+  replaceStep,
+  stepFromPath,
+} from '../lib/router';
 import { toFaDigits } from '../lib/jalali';
-import StepStart from './steps/StepStart';
+import StepTitle from './steps/StepTitle';
+import Landing from './Landing';
 import StepRequest from './steps/StepRequest';
 import StepProblem from './steps/StepProblem';
 import StepCriteria from './steps/StepCriteria';
@@ -17,7 +25,7 @@ import { openPrintDialog } from '../lib/print';
 
 /** نام کوتاه هر مرحله برای نوار پیشرفت */
 const STEP_NAMES: Record<StepId, string> = {
-  start: 'نوع سند',
+  title: 'عنوان و درخواست‌دهنده',
   request: 'نوع و مسیر',
   problem: 'شرح مسئله',
   criteria: 'معیارها و دامنه',
@@ -29,6 +37,8 @@ const STEP_NAMES: Record<StepId, string> = {
 export default function Wizard() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [stepIndex, setStepIndex] = useState(0);
+  /** تا وقتی false است، صفحهٔ آغازین نمایش داده می‌شود و ویزارد شروع نشده */
+  const [started, setStarted] = useState(false);
 
   const steps = useMemo(() => visibleSteps(state), [state]);
   // اگر مرحلهٔ باگ حذف شد و index از انتها گذشت، به آخرین مرحله برگرد
@@ -53,23 +63,36 @@ export default function Wizard() {
 
   const goPrev = () => {
     if (index > 0) goTo(index - 1);
+    // از مرحلهٔ ۱ به صفحهٔ آغازین برمی‌گردیم
+    else {
+      setStarted(false);
+      pushLanding();
+    }
   };
 
-  // مرحلهٔ اول: آدرس فعلی را بخوان؛ آدرس ناشناخته به مرحلهٔ اول برمی‌گردد.
-  // ورود مستقیم به مرحلهٔ میانی معتبر نیست چون داده‌ای در حافظه نیست.
+  const start = () => {
+    setStarted(true);
+    setStepIndex(0);
+    pushStep(steps[0]);
+  };
+
+  // هر بار که اپ باز می‌شود از صفحهٔ آغازین شروع می‌کند؛ ورود مستقیم به یک
+  // مرحله معتبر نیست چون هیچ داده‌ای بین بارگذاری‌ها نگه داشته نمی‌شود.
   useEffect(() => {
-    const fromUrl = stepFromPath(window.location.pathname);
-    if (fromUrl !== 'start') replaceStep('start');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    replaceLanding();
   }, []);
 
-  // دکمهٔ back مرورگر باید مرحله را عقب ببرد
+  // دکمهٔ back مرورگر: بین مراحل و صفحهٔ آغازین عقب می‌رود
   useEffect(() => {
     const onPop = () => {
+      if (window.location.pathname === LANDING_PATH) {
+        setStarted(false);
+        return;
+      }
       const step = stepFromPath(window.location.pathname);
       const target = step ? steps.indexOf(step) : -1;
-      if (target >= 0) setStepIndex(target);
-      else setStepIndex(0);
+      setStarted(true);
+      setStepIndex(target >= 0 ? target : 0);
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
@@ -77,13 +100,14 @@ export default function Wizard() {
 
   // اگر فهرست مراحل عوض شد (افزودن/حذف مرحلهٔ باگ)، آدرس را هم‌گام کن
   useEffect(() => {
-    replaceStep(steps[index]);
-  }, [steps, index]);
+    if (started) replaceStep(steps[index]);
+  }, [started, steps, index]);
 
   // Enter = مرحلهٔ بعد (فقط وقتی مرحله کامل است)؛ داخل textarea نه
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Enter' || e.defaultPrevented || isLast || !canAdvance) return;
+      if (!started) return;
       const target = e.target as HTMLElement | null;
       if (target && target.tagName === 'TEXTAREA') return;
       setStepIndex((i) => {
@@ -94,18 +118,29 @@ export default function Wizard() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [canAdvance, isLast, steps]);
+  }, [canAdvance, isLast, started, steps]);
 
   // با تعویض مرحله، به بالای صفحه برگرد
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [index]);
+  }, [index, started]);
 
   /** اتمام فرآیند: تا انتهای سند اسکرول کن، بعد پنجرهٔ چاپ را باز کن */
   const finish = () => {
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     window.setTimeout(() => openPrintDialog(state.title), 600);
   };
+
+  if (!started) {
+    return (
+      <>
+        <div id="app-root" className="app app-landing">
+          <Landing state={state} dispatch={dispatch} onStart={start} />
+        </div>
+        <PrintDocument state={state} />
+      </>
+    );
+  }
 
   return (
     <>
@@ -150,7 +185,7 @@ export default function Wizard() {
         <main className="card">
           {/* key باعث اجرای انیمیشن fade+slide هنگام تعویض مرحله می‌شود */}
           <div className="step-container" key={current}>
-            {current === 'start' && <StepStart state={state} dispatch={dispatch} />}
+            {current === 'title' && <StepTitle state={state} dispatch={dispatch} />}
             {current === 'request' && <StepRequest state={state} dispatch={dispatch} />}
             {current === 'problem' && <StepProblem state={state} dispatch={dispatch} />}
             {current === 'criteria' && <StepCriteria state={state} dispatch={dispatch} />}
@@ -166,9 +201,8 @@ export default function Wizard() {
               type="button"
               className="btn ghost"
               onClick={goPrev}
-              disabled={index === 0}
             >
-              → قبلی
+              → {index === 0 ? 'بازگشت' : 'قبلی'}
             </button>
 
             <span className="navbar-center">
@@ -193,7 +227,7 @@ export default function Wizard() {
                 onClick={goNext}
                 disabled={!canAdvance}
               >
-                {index === 0 ? 'شروع فرآیند ←' : 'بعدی ←'}
+                بعدی ←
               </button>
             )}
           </div>

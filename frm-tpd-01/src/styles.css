@@ -132,6 +132,85 @@ textarea {
   margin: 0 0 18px;
 }
 
+/* ---------- صفحهٔ آغازین ---------- */
+.app-landing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 48px 24px;
+}
+
+.landing {
+  width: 100%;
+  max-width: 660px;
+  background: #fff;
+  border-radius: 26px;
+  box-shadow: 0 1px 2px rgba(14, 122, 87, 0.05),
+    0 24px 70px rgba(14, 122, 87, 0.12);
+  overflow: hidden;
+  animation: step-in 0.4s ease both;
+}
+
+.landing-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 42px 32px 32px;
+  background: linear-gradient(180deg, var(--brand-50) 0%, #ffffff 100%);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.landing-title {
+  margin: 14px 0 0;
+  font-size: 27px;
+  font-weight: 800;
+  color: var(--charcoal);
+}
+
+.landing-sub {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.landing-meta {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  color: #9ab5a9;
+  letter-spacing: 0.02em;
+}
+
+.landing-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 32px clamp(24px, 5vw, 44px) 38px;
+}
+
+.landing-lead {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--charcoal);
+}
+
+.landing-start {
+  align-self: stretch;
+  margin-top: 6px;
+  padding: 15px 32px;
+  font-size: 16px;
+}
+
+.landing-note {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 2;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
 /* سربرگ: نشان + عنوان */
 .brand {
   display: flex;
@@ -777,6 +856,21 @@ textarea {
   animation: step-in 0.18s ease both;
 }
 
+/* شمارندهٔ کاراکتر */
+.char-count {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: #9ab5a9;
+}
+
+.char-count.short {
+  color: var(--accent-deep);
+}
+
+.char-count.ok {
+  color: var(--tone-low);
+}
+
 /* ---------- فهرست‌های قابل کم و زیاد کردن ---------- */
 .repeat-list {
   display: flex;
@@ -786,9 +880,40 @@ textarea {
 
 .repeat-row {
   display: grid;
-  grid-template-columns: 26px 1fr 32px;
+  grid-template-columns: 26px 1fr 10px 32px;
   align-items: start;
   gap: 10px;
+}
+
+/* نقطهٔ وضعیت هر ردیف: خالی، کوتاه، یا کافی */
+.repeat-state {
+  width: 8px;
+  height: 8px;
+  margin-top: 18px;
+  border-radius: 50%;
+  background: var(--line);
+  transition: background 0.2s ease;
+}
+
+.repeat-state.short {
+  background: var(--accent);
+}
+
+.repeat-state.ok {
+  background: var(--tone-low);
+}
+
+.repeat-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-right: 36px;
+}
+
+.repeat-hint {
+  font-size: 11.5px;
+  color: #9ab5a9;
 }
 
 .repeat-index {
@@ -828,10 +953,8 @@ textarea {
 }
 
 .repeat-add {
-  align-self: flex-start;
+  flex: none;
   margin-top: 2px;
-  /* هم‌تراز با ورودی‌ها، نه با ستون شماره */
-  margin-right: 36px;
 }
 
 /* ---------- مسیر سریع ---------- */

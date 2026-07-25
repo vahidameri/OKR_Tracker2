@@ -1,5 +1,6 @@
 import StepShell from '../StepShell';
 import ChipGroup from '../ChipGroup';
+import ChipMultiGroup from '../ChipMultiGroup';
 import Field from '../Field';
 import type { Action, FormState } from '../../state';
 import { REQUEST_TYPES } from '../../state';
@@ -20,20 +21,25 @@ export default function StepType({ state, dispatch }: Props) {
 
   return (
     <StepShell title="نوع و مشخصات">
-      <Field label="نوع درخواست">
-        <ChipGroup
+      <Field
+        number={1}
+        label="نوع درخواست"
+        hint="می‌توانید بیش از یک نوع را انتخاب کنید"
+        help="اگر درخواست شما بیش از یک ماهیت دارد، همهٔ موارد مرتبط را انتخاب کنید — مثلاً کاری که هم یک باگ را رفع می‌کند و هم قابلیتی اضافه می‌کند. اگر «باگ» را انتخاب کنید، یک مرحلهٔ اضافه برای جزئیات فنی باگ به فرم اضافه می‌شود."
+      >
+        <ChipMultiGroup
           ariaLabel="نوع درخواست"
           options={REQUEST_TYPES}
-          value={state.requestType}
-          onChange={(requestType) =>
-            dispatch({ type: 'patch', patch: { requestType } })
-          }
+          values={state.requestTypes}
+          onToggle={(value) => dispatch({ type: 'toggleRequestType', value })}
         />
       </Field>
 
       <Field
+        number={2}
         label="عنوان درخواست"
         hint={`فعل + موضوع + برای چه کسی — حداکثر ${toFaDigits(MAX_TITLE_WORDS)} کلمه`}
+        help="یک جملهٔ کوتاه که به‌تنهایی معنا بدهد؛ همین متن تیتر تسک می‌شود. به‌جای «مشکل تکالیف» بنویسید «کاهش زمان ارسال تکلیف برای معلمان کلاس‌های بزرگ». شمارندهٔ کلمات فقط یادآوری است و جلوی ادامه را نمی‌گیرد."
       >
         <input
           type="text"
@@ -52,7 +58,12 @@ export default function StepType({ state, dispatch }: Props) {
         </p>
       </Field>
 
-      <Field label="محصول هدف" hint="بر اساس نام شما پیش‌انتخاب شده؛ قابل تغییر است">
+      <Field
+        number={3}
+        label="محصول هدف"
+        hint="بر اساس نام شما پیش‌انتخاب شده؛ قابل تغییر است"
+        help="محصولی که این کار روی آن انجام می‌شود. این انتخاب تعیین می‌کند درخواست به کدام تیم و کدام لید ارجاع شود. اگر مطمئن نیستید یا به چند محصول مربوط است، «سایر» را بزنید تا مدیر برنامه تعیین کند."
+      >
         <ChipGroup
           ariaLabel="محصول هدف"
           options={PRODUCTS.map((p) => ({ value: p, label: p }))}

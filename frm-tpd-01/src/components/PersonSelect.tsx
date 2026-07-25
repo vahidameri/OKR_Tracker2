@@ -1,11 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Person } from '../data/people';
-import { PEOPLE } from '../data/people';
+import { PEOPLE_SORTED } from '../data/people';
+import { OTHER_PERSON_ID } from '../state';
 
 interface Props {
   value: string | null;
   onChange: (id: string) => void;
 }
+
+/** گزینهٔ ثابت انتهای فهرست برای کسانی که در فهرست نیستند */
+const OTHER_OPTION: Person = {
+  id: OTHER_PERSON_ID,
+  name: 'نام من در فهرست نیست',
+  role: 'نام و سمت را خودم وارد می‌کنم',
+};
 
 /** دراپ‌داون سفارشی انتخاب شخص با جست‌وجوی تایپی و ناوبری کیبورد */
 export default function PersonSelect({ value, onChange }: Props) {
@@ -15,14 +23,19 @@ export default function PersonSelect({ value, onChange }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const selected = PEOPLE.find((p) => p.id === value) ?? null;
+  const selected =
+    value === OTHER_PERSON_ID
+      ? OTHER_OPTION
+      : (PEOPLE_SORTED.find((p) => p.id === value) ?? null);
 
   const filtered = useMemo(() => {
     const q = query.trim();
-    if (!q) return PEOPLE;
-    return PEOPLE.filter(
+    // گزینهٔ «در فهرست نیست» همیشه در انتها می‌ماند
+    if (!q) return [...PEOPLE_SORTED, OTHER_OPTION];
+    const matches = PEOPLE_SORTED.filter(
       (p) => p.name.includes(q) || p.role.includes(q),
     );
+    return [...matches, OTHER_OPTION];
   }, [query]);
 
   // بستن با کلیک بیرون از دراپ‌داون
@@ -107,9 +120,6 @@ export default function PersonSelect({ value, onChange }: Props) {
             onKeyDown={onSearchKeyDown}
           />
           <ul className="person-list" role="listbox">
-            {filtered.length === 0 && (
-              <li className="person-empty">موردی پیدا نشد</li>
-            )}
             {filtered.map((p, i) => (
               <li key={p.id}>
                 <button
@@ -118,7 +128,7 @@ export default function PersonSelect({ value, onChange }: Props) {
                   aria-selected={p.id === value}
                   className={`person-option${i === activeIndex ? ' active' : ''}${
                     p.id === value ? ' selected' : ''
-                  }`}
+                  }${p.id === OTHER_PERSON_ID ? ' other' : ''}`}
                   onMouseEnter={() => setActiveIndex(i)}
                   onClick={() => pick(p)}
                 >

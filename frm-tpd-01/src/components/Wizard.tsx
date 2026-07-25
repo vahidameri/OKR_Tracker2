@@ -60,6 +60,11 @@ export default function Wizard() {
     window.scrollTo({ top: 0 });
   }, [index]);
 
+  // به‌محض اینکه کاربر چیزی را تغییر داد، پیام خطای قبلی پاک شود
+  useEffect(() => {
+    setError(null);
+  }, [state]);
+
   return (
     <>
       <div id="app-root" className="app">

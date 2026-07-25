@@ -1,17 +1,22 @@
 // اعتبارسنجی نرم هر مرحله — پیام‌ها مؤدبانه و مشخص
 
 import type { FormState, StepId } from '../state';
-import { isCriterionComplete } from '../state';
+import { OTHER_PERSON_ID, criteriaLines } from '../state';
 
 /** فهرست چیزهایی که برای عبور از این مرحله کم است (خالی = معتبر) */
 export function stepMissing(step: StepId, state: FormState): string[] {
   const missing: string[] = [];
   switch (step) {
     case 'person':
-      if (!state.personId) missing.push('انتخاب نام درخواست‌دهنده');
+      if (!state.personId) {
+        missing.push('انتخاب نام درخواست‌دهنده');
+      } else if (state.personId === OTHER_PERSON_ID) {
+        if (!state.customName.trim()) missing.push('نام و نام خانوادگی');
+        if (!state.customRole.trim()) missing.push('سمت سازمانی');
+      }
       break;
     case 'type':
-      if (!state.requestType) missing.push('نوع درخواست');
+      if (state.requestTypes.length === 0) missing.push('دست‌کم یک نوع درخواست');
       if (!state.title.trim()) missing.push('عنوان درخواست');
       if (!state.product) missing.push('محصول هدف');
       break;
@@ -20,8 +25,8 @@ export function stepMissing(step: StepId, state: FormState): string[] {
       if (!state.desiredState.trim()) missing.push('وضعیت مطلوب');
       break;
     case 'criteria':
-      if (!state.criteria.some(isCriterionComplete))
-        missing.push('دست‌کم یک معیار پذیرش کامل (هر سه بخش پر)');
+      if (criteriaLines(state.criteria).length === 0)
+        missing.push('دست‌کم یک معیار پذیرش');
       break;
     case 'bug':
       if (!state.bugSteps.trim()) missing.push('مراحل بازتولید');

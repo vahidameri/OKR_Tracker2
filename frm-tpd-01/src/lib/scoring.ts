@@ -1,7 +1,8 @@
 // امتیاز آمادگی سند از ۱۰۰ + فهرست کمبودها برای جعبهٔ «برای بهترشدن سند»
+// توجه: این محاسبه فعلاً فقط بر اساس تکمیل‌بودن فیلدهاست و کیفیت محتوا را نمی‌سنجد.
 
 import type { FormState } from '../state';
-import { isCriterionComplete } from '../state';
+import { criteriaLines, isBug } from '../state';
 
 export interface ScoreResult {
   total: number;
@@ -9,6 +10,7 @@ export interface ScoreResult {
 }
 
 const MIN_PROBLEM_CHARS = 40;
+const MIN_CRITERIA_CHARS = 60;
 
 export function computeScore(state: FormState): ScoreResult {
   let total = 0;
@@ -29,15 +31,16 @@ export function computeScore(state: FormState): ScoreResult {
   if (state.desiredState.trim()) total += 7;
   else missing.push('«وضعیت مطلوب» خالی است.');
 
-  // معیارهای پذیرش — ۲۵ امتیاز (دو معیار کامل = کامل؛ یکی = نصف)
-  const completeCriteria = state.criteria.filter(isCriterionComplete).length;
-  if (completeCriteria >= 2) {
+  // معیارهای پذیرش — ۲۵ امتیاز (دو معیار یا بیشتر با شرح کافی = کامل)
+  const lines = criteriaLines(state.criteria);
+  const criteriaLen = state.criteria.trim().length;
+  if (lines.length >= 2 && criteriaLen >= MIN_CRITERIA_CHARS) {
     total += 25;
-  } else if (completeCriteria === 1) {
+  } else if (lines.length >= 1) {
     total += 13;
-    missing.push('یک معیار پذیرش کاملِ دیگر (هر سه بخش) اضافه کنید.');
+    missing.push('دست‌کم دو معیار پذیرش بنویسید، هر کدام در یک خط جدا.');
   } else {
-    missing.push('دست‌کم یک معیار پذیرش کامل (با آنکه / وقتی / آنگاه) بنویسید.');
+    missing.push('هیچ معیار پذیرشی نوشته نشده است.');
   }
 
   // ارزش کسب‌وکاری — ۲۰ امتیاز
@@ -56,7 +59,7 @@ export function computeScore(state: FormState): ScoreResult {
   }
 
   // اطلاعات فنی / وابستگی — ۱۵ امتیاز
-  if (state.requestType === 'bug') {
+  if (isBug(state)) {
     if (state.bugEnv.trim()) total += 5;
     else missing.push('«محیط، نسخه و دستگاه» باگ را مشخص کنید.');
     if (state.bugObserved.trim()) total += 5;

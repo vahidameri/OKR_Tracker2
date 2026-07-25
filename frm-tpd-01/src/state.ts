@@ -14,19 +14,19 @@ export type RequestType =
 
 export type Severity = 'high' | 'medium' | 'low';
 export type Priority = 'critical' | 'high' | 'medium' | 'low';
-/** پاسخ پرسش‌های مسیر سریع: «بله» یا «خیر یا نمی‌دانم» */
+/** پاسخ گزاره‌های مسیر سریع: «بله» یا «خیر یا نمی‌دانم» */
 export type YesNo = 'yes' | 'no' | null;
 
-export interface Criterion {
-  id: number;
-  given: string; // با آنکه…
-  when: string; // وقتی…
-  then: string; // آنگاه…
-}
+/** شناسهٔ ویژه برای درخواست‌دهنده‌ای که در فهرست نیست */
+export const OTHER_PERSON_ID = '__other__';
 
 export interface FormState {
   personId: string | null;
-  requestType: RequestType | null;
+  /** نام و سمت دستی — فقط وقتی personId برابر OTHER_PERSON_ID است */
+  customName: string;
+  customRole: string;
+  /** نوع درخواست چندانتخابی است */
+  requestTypes: RequestType[];
   title: string;
   product: Product | null;
   /** آیا کاربر محصول را دستی تغییر داده؟ (برای پیش‌انتخاب خودکار) */
@@ -35,7 +35,8 @@ export interface FormState {
   currentState: string;
   desiredState: string;
   businessValue: string;
-  criteria: Criterion[];
+  /** معیارهای پذیرش به‌صورت متن آزاد، هر معیار در یک خط */
+  criteria: string;
   outOfScope1: string;
   outOfScope2: string;
   successMetric: string;
@@ -50,11 +51,11 @@ export interface FormState {
   dependencies: string;
 }
 
-let nextCriterionId = 3;
-
 export const initialState: FormState = {
   personId: null,
-  requestType: null,
+  customName: '',
+  customRole: '',
+  requestTypes: [],
   title: '',
   product: null,
   productTouched: false,
@@ -62,11 +63,7 @@ export const initialState: FormState = {
   currentState: '',
   desiredState: '',
   businessValue: '',
-  // دو کارت خالی پیش‌فرض
-  criteria: [
-    { id: 1, given: '', when: '', then: '' },
-    { id: 2, given: '', when: '', then: '' },
-  ],
+  criteria: '',
   outOfScope1: '',
   outOfScope2: '',
   successMetric: '',
@@ -85,15 +82,8 @@ export type Action =
   | { type: 'patch'; patch: Partial<FormState> }
   | { type: 'selectPerson'; id: string }
   | { type: 'selectProduct'; product: Product }
-  | { type: 'setFastTrack'; index: number; value: YesNo }
-  | { type: 'addCriterion' }
-  | { type: 'removeCriterion'; id: number }
-  | {
-      type: 'updateCriterion';
-      id: number;
-      field: 'given' | 'when' | 'then';
-      value: string;
-    };
+  | { type: 'toggleRequestType'; value: RequestType }
+  | { type: 'setFastTrack'; index: number; value: YesNo };
 
 export function reducer(state: FormState, action: Action): FormState {
   switch (action.type) {
@@ -110,47 +100,49 @@ export function reducer(state: FormState, action: Action): FormState {
     }
     case 'selectProduct':
       return { ...state, product: action.product, productTouched: true };
+    case 'toggleRequestType': {
+      const has = state.requestTypes.includes(action.value);
+      return {
+        ...state,
+        requestTypes: has
+          ? state.requestTypes.filter((t) => t !== action.value)
+          : [...state.requestTypes, action.value],
+      };
+    }
     case 'setFastTrack': {
       const fastTrack = [...state.fastTrack] as FormState['fastTrack'];
       fastTrack[action.index] = action.value;
       return { ...state, fastTrack };
     }
-    case 'addCriterion':
-      return {
-        ...state,
-        criteria: [
-          ...state.criteria,
-          { id: nextCriterionId++, given: '', when: '', then: '' },
-        ],
-      };
-    case 'removeCriterion':
-      return {
-        ...state,
-        criteria: state.criteria.filter((c) => c.id !== action.id),
-      };
-    case 'updateCriterion':
-      return {
-        ...state,
-        criteria: state.criteria.map((c) =>
-          c.id === action.id ? { ...c, [action.field]: action.value } : c,
-        ),
-      };
   }
 }
 
-/** آیا هر سه بخش معیار پر شده است؟ */
-export function isCriterionComplete(c: Criterion): boolean {
-  return !!(c.given.trim() && c.when.trim() && c.then.trim());
+/** آیا این درخواست از نوع باگ است؟ */
+export function isBug(state: FormState): boolean {
+  return state.requestTypes.includes('bug');
 }
 
-/** جملهٔ کامل معیار پذیرش */
-export function criterionSentence(c: Criterion): string {
-  return `با آنکه ${c.given.trim()}، وقتی ${c.when.trim()}، آنگاه ${c.then.trim()}.`;
+/** خطوط غیرخالی معیارهای پذیرش */
+export function criteriaLines(criteria: string): string[] {
+  return criteria
+    .split('\n')
+    .map((line) => line.replace(/^\s*[-•*]\s*/, '').trim())
+    .filter(Boolean);
 }
 
 /** آیا درخواست واجد شرایط مسیر سریع است؟ (هر چهار پاسخ «بله») */
 export function isFastTrack(state: FormState): boolean {
   return state.fastTrack.every((a) => a === 'yes');
+}
+
+/** نام و سمت درخواست‌دهنده، چه از فهرست چه دستی */
+export function requesterInfo(state: FormState): { name: string; role: string } | null {
+  if (state.personId === OTHER_PERSON_ID) {
+    if (!state.customName.trim()) return null;
+    return { name: state.customName.trim(), role: state.customRole.trim() };
+  }
+  const person = findPerson(state.personId);
+  return person ? { name: person.name, role: person.role } : null;
 }
 
 // ---------- برچسب‌های ثابت UI و سند ----------
@@ -176,21 +168,25 @@ export const SEVERITIES: { value: Severity; label: string; hint: string }[] = [
 ];
 
 export const PRIORITIES: { value: Priority; label: string; hint: string }[] = [
-  { value: 'critical', label: 'بحرانی', hint: 'مانع جدی کار جاری' },
-  { value: 'high', label: 'بالا', hint: 'اثر مستقیم بر OKR' },
-  { value: 'medium', label: 'متوسط', hint: 'بدون قید زمانی سخت' },
-  { value: 'low', label: 'پایین', hint: 'هر زمان ظرفیت بود' },
+  { value: 'critical', label: 'بحرانی', hint: 'کار جاری متوقف شده و راه دور زدنی ندارد' },
+  { value: 'high', label: 'بالا', hint: 'مستقیماً روی یکی از OKRهای فصل جاری اثر دارد' },
+  { value: 'medium', label: 'متوسط', hint: 'لازم است، اما تاریخ الزام‌آور ندارد' },
+  { value: 'low', label: 'پایین', hint: 'بهبود مطلوب؛ هر زمان ظرفیت آزاد شد' },
 ];
 
+/** گزاره‌های مسیر سریع — همه مثبت نوشته شده‌اند تا «بله» همیشه یک معنا بدهد */
 export const FAST_TRACK_QUESTIONS = [
-  'کل کار احتمالاً کمتر از ۴ ساعت است؟',
-  'به تیم دیگری وابسته نیست؟',
-  'تغییری در معماری، پایگاه داده یا تجربهٔ کاربری ایجاد نمی‌کند؟',
-  'به تصمیم جدید محصولی نیاز ندارد؟',
+  'برآورد شما از کل کار — تحلیل، پیاده‌سازی و تست — کمتر از ۴ ساعت است.',
+  'انجام آن فقط به تیم فناوری و محصول نیاز دارد و منتظر تیم دیگری نمی‌ماند.',
+  'معماری، ساختار پایگاه داده و جریان تجربهٔ کاربری را تغییر نمی‌دهد.',
+  'تکلیف محصولی آن روشن است و به تصمیم جدیدی از مدیر محصول نیاز ندارد.',
 ];
 
-export function requestTypeLabel(t: RequestType | null): string {
-  return REQUEST_TYPES.find((r) => r.value === t)?.label ?? '—';
+export function requestTypesLabel(types: RequestType[]): string {
+  if (types.length === 0) return '—';
+  return types
+    .map((t) => REQUEST_TYPES.find((r) => r.value === t)?.label ?? t)
+    .join(' · ');
 }
 
 export function severityLabel(s: Severity | null): string {
@@ -214,10 +210,10 @@ export type StepId =
   | 'schedule'
   | 'review';
 
-/** فهرست مراحل قابل‌نمایش؛ مرحلهٔ باگ فقط وقتی نوع = باگ */
+/** فهرست مراحل قابل‌نمایش؛ مرحلهٔ باگ فقط وقتی «باگ» بین نوع‌ها باشد */
 export function visibleSteps(state: FormState): StepId[] {
   const steps: StepId[] = ['person', 'type', 'problem', 'criteria'];
-  if (state.requestType === 'bug') steps.push('bug');
+  if (isBug(state)) steps.push('bug');
   steps.push('schedule', 'review');
   return steps;
 }

@@ -40,3 +40,10 @@ export const PEOPLE: Person[] = [
 export function findPerson(id: string | null): Person | undefined {
   return PEOPLE.find((p) => p.id === id);
 }
+
+/** فهرست افراد مرتب‌شده بر اساس الفبای فارسی (ترتیب فایل بالا دست‌نخورده می‌ماند) */
+const faCollator = new Intl.Collator('fa');
+
+export const PEOPLE_SORTED: Person[] = [...PEOPLE].sort((a, b) =>
+  faCollator.compare(a.name, b.name),
+);

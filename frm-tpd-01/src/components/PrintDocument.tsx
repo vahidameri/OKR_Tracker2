@@ -1,13 +1,13 @@
 import type { FormState } from '../state';
 import {
-  criterionSentence,
-  isCriterionComplete,
+  criteriaLines,
+  isBug,
   isFastTrack,
   priorityLabel,
-  requestTypeLabel,
+  requestTypesLabel,
+  requesterInfo,
   severityLabel,
 } from '../state';
-import { findPerson } from '../data/people';
 import { computeScore } from '../lib/scoring';
 import { toFaDigits, todayJalaliLabel } from '../lib/jalali';
 
@@ -26,10 +26,10 @@ function Row({ label, value }: { label: string; value: string }) {
 
 /** قالب سند رسمی — فقط در حالت چاپ (@media print) نمایش داده می‌شود */
 export default function PrintDocument({ state }: Props) {
-  const person = findPerson(state.personId);
+  const requester = requesterInfo(state);
   const score = computeScore(state);
   const fastTrack = isFastTrack(state);
-  const completeCriteria = state.criteria.filter(isCriterionComplete);
+  const criteria = criteriaLines(state.criteria);
   const outOfScope = [state.outOfScope1, state.outOfScope2]
     .map((s) => s.trim())
     .filter(Boolean)
@@ -57,8 +57,17 @@ export default function PrintDocument({ state }: Props) {
         <h2 className="doc-section-title">بخش ۱ — مشخصات درخواست</h2>
         <table className="doc-table">
           <tbody>
-            <Row label="درخواست‌دهنده" value={person ? `${person.name} — ${person.role}` : ''} />
-            <Row label="نوع درخواست" value={requestTypeLabel(state.requestType)} />
+            <Row
+              label="درخواست‌دهنده"
+              value={
+                requester
+                  ? requester.role
+                    ? `${requester.name} — ${requester.role}`
+                    : requester.name
+                  : ''
+              }
+            />
+            <Row label="نوع درخواست" value={requestTypesLabel(state.requestTypes)} />
             <Row label="عنوان درخواست" value={state.title} />
             <Row label="محصول هدف" value={state.product ?? ''} />
             <tr>
@@ -94,10 +103,10 @@ export default function PrintDocument({ state }: Props) {
             <tr>
               <th>معیارهای پذیرش</th>
               <td>
-                {completeCriteria.length ? (
+                {criteria.length ? (
                   <ol className="doc-criteria">
-                    {completeCriteria.map((c) => (
-                      <li key={c.id}>{criterionSentence(c)}</li>
+                    {criteria.map((c, i) => (
+                      <li key={i}>{c}</li>
                     ))}
                   </ol>
                 ) : (
@@ -114,7 +123,7 @@ export default function PrintDocument({ state }: Props) {
         </table>
       </section>
 
-      {state.requestType === 'bug' && (
+      {isBug(state) && (
         <section className="doc-section">
           <h2 className="doc-section-title">بخش ۴ — اطلاعات تکمیلی باگ</h2>
           <table className="doc-table">

@@ -1,14 +1,14 @@
 import StepShell from './StepShell';
 import type { FormState } from '../state';
 import {
-  criterionSentence,
-  isCriterionComplete,
+  criteriaLines,
+  isBug,
   isFastTrack,
   priorityLabel,
-  requestTypeLabel,
+  requestTypesLabel,
+  requesterInfo,
   severityLabel,
 } from '../state';
-import { findPerson } from '../data/people';
 import { computeScore } from '../lib/scoring';
 import { toFaDigits, todayJalaliLabel } from '../lib/jalali';
 
@@ -40,8 +40,8 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 
 export default function ReviewStep({ state }: Props) {
   const score = computeScore(state);
-  const person = findPerson(state.personId);
-  const completeCriteria = state.criteria.filter(isCriterionComplete);
+  const requester = requesterInfo(state);
+  const criteria = criteriaLines(state.criteria);
   const fastTrack = isFastTrack(state);
 
   return (
@@ -77,22 +77,27 @@ export default function ReviewStep({ state }: Props) {
       )}
 
       <div className="summary-card">
-        <SummaryRow label="درخواست‌دهنده" value={person ? `${person.name} — ${person.role}` : ''} />
+        <SummaryRow
+          label="درخواست‌دهنده"
+          value={
+            requester
+              ? requester.role
+                ? `${requester.name} — ${requester.role}`
+                : requester.name
+              : ''
+          }
+        />
         <SummaryRow label="تاریخ ثبت" value={todayJalaliLabel()} />
-        <SummaryRow label="نوع درخواست" value={requestTypeLabel(state.requestType)} />
+        <SummaryRow label="نوع درخواست" value={requestTypesLabel(state.requestTypes)} />
         <SummaryRow label="عنوان" value={state.title} />
         <SummaryRow label="محصول هدف" value={state.product ?? ''} />
         <SummaryRow label="صورت‌مسئله" value={state.problem} />
         <SummaryRow label="وضعیت مطلوب" value={state.desiredState} />
         <SummaryRow
           label="معیارهای پذیرش"
-          value={
-            completeCriteria.length
-              ? completeCriteria.map((c, i) => `${toFaDigits(i + 1)}. ${criterionSentence(c)}`).join(' ')
-              : ''
-          }
+          value={criteria.map((c, i) => `${toFaDigits(i + 1)}. ${c}`).join('\n')}
         />
-        {state.requestType === 'bug' && (
+        {isBug(state) && (
           <SummaryRow label="شدت باگ" value={severityLabel(state.bugSeverity)} />
         )}
         <SummaryRow label="اولویت پیشنهادی" value={priorityLabel(state.priority)} />

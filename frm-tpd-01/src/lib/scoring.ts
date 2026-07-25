@@ -47,11 +47,13 @@ export function computeScore(state: FormState): ScoreResult {
     });
   }
 
-  parts.push({
-    weight: 7,
-    ratio: state.desiredState.trim() ? 1 : 0,
-    missing: '«وضعیت مطلوب» خالی است.',
-  });
+  if (fieldEnabled(state, 'desiredState')) {
+    parts.push({
+      weight: 7,
+      ratio: state.desiredState.trim() ? 1 : 0,
+      missing: '«وضعیت مطلوب» خالی است.',
+    });
+  }
 
   if (fieldEnabled(state, 'criteria')) {
     const n = filledItems(state.criteria).length;

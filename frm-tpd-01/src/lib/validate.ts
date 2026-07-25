@@ -1,7 +1,12 @@
 // اعتبارسنجی نرم هر مرحله — پیام‌ها مؤدبانه و مشخص
 
 import type { FormState, StepId } from '../state';
-import { OTHER_PERSON_ID, fieldEnabled, filledItems, triageAnswered } from '../state';
+import {
+  OTHER_PERSON_ID,
+  fieldRequired,
+  filledItems,
+  triageAnswered,
+} from '../state';
 
 /** فهرست چیزهایی که برای عبور از این مرحله کم است (خالی = معتبر) */
 export function stepMissing(step: StepId, state: FormState): string[] {
@@ -24,16 +29,17 @@ export function stepMissing(step: StepId, state: FormState): string[] {
       break;
     case 'problem':
       if (!state.problem.trim()) missing.push('صورت‌مسئله');
-      if (fieldEnabled(state, 'currentState') && !state.currentState.trim())
+      if (fieldRequired(state, 'currentState') && !state.currentState.trim())
         missing.push('وضعیت فعلی');
-      if (!state.desiredState.trim()) missing.push('وضعیت مطلوب');
-      if (fieldEnabled(state, 'businessValue') && !state.businessValue.trim())
+      if (fieldRequired(state, 'desiredState') && !state.desiredState.trim())
+        missing.push('وضعیت مطلوب');
+      if (fieldRequired(state, 'businessValue') && !state.businessValue.trim())
         missing.push('ارزش کسب‌وکاری');
       break;
     case 'criteria':
-      if (fieldEnabled(state, 'criteria') && filledItems(state.criteria).length === 0)
+      if (fieldRequired(state, 'criteria') && filledItems(state.criteria).length === 0)
         missing.push('دست‌کم یک معیار پذیرش');
-      if (fieldEnabled(state, 'outOfScope') && filledItems(state.outOfScope).length === 0)
+      if (fieldRequired(state, 'outOfScope') && filledItems(state.outOfScope).length === 0)
         missing.push('دست‌کم یک مورد خارج از دامنه');
       break;
     case 'bug':

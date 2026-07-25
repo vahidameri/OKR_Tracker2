@@ -1,7 +1,7 @@
 import StepShell from '../StepShell';
 import Field from '../Field';
 import type { Action, FormState } from '../../state';
-import { disabledReason, fieldEnabled } from '../../state';
+import { disabledReason, fieldEnabled, fieldRequired } from '../../state';
 
 interface Props {
   state: FormState;
@@ -48,16 +48,17 @@ export default function StepProblem({ state, dispatch }: Props) {
   return (
     <StepShell title="شرح مسئله">
       {FIELDS.map((f, i) => {
-        // فقط این دو فیلد بسته به نوع درخواست غیرفعال می‌شوند
-        const gated =
-          f.key === 'currentState' || f.key === 'businessValue' ? f.key : null;
+        // صورت‌مسئله همیشه الزامی است؛ بقیه بسته به نوع درخواست تغییر می‌کنند
+        const gated = f.key === 'problem' ? null : f.key;
         const skipped = gated !== null && !fieldEnabled(state, gated);
+        const optional = gated !== null && !skipped && !fieldRequired(state, gated);
         return (
           <Field
             key={f.key}
             number={i + 1}
             label={f.label}
             help={f.help}
+            optional={optional}
             disabled={skipped}
             disabledNote={gated !== null ? disabledReason(state, gated) : undefined}
           >

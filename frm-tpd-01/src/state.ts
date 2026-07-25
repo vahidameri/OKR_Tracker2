@@ -182,9 +182,10 @@ export function triageAnswered(state: FormState): boolean {
   return state.fastTrack.every((a) => a !== null);
 }
 
-/** فیلدهایی که بسته به نوع درخواست و مسیر بررسی ممکن است لازم نباشند */
+/** فیلدهایی که بسته به نوع درخواست و مسیر بررسی، وضعیتشان فرق می‌کند */
 export type GatedField =
   | 'currentState'
+  | 'desiredState'
   | 'businessValue'
   | 'criteria'
   | 'outOfScope'
@@ -193,19 +194,44 @@ export type GatedField =
 
 /**
  * هر نوع درخواست فقط اطلاعاتی را می‌خواهد که واقعاً به آن نیاز دارد.
- * وقتی چند نوع انتخاب شده، اجتماع نیازها ملاک است.
+ * required = باید پر شود، optional = نمایش داده می‌شود ولی اجباری نیست،
+ * هرچه در هیچ‌کدام نباشد غیرفعال می‌شود.
  */
-const TYPE_NEEDS: Record<RequestType, GatedField[]> = {
-  feature: ['currentState', 'businessValue', 'criteria', 'outOfScope', 'successMetrics', 'dependencies'],
-  improvement: ['currentState', 'businessValue', 'criteria', 'outOfScope', 'successMetrics', 'dependencies'],
+const TYPE_FIELDS: Record<
+  RequestType,
+  { required: GatedField[]; optional: GatedField[] }
+> = {
+  feature: {
+    required: ['currentState', 'desiredState', 'businessValue', 'criteria', 'outOfScope'],
+    optional: ['successMetrics', 'dependencies'],
+  },
+  improvement: {
+    required: ['currentState', 'desiredState', 'businessValue', 'criteria', 'outOfScope'],
+    optional: ['successMetrics', 'dependencies'],
+  },
+  other: {
+    required: ['currentState', 'desiredState', 'businessValue', 'criteria', 'outOfScope'],
+    optional: ['successMetrics', 'dependencies'],
+  },
+  tech: {
+    required: ['currentState', 'desiredState', 'businessValue', 'criteria', 'outOfScope'],
+    optional: ['dependencies'],
+  },
   // جزئیات باگ در مرحلهٔ اختصاصی خودش گرفته می‌شود
-  bug: ['currentState', 'criteria', 'dependencies'],
-  tech: ['currentState', 'businessValue', 'criteria', 'outOfScope', 'dependencies'],
-  // خروجی گزارش خودش سند پذیرش است؛ تحلیل دامنه و سنجه معنا ندارد
-  data: ['currentState', 'dependencies'],
+  bug: {
+    required: ['currentState', 'desiredState', 'criteria'],
+    optional: ['dependencies'],
+  },
+  // خروجی گزارش خودش سند پذیرش است؛ شرح وضعیت هم کمک‌کننده است نه الزامی
+  data: {
+    required: [],
+    optional: ['currentState', 'desiredState', 'dependencies'],
+  },
   // هنوز نمی‌دانیم شدنی است، پس معیار پذیرش و سنجه هنوز قابل تعریف نیست
-  feasibility: ['currentState', 'businessValue', 'outOfScope', 'dependencies'],
-  other: ['currentState', 'businessValue', 'criteria', 'outOfScope', 'successMetrics', 'dependencies'],
+  feasibility: {
+    required: ['currentState', 'desiredState', 'businessValue', 'outOfScope'],
+    optional: ['dependencies'],
+  },
 };
 
 /** فیلدهایی که مسیر سریع آنها را غیرضروری می‌کند */
@@ -220,7 +246,18 @@ const FAST_TRACK_SKIPPED: GatedField[] = [
 export function fieldEnabled(state: FormState, field: GatedField): boolean {
   if (isFastTrack(state) && FAST_TRACK_SKIPPED.includes(field)) return false;
   if (state.requestTypes.length === 0) return true;
-  return state.requestTypes.some((t) => TYPE_NEEDS[t].includes(field));
+  return state.requestTypes.some(
+    (t) =>
+      TYPE_FIELDS[t].required.includes(field) ||
+      TYPE_FIELDS[t].optional.includes(field),
+  );
+}
+
+/** آیا پرکردن این فیلد الزامی است؟ (فقط وقتی فعال هم باشد) */
+export function fieldRequired(state: FormState, field: GatedField): boolean {
+  if (!fieldEnabled(state, field)) return false;
+  if (state.requestTypes.length === 0) return true;
+  return state.requestTypes.some((t) => TYPE_FIELDS[t].required.includes(field));
 }
 
 /** توضیح اینکه چرا این فیلد غیرفعال شده است */
@@ -301,10 +338,10 @@ export const PRIORITIES: {
 
 /** گزاره‌های مسیر بررسی — همه مثبت نوشته شده‌اند تا «بله» همیشه یک معنا بدهد */
 export const FAST_TRACK_QUESTIONS = [
-  'برآورد شما از کل کار — تحلیل، پیاده‌سازی و تست — کمتر از ۴ ساعت است.',
-  'انجام آن فقط به تیم فناوری و محصول نیاز دارد و منتظر تیم دیگری نمی‌ماند.',
-  'معماری، ساختار پایگاه داده و جریان تجربهٔ کاربری را تغییر نمی‌دهد.',
-  'تکلیف محصولی آن روشن است و به تصمیم جدیدی از مدیر محصول نیاز ندارد.',
+  'تغییرِ چیزی است که هم‌اکنون وجود دارد؛ چیز تازه‌ای ساخته نمی‌شود.',
+  'تنها به یک تیم نیاز دارد و به کار تیم دیگری وابسته نیست.',
+  'معماری، ساختار پایگاه داده یا جریان تجربهٔ کاربری را تغییر نمی‌دهد.',
+  'تکلیف محصولی آن روشن است و تصمیم تازه‌ای از مدیر محصول نمی‌خواهد.',
 ];
 
 export function requestTypesLabel(types: RequestType[]): string {

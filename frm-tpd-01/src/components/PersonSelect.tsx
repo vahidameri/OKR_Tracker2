@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { Person } from '../data/people';
 import { PEOPLE_SORTED } from '../data/people';
 import { OTHER_PERSON_ID } from '../state';
@@ -16,18 +17,26 @@ const OTHER_OPTION: Person = {
   role: 'نام و سمت را خودم وارد می‌کنم',
 };
 
+/** فاصلهٔ امن از لبهٔ پنجره */
+const EDGE = 12;
+
+interface PanelBox {
+  top: number;
+  left: number;
+  width: number;
+  maxHeight: number;
+}
+
 /** دراپ‌داون سفارشی انتخاب شخص با جست‌وجوی تایپی و ناوبری کیبورد */
 export default function PersonSelect({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
-  /** ارتفاع و جهت پنل بر اساس فضای واقعی صفحه محاسبه می‌شود */
-  const [panel, setPanel] = useState<{ maxHeight: number; flip: boolean }>({
-    maxHeight: 300,
-    flip: false,
-  });
+  const [box, setBox] = useState<PanelBox | null>(null);
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const activeRef = useRef<HTMLButtonElement>(null);
 
   const selected =
     value === OTHER_PERSON_ID
@@ -44,11 +53,46 @@ export default function PersonSelect({ value, onChange }: Props) {
     return [...matches, OTHER_OPTION];
   }, [query]);
 
-  // بستن با کلیک بیرون از دراپ‌داون
+  /**
+   * پنل داخل body رندر می‌شود (portal) و position: fixed دارد.
+   * این لازم است چون انیمیشن مرحله یک transform همانی روی .step-container
+   * باقی می‌گذارد و همان برای عناصر fixed یک containing block می‌سازد —
+   * بدون portal مختصات پنل نسبت به کارت حساب می‌شد، نه نسبت به پنجره.
+   */
+  const measure = useCallback(() => {
+    const rect = rootRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const below = window.innerHeight - rect.bottom - EDGE;
+    const above = rect.top - EDGE;
+    // سمتی که فضای بیشتری دارد انتخاب می‌شود و ارتفاع دقیقاً همان فضاست
+    const flip = above > below;
+    const maxHeight = Math.floor(Math.max(0, flip ? above : below)) - 8;
+    const next: PanelBox = {
+      top: flip ? rect.top - maxHeight - 8 : rect.bottom + 8,
+      left: rect.left,
+      width: rect.width,
+      maxHeight: Math.max(96, maxHeight),
+    };
+    setBox((prev) =>
+      prev &&
+      prev.top === next.top &&
+      prev.left === next.left &&
+      prev.width === next.width &&
+      prev.maxHeight === next.maxHeight
+        ? prev
+        : next,
+    );
+  }, []);
+
+  // بستن با کلیک بیرون از دراپ‌داون یا پنل
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        !rootRef.current?.contains(target) &&
+        !panelRef.current?.contains(target)
+      ) {
         setOpen(false);
       }
     };
@@ -57,29 +101,39 @@ export default function PersonSelect({ value, onChange }: Props) {
   }, [open]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setBox(null);
+      return;
+    }
     setQuery('');
     setActiveIndex(0);
-    // فوکوس روی جعبهٔ جست‌وجو پس از بازشدن
     requestAnimationFrame(() => searchRef.current?.focus());
 
-    // جای پنل را با فضای موجود تطبیق بده تا فهرست نصفه بریده نشود
-    const measure = () => {
-      const rect = rootRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const below = window.innerHeight - rect.bottom - 24;
-      const above = rect.top - 24;
-      const flip = below < 240 && above > below;
-      setPanel({ maxHeight: Math.max(200, Math.floor(flip ? above : below)), flip });
+    /*
+     * موقعیت تریگر می‌تواند پس از بازشدن هم جابه‌جا شود — اسکرول نرم، انیمیشن
+     * مرحله، یا تغییر چیدمان. به‌جای اندازه‌گیری در یک لحظهٔ خاص، تا وقتی پنل
+     * باز است در هر فریم دنبالش می‌کنیم؛ state فقط وقتی عوض می‌شود که عدد
+     * واقعاً تغییر کرده باشد.
+     */
+    let frame = 0;
+    const follow = () => {
+      measure();
+      frame = requestAnimationFrame(follow);
     };
-    measure();
-    window.addEventListener('resize', measure);
-    window.addEventListener('scroll', measure, true);
-    return () => {
-      window.removeEventListener('resize', measure);
-      window.removeEventListener('scroll', measure, true);
-    };
-  }, [open]);
+    follow();
+    return () => cancelAnimationFrame(frame);
+  }, [open, measure]);
+
+  // گزینهٔ فعال داخل کادر دید بماند — فقط داخل خود فهرست، بدون تکان‌دادن صفحه
+  useEffect(() => {
+    const el = activeRef.current;
+    const list = el?.closest('.person-list');
+    if (!el || !list) return;
+    const e = el.getBoundingClientRect();
+    const l = list.getBoundingClientRect();
+    if (e.top < l.top) list.scrollTop -= l.top - e.top;
+    else if (e.bottom > l.bottom) list.scrollTop += e.bottom - l.bottom;
+  }, [activeIndex]);
 
   const pick = (p: Person) => {
     onChange(p.id);
@@ -127,44 +181,55 @@ export default function PersonSelect({ value, onChange }: Props) {
         </span>
       </button>
 
-      {open && (
-        <div
-          className={`person-panel${panel.flip ? ' flip' : ''}`}
-          style={{ maxHeight: panel.maxHeight }}
-        >
-          <input
-            ref={searchRef}
-            className="person-search"
-            type="text"
-            placeholder="جست‌وجو…"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setActiveIndex(0);
+      {open &&
+        box &&
+        createPortal(
+          <div
+            ref={panelRef}
+            className="person-panel"
+            style={{
+              top: box.top,
+              left: box.left,
+              width: box.width,
+              maxHeight: box.maxHeight,
             }}
-            onKeyDown={onSearchKeyDown}
-          />
-          <ul className="person-list" role="listbox">
-            {filtered.map((p, i) => (
-              <li key={p.id}>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={p.id === value}
-                  className={`person-option${i === activeIndex ? ' active' : ''}${
-                    p.id === value ? ' selected' : ''
-                  }${p.id === OTHER_PERSON_ID ? ' other' : ''}`}
-                  onMouseEnter={() => setActiveIndex(i)}
-                  onClick={() => pick(p)}
-                >
-                  <span className="person-name">{p.name}</span>
-                  <span className="person-role">{p.role}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+          >
+            <input
+              ref={searchRef}
+              className="person-search"
+              type="text"
+              placeholder="جست‌وجو…"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setActiveIndex(0);
+              }}
+              onKeyDown={onSearchKeyDown}
+            />
+            <ul className="person-list" role="listbox">
+              {filtered.map((p, i) => (
+                <li key={p.id}>
+                  <button
+                    ref={i === activeIndex ? activeRef : undefined}
+                    type="button"
+                    role="option"
+                    aria-selected={p.id === value}
+                    tabIndex={-1}
+                    className={`person-option${i === activeIndex ? ' active' : ''}${
+                      p.id === value ? ' selected' : ''
+                    }${p.id === OTHER_PERSON_ID ? ' other' : ''}`}
+                    onMouseEnter={() => setActiveIndex(i)}
+                    onClick={() => pick(p)}
+                  >
+                    <span className="person-name">{p.name}</span>
+                    <span className="person-role">{p.role}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

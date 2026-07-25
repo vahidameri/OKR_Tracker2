@@ -2,7 +2,7 @@ import StepShell from '../StepShell';
 import Field from '../Field';
 import RepeatableList from '../RepeatableList';
 import type { Action, FormState } from '../../state';
-import { disabledReason, fieldEnabled } from '../../state';
+import { disabledReason, fieldEnabled, fieldRequired } from '../../state';
 
 interface Props {
   state: FormState;
@@ -18,6 +18,7 @@ export default function StepCriteria({ state, dispatch }: Props) {
       <Field
         number={1}
         label="معیارهای پذیرش"
+        optional={fieldEnabled(state, 'criteria') && !fieldRequired(state, 'criteria')}
         disabled={!fieldEnabled(state, 'criteria')}
         disabledNote={disabledReason(state, 'criteria')}
         help="معیار پذیرش یعنی شرطی که اگر برقرار باشد، همه قبول دارند کار تمام شده است. هر معیار باید قابل مشاهده یا اندازه‌گیری باشد — یعنی دو نفر با دیدن نتیجه به یک جواب برسند. «سریع‌تر شود» معیار نیست؛ «زیر ۲ ثانیه کامل شود» معیار است. هر تعداد که لازم دارید اضافه کنید؛ اگر برایتان راحت‌تر است می‌توانید از قالب «با آنکه… وقتی… آنگاه…» استفاده کنید، اما اجباری نیست."
@@ -40,6 +41,7 @@ export default function StepCriteria({ state, dispatch }: Props) {
       <Field
         number={2}
         label="خارج از دامنه"
+        optional={fieldEnabled(state, 'outOfScope') && !fieldRequired(state, 'outOfScope')}
         disabled={!fieldEnabled(state, 'outOfScope')}
         disabledNote={disabledReason(state, 'outOfScope')}
         help="مرز کار را مشخص می‌کند و جلوی بزرگ‌شدن ناخواستهٔ تسک را می‌گیرد. چیزهایی را بنویسید که کسی ممکن است انتظارشان را داشته باشد اما جزو این درخواست نیستند — مثلاً «بازطراحی ظاهر صفحه» یا «پشتیبانی از نسخهٔ وب». نوشتن «هیچ» به کسی کمک نمی‌کند."

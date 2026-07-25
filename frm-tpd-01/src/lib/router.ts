@@ -7,7 +7,6 @@ import type { StepId } from '../state';
 export const LANDING_PATH = '/';
 
 export const STEP_PATHS: Record<StepId, string> = {
-  title: '/title',
   request: '/request',
   problem: '/problem',
   criteria: '/criteria',

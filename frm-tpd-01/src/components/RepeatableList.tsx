@@ -12,7 +12,7 @@ interface Props {
   /** چند مورد باید همیشه بماند (دکمهٔ حذف زیر این تعداد غیرفعال می‌شود) */
   minItems?: number;
   multiline?: boolean;
-  /** حداقل طول هر مورد */
+  /** طول پیشنهادی هر مورد برای امتیاز کامل */
   minChars: number;
 }
 
@@ -95,7 +95,7 @@ export default function RepeatableList({
           + {addLabel}
         </button>
         <span className="repeat-hint">
-          هر {itemName} دست‌کم {toFaDigits(minChars)} کاراکتر
+          هر {itemName} از {toFaDigits(minChars)} کاراکتر امتیاز کامل می‌گیرد
         </span>
       </div>
     </div>

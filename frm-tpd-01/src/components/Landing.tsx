@@ -1,62 +1,140 @@
 import ChipGroup from './ChipGroup';
+import PersonSelect from './PersonSelect';
+import Field from './Field';
+import CharCount from './CharCount';
 import Logo from './Logo';
 import type { Action, DocType, FormState } from '../state';
-import { DOC_TYPES } from '../state';
+import { DOC_TYPES, OTHER_PERSON_ID, requesterInfo } from '../state';
+import { GOOD_LENGTH } from '../lib/limits';
 import { todayJalaliLabel } from '../lib/jalali';
 
 interface Props {
   state: FormState;
   dispatch: React.Dispatch<Action>;
+  canStart: boolean;
+  missing: string[];
   onStart: () => void;
 }
 
 /**
- * صفحهٔ آغازین — پیش از شروع ویزارد. نوع سند اینجا انتخاب می‌شود و
- * شمارش مراحل تازه از صفحهٔ بعد شروع می‌شود.
+ * صفحهٔ آغازین — پیش از شروع ویزارد. عنوان، درخواست‌دهنده و نوع سند اینجا
+ * گرفته می‌شود و شمارش مراحل تازه از صفحهٔ بعد شروع می‌شود.
  */
-export default function Landing({ state, dispatch, onStart }: Props) {
+export default function Landing({
+  state,
+  dispatch,
+  canStart,
+  missing,
+  onStart,
+}: Props) {
+  const isOther = state.personId === OTHER_PERSON_ID;
+  const requester = requesterInfo(state);
+  let n = 1;
+
   return (
     <div className="landing">
       <div className="landing-head">
-        <Logo size={72} />
+        <Logo size={64} />
         <h1 className="landing-title">فرم ثبت درخواست کار</h1>
-        <p className="landing-sub">
-          دپارتمان فناوری و محصول (CPTO) — همراه اول
-        </p>
+        <p className="landing-sub">دپارتمان فناوری و محصول (CPTO) — همراه اول</p>
         <p className="landing-meta">
           FRM-TPD-01 · نسخهٔ ۲٫۰ · {todayJalaliLabel()}
         </p>
       </div>
 
       <div className="landing-body">
-        <p className="landing-lead">
-          برای شروع، مشخص کنید چه سندی می‌خواهید بسازید.
-        </p>
-
-        <ChipGroup
-          ariaLabel="نوع سند"
-          variant="card"
-          options={DOC_TYPES.map((d) => ({
-            value: d.value,
-            label: `${d.label} — ${d.english}`,
-            hint: d.hint,
-            disabled: !d.available,
-            disabledNote: d.available ? undefined : 'به‌زودی',
-          }))}
-          value={state.docType}
-          onChange={(docType: DocType) =>
-            dispatch({ type: 'patch', patch: { docType } })
-          }
-        />
-
-        <button
-          type="button"
-          className="btn primary landing-start"
-          disabled={!state.docType}
-          onClick={onStart}
+        <Field
+          number={n++}
+          label="عنوان درخواست"
+          help="یک جملهٔ کوتاه که به‌تنهایی معنا بدهد؛ همین متن تیتر تسک می‌شود. قالب پیشنهادی: فعل + موضوع + برای چه کسی. به‌جای «مشکل تکالیف» بنویسید «کاهش زمان ارسال تکلیف برای معلمان کلاس‌های بزرگ»."
         >
-          شروع فرآیند ←
-        </button>
+          <input
+            type="text"
+            className="text-input"
+            value={state.title}
+            placeholder="نمونه: کاهش زمان بارگذاری صفحهٔ تکالیف برای معلمان"
+            onChange={(e) =>
+              dispatch({ type: 'patch', patch: { title: e.target.value } })
+            }
+          />
+          <CharCount value={state.title} good={GOOD_LENGTH.title} />
+        </Field>
+
+        <Field
+          number={n++}
+          label="نام و سمت درخواست‌دهنده"
+          help="نام خود را از فهرست انتخاب کنید. فهرست بر اساس نام خانوادگی مرتب شده و می‌توانید داخل آن جست‌وجو کنید. اگر نامتان در فهرست نبود، آخرین گزینه را انتخاب کنید تا نام و سمت را خودتان وارد کنید."
+        >
+          <PersonSelect
+            value={state.personId}
+            onChange={(id) => dispatch({ type: 'selectPerson', id })}
+          />
+          {requester && !isOther && (
+            <p className="person-confirm">سمت: {requester.role}</p>
+          )}
+          {isOther && (
+            <div className="landing-custom">
+              <input
+                type="text"
+                className="text-input"
+                value={state.customName}
+                placeholder="نام و نام خانوادگی — نمونه: سارا محمدی"
+                aria-label="نام و نام خانوادگی"
+                onChange={(e) =>
+                  dispatch({ type: 'patch', patch: { customName: e.target.value } })
+                }
+              />
+              <input
+                type="text"
+                className="text-input"
+                value={state.customRole}
+                placeholder="سمت سازمانی — نمونه: کارشناس ارشد بازاریابی"
+                aria-label="سمت سازمانی"
+                onChange={(e) =>
+                  dispatch({ type: 'patch', patch: { customRole: e.target.value } })
+                }
+              />
+            </div>
+          )}
+        </Field>
+
+        <Field
+          number={n++}
+          label="نوع سند"
+          help="سند اطلاعات تسک (TID) برای یک کار مشخص و قابل تحویل است — قابلیت، بهبود، باگ یا وظیفهٔ فنی. سند نیازمندی محصول (PRD) برای تعریف یک محصول یا قابلیت بزرگ با چند تسک است و هنوز در دسترس نیست."
+        >
+          <ChipGroup
+            ariaLabel="نوع سند"
+            variant="card"
+            options={DOC_TYPES.map((d) => ({
+              value: d.value,
+              label: `${d.label} — ${d.english}`,
+              hint: d.hint,
+              disabled: !d.available,
+              disabledNote: d.available ? undefined : 'به‌زودی',
+            }))}
+            value={state.docType}
+            onChange={(docType: DocType) =>
+              dispatch({ type: 'patch', patch: { docType } })
+            }
+          />
+        </Field>
+
+        <div className="landing-foot">
+          <button
+            type="button"
+            className="btn primary landing-start"
+            disabled={!canStart}
+            onClick={onStart}
+          >
+            شروع فرآیند ←
+          </button>
+          {!canStart && (
+            <p className="landing-missing" aria-live="polite">
+              برای شروع: {missing.join('، ')}
+            </p>
+          )}
+        </div>
 
         <p className="landing-note">
           پر کردن فرم حدود ۵ تا ۱۰ دقیقه طول می‌کشد. هیچ اطلاعاتی ذخیره یا ارسال

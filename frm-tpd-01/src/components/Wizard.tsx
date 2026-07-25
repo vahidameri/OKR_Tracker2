@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { initialState, reducer, visibleSteps } from '../state';
 import type { StepId } from '../state';
-import { stepMissing } from '../lib/validate';
+import { landingMissing, stepMissing } from '../lib/validate';
 import {
   LANDING_PATH,
   pushLanding,
@@ -11,7 +11,6 @@ import {
   stepFromPath,
 } from '../lib/router';
 import { toFaDigits } from '../lib/jalali';
-import StepTitle from './steps/StepTitle';
 import Landing from './Landing';
 import StepRequest from './steps/StepRequest';
 import StepProblem from './steps/StepProblem';
@@ -25,7 +24,6 @@ import { openPrintDialog } from '../lib/print';
 
 /** نام کوتاه هر مرحله برای نوار پیشرفت */
 const STEP_NAMES: Record<StepId, string> = {
-  title: 'عنوان و درخواست‌دهنده',
   request: 'نوع و مسیر',
   problem: 'شرح مسئله',
   criteria: 'معیارها و دامنه',
@@ -132,10 +130,17 @@ export default function Wizard() {
   };
 
   if (!started) {
+    const gaps = landingMissing(state);
     return (
       <>
         <div id="app-root" className="app app-landing">
-          <Landing state={state} dispatch={dispatch} onStart={start} />
+          <Landing
+            state={state}
+            dispatch={dispatch}
+            canStart={gaps.length === 0}
+            missing={gaps}
+            onStart={start}
+          />
         </div>
         <PrintDocument state={state} />
       </>
@@ -185,7 +190,6 @@ export default function Wizard() {
         <main className="card">
           {/* key باعث اجرای انیمیشن fade+slide هنگام تعویض مرحله می‌شود */}
           <div className="step-container" key={current}>
-            {current === 'title' && <StepTitle state={state} dispatch={dispatch} />}
             {current === 'request' && <StepRequest state={state} dispatch={dispatch} />}
             {current === 'problem' && <StepProblem state={state} dispatch={dispatch} />}
             {current === 'criteria' && <StepCriteria state={state} dispatch={dispatch} />}

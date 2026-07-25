@@ -4,7 +4,7 @@ import Field from '../Field';
 import CharCount from '../CharCount';
 import type { Action, FormState } from '../../state';
 import { SEVERITIES } from '../../state';
-import { MIN_CHARS } from '../../lib/limits';
+import { GOOD_LENGTH } from '../../lib/limits';
 
 interface Props {
   state: FormState;
@@ -31,7 +31,7 @@ export default function StepBug({ state, dispatch }: Props) {
             dispatch({ type: 'patch', patch: { bugSteps: e.target.value } })
           }
         />
-        <CharCount value={state.bugSteps} min={MIN_CHARS.bugSteps} />
+        <CharCount value={state.bugSteps} good={GOOD_LENGTH.bugSteps} />
       </Field>
 
       <Field
@@ -48,7 +48,7 @@ export default function StepBug({ state, dispatch }: Props) {
             dispatch({ type: 'patch', patch: { bugObserved: e.target.value } })
           }
         />
-        <CharCount value={state.bugObserved} min={MIN_CHARS.bugObserved} />
+        <CharCount value={state.bugObserved} good={GOOD_LENGTH.bugObserved} />
       </Field>
 
       <Field
@@ -65,7 +65,7 @@ export default function StepBug({ state, dispatch }: Props) {
             dispatch({ type: 'patch', patch: { bugExpected: e.target.value } })
           }
         />
-        <CharCount value={state.bugExpected} min={MIN_CHARS.bugExpected} />
+        <CharCount value={state.bugExpected} good={GOOD_LENGTH.bugExpected} />
       </Field>
 
       <Field
@@ -82,7 +82,7 @@ export default function StepBug({ state, dispatch }: Props) {
             dispatch({ type: 'patch', patch: { bugEnv: e.target.value } })
           }
         />
-        <CharCount value={state.bugEnv} min={MIN_CHARS.bugEnv} />
+        <CharCount value={state.bugEnv} good={GOOD_LENGTH.bugEnv} />
       </Field>
 
       <Field

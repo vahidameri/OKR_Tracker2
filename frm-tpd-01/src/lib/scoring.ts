@@ -1,21 +1,28 @@
 // امتیاز آمادگی سند از ۱۰۰ + فهرست کمبودها برای جعبهٔ «برای بهترشدن سند»
-// توجه: این محاسبه فعلاً فقط بر اساس تکمیل‌بودن فیلدهاست و کیفیت محتوا را نمی‌سنجد.
+// طول پاسخ‌ها اینجا دخیل است: پاسخ کوتاه نیمی از امتیاز محور خودش را می‌گیرد.
 
 import type { FormState } from '../state';
-import { fieldEnabled, filledItems, isBug } from '../state';
+import { fieldEnabled, isBug } from '../state';
+import { GOOD_LENGTH, filled, len, lengthRatio, listRatio } from './limits';
 
 export interface ScoreResult {
   total: number;
   missing: string[];
 }
 
-const MIN_PROBLEM_CHARS = 40;
-
 interface Component {
   weight: number;
   /** میزان تکمیل، بین ۰ تا ۱ */
   ratio: number;
   missing?: string;
+}
+
+/** پیام کمبود برای یک فیلد متنی */
+function textGap(label: string, value: string, good: number): string | undefined {
+  const n = len(value);
+  if (n === 0) return `«${label}» خالی است.`;
+  if (n < good) return `«${label}» خیلی کوتاه است؛ کمی کامل‌ترش کنید.`;
+  return undefined;
 }
 
 /**
@@ -26,84 +33,100 @@ interface Component {
 export function computeScore(state: FormState): ScoreResult {
   const parts: Component[] = [];
 
-  // صورت‌مسئله
-  const problemLen = state.problem.trim().length;
   parts.push({
-    weight: 12,
-    ratio: problemLen >= MIN_PROBLEM_CHARS ? 1 : problemLen > 0 ? 0.5 : 0,
-    missing:
-      problemLen === 0
-        ? 'صورت‌مسئله نوشته نشده است.'
-        : problemLen < MIN_PROBLEM_CHARS
-          ? 'صورت‌مسئله را کمی کامل‌تر بنویسید (حدود ۴۰ کاراکتر یا بیشتر).'
-          : undefined,
+    weight: 8,
+    ratio: lengthRatio(state.title, GOOD_LENGTH.title),
+    missing: textGap('عنوان درخواست', state.title, GOOD_LENGTH.title),
+  });
+
+  parts.push({
+    weight: 14,
+    ratio: lengthRatio(state.problem, GOOD_LENGTH.problem),
+    missing: textGap('صورت‌مسئله', state.problem, GOOD_LENGTH.problem),
   });
 
   if (fieldEnabled(state, 'currentState')) {
     parts.push({
-      weight: 6,
-      ratio: state.currentState.trim() ? 1 : 0,
-      missing: '«وضعیت فعلی» خالی است؛ در صورت امکان با شاهد کمی بنویسید.',
+      weight: 7,
+      ratio: lengthRatio(state.currentState, GOOD_LENGTH.currentState),
+      missing: textGap('وضعیت فعلی', state.currentState, GOOD_LENGTH.currentState),
     });
   }
 
   if (fieldEnabled(state, 'desiredState')) {
     parts.push({
-      weight: 7,
-      ratio: state.desiredState.trim() ? 1 : 0,
-      missing: '«وضعیت مطلوب» خالی است.',
+      weight: 8,
+      ratio: lengthRatio(state.desiredState, GOOD_LENGTH.desiredState),
+      missing: textGap('وضعیت مطلوب', state.desiredState, GOOD_LENGTH.desiredState),
     });
   }
 
   if (fieldEnabled(state, 'criteria')) {
-    const n = filledItems(state.criteria).length;
+    const n = filled(state.criteria).length;
     parts.push({
       weight: 25,
-      ratio: n >= 2 ? 1 : n === 1 ? 0.5 : 0,
+      ratio: listRatio(state.criteria, GOOD_LENGTH.criterion),
       missing:
         n === 0
           ? 'هیچ معیار پذیرشی نوشته نشده است.'
-          : n === 1
-            ? 'دست‌کم یک معیار پذیرش دیگر اضافه کنید.'
+          : listRatio(state.criteria, GOOD_LENGTH.criterion) < 1
+            ? 'معیارهای پذیرش را کامل‌تر یا بیشتر کنید (دو معیار روشن).'
             : undefined,
     });
   }
 
   if (fieldEnabled(state, 'businessValue')) {
     parts.push({
-      weight: 20,
-      ratio: state.businessValue.trim() ? 1 : 0,
-      missing: '«ارزش کسب‌وکاری» خالی است؛ بنویسید اگر انجام نشود چه از دست می‌رود.',
+      weight: 18,
+      ratio: lengthRatio(state.businessValue, GOOD_LENGTH.businessValue),
+      missing: textGap(
+        'ارزش کسب‌وکاری',
+        state.businessValue,
+        GOOD_LENGTH.businessValue,
+      ),
     });
   }
 
   if (fieldEnabled(state, 'outOfScope')) {
-    const n = filledItems(state.outOfScope).length;
+    const n = filled(state.outOfScope).length;
     parts.push({
-      weight: 15,
-      ratio: n >= 2 ? 1 : n === 1 ? 0.5 : 0,
+      weight: 13,
+      ratio: listRatio(state.outOfScope, GOOD_LENGTH.scopeItem),
       missing:
         n === 0
           ? '«خارج از دامنه» مشخص نشده است.'
-          : n === 1
+          : listRatio(state.outOfScope, GOOD_LENGTH.scopeItem) < 1
             ? 'مورد دوم «خارج از دامنه» را هم مشخص کنید.'
             : undefined,
     });
   }
 
+  if (fieldEnabled(state, 'successMetrics')) {
+    parts.push({
+      weight: 5,
+      ratio: Math.min(1, filled(state.successMetrics).length),
+      missing: '«سنجهٔ موفقیت» خالی است.',
+    });
+  }
+
   // اطلاعات فنی: برای باگ سه‌قسمتی، در غیر این صورت وابستگی‌ها
   if (isBug(state)) {
-    const bug: [boolean, string][] = [
-      [!!state.bugEnv.trim(), '«محیط، نسخه و دستگاه» باگ را مشخص کنید.'],
-      [!!state.bugObserved.trim(), '«نتیجهٔ مشاهده‌شده» باگ خالی است.'],
-      [!!state.bugExpected.trim(), '«نتیجهٔ مورد انتظار» باگ خالی است.'],
+    const bug: [string, string, number][] = [
+      ['محیط، نسخه و دستگاه', state.bugEnv, GOOD_LENGTH.bugEnv],
+      ['نتیجهٔ مشاهده‌شده', state.bugObserved, GOOD_LENGTH.bugObserved],
+      ['نتیجهٔ مورد انتظار', state.bugExpected, GOOD_LENGTH.bugExpected],
+      ['مراحل بازتولید', state.bugSteps, GOOD_LENGTH.bugSteps],
     ];
-    for (const [ok, msg] of bug) {
-      parts.push({ weight: 5, ratio: ok ? 1 : 0, missing: msg });
+    for (const [label, value, good] of bug) {
+      parts.push({
+        weight: 4,
+        ratio: lengthRatio(value, good),
+        missing: textGap(label, value, good),
+      });
     }
   } else if (fieldEnabled(state, 'dependencies')) {
     parts.push({
-      weight: 15,
+      weight: 12,
       ratio: state.dependencies.trim() ? 1 : 0,
       missing: '«وابستگی‌ها و پیوست‌ها» خالی است؛ اگر وابستگی ندارد، همین را بنویسید.',
     });

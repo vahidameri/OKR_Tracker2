@@ -3,7 +3,7 @@ import Field from '../Field';
 import CharCount from '../CharCount';
 import type { Action, FormState } from '../../state';
 import { disabledReason, fieldEnabled, fieldRequired } from '../../state';
-import { MIN_CHARS } from '../../lib/limits';
+import { GOOD_LENGTH } from '../../lib/limits';
 
 interface Props {
   state: FormState;
@@ -73,7 +73,7 @@ export default function StepProblem({ state, dispatch }: Props) {
                 dispatch({ type: 'patch', patch: { [f.key]: e.target.value } })
               }
             />
-            <CharCount value={state[f.key]} min={MIN_CHARS[f.key]} />
+            <CharCount value={state[f.key]} good={GOOD_LENGTH[f.key]} />
           </Field>
         );
       })}

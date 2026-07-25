@@ -135,15 +135,15 @@ textarea {
 /* ---------- صفحهٔ آغازین ---------- */
 .app-landing {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   min-height: 100vh;
-  padding: 48px 24px;
+  padding: 40px 24px 56px;
 }
 
 .landing {
   width: 100%;
-  max-width: 660px;
+  max-width: 680px;
   background: #fff;
   border-radius: 26px;
   box-shadow: 0 1px 2px rgba(14, 122, 87, 0.05),
@@ -185,22 +185,42 @@ textarea {
 .landing-body {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 32px clamp(24px, 5vw, 44px) 38px;
+  gap: 22px;
+  padding: 30px clamp(24px, 5vw, 44px) 36px;
 }
 
-.landing-lead {
-  margin: 0;
-  font-size: 14.5px;
-  font-weight: 700;
-  color: var(--charcoal);
+/* دیوایدر بین پرسش‌های صفحهٔ آغازین، مثل مراحل ویزارد */
+.landing-body .field + .field {
+  border-top: 1px solid var(--line-soft);
+  padding-top: 22px;
+}
+
+.landing-custom {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.landing-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  border-top: 1px solid var(--line-soft);
+  padding-top: 22px;
 }
 
 .landing-start {
-  align-self: stretch;
-  margin-top: 6px;
   padding: 15px 32px;
   font-size: 16px;
+}
+
+.landing-missing {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--accent-deep);
 }
 
 .landing-note {

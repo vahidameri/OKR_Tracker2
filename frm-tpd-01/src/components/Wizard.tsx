@@ -1,21 +1,23 @@
-import { useEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { initialState, reducer, visibleSteps } from '../state';
 import type { StepId } from '../state';
-import { missingMessage, stepMissing } from '../lib/validate';
+import { stepMissing } from '../lib/validate';
+import { pushStep, replaceStep, stepFromPath } from '../lib/router';
 import { toFaDigits } from '../lib/jalali';
-import StepPerson from './steps/StepPerson';
-import StepTriage from './steps/StepTriage';
+import StepStart from './steps/StepStart';
+import StepRequest from './steps/StepRequest';
 import StepProblem from './steps/StepProblem';
 import StepCriteria from './steps/StepCriteria';
 import StepBug from './steps/StepBug';
 import StepPriority from './steps/StepPriority';
 import ReviewStep from './ReviewStep';
 import PrintDocument from './PrintDocument';
+import { openPrintDialog } from '../lib/print';
 
 /** نام کوتاه هر مرحله برای نوار پیشرفت */
 const STEP_NAMES: Record<StepId, string> = {
-  person: 'درخواست‌دهنده',
-  triage: 'مسیر و مشخصات',
+  start: 'نوع سند',
+  request: 'نوع و مسیر',
   problem: 'شرح مسئله',
   criteria: 'معیارها و دامنه',
   bug: 'جزئیات باگ',
@@ -26,9 +28,6 @@ const STEP_NAMES: Record<StepId, string> = {
 export default function Wizard() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [stepIndex, setStepIndex] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  /** بیشترین مرحله‌ای که کاربر به آن رسیده — برای برگشت سریع از نوار پیشرفت */
-  const [maxReached, setMaxReached] = useState(0);
 
   const steps = useMemo(() => visibleSteps(state), [state]);
   // اگر مرحلهٔ باگ حذف شد و index از انتها گذشت، به آخرین مرحله برگرد
@@ -36,55 +35,76 @@ export default function Wizard() {
   const current: StepId = steps[index];
   const isLast = index === steps.length - 1;
 
-  const goTo = (next: number) => {
-    setError(null);
-    setStepIndex(next);
-    setMaxReached((m) => Math.max(m, next));
-  };
+  const missing = stepMissing(current, state);
+  const canAdvance = missing.length === 0;
+
+  const goTo = useCallback(
+    (next: number, viaHistory = false) => {
+      setStepIndex(next);
+      if (!viaHistory) pushStep(steps[next]);
+    },
+    [steps],
+  );
 
   const goNext = () => {
-    const missing = stepMissing(current, state);
-    if (missing.length > 0) {
-      setError(missingMessage(missing));
-      return;
-    }
-    if (!isLast) goTo(index + 1);
+    if (canAdvance && !isLast) goTo(index + 1);
   };
 
   const goPrev = () => {
     if (index > 0) goTo(index - 1);
   };
 
-  // Enter = مرحلهٔ بعد (وقتی معتبر است)؛ داخل textarea یا دراپ‌داون باز نه
+  // مرحلهٔ اول: آدرس فعلی را بخوان؛ آدرس ناشناخته به مرحلهٔ اول برمی‌گردد.
+  // ورود مستقیم به مرحلهٔ میانی معتبر نیست چون داده‌ای در حافظه نیست.
+  useEffect(() => {
+    const fromUrl = stepFromPath(window.location.pathname);
+    if (fromUrl !== 'start') replaceStep('start');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // دکمهٔ back مرورگر باید مرحله را عقب ببرد
+  useEffect(() => {
+    const onPop = () => {
+      const step = stepFromPath(window.location.pathname);
+      const target = step ? steps.indexOf(step) : -1;
+      if (target >= 0) setStepIndex(target);
+      else setStepIndex(0);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [steps]);
+
+  // اگر فهرست مراحل عوض شد (افزودن/حذف مرحلهٔ باگ)، آدرس را هم‌گام کن
+  useEffect(() => {
+    replaceStep(steps[index]);
+  }, [steps, index]);
+
+  // Enter = مرحلهٔ بعد (فقط وقتی مرحله کامل است)؛ داخل textarea نه
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Enter' || e.defaultPrevented || isLast) return;
+      if (e.key !== 'Enter' || e.defaultPrevented || isLast || !canAdvance) return;
       const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === 'TEXTAREA' || target.tagName === 'SELECT'))
-        return;
-      const missing = stepMissing(current, state);
-      if (missing.length === 0) {
-        setError(null);
-        setStepIndex((i) => {
-          const next = Math.min(i + 1, steps.length - 1);
-          setMaxReached((m) => Math.max(m, next));
-          return next;
-        });
-      }
+      if (target && target.tagName === 'TEXTAREA') return;
+      setStepIndex((i) => {
+        const next = Math.min(i + 1, steps.length - 1);
+        pushStep(steps[next]);
+        return next;
+      });
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [current, state, isLast, steps.length]);
+  }, [canAdvance, isLast, steps]);
 
   // با تعویض مرحله، به بالای صفحه برگرد
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [index]);
 
-  // به‌محض اینکه کاربر چیزی را تغییر داد، پیام خطای قبلی پاک شود
-  useEffect(() => {
-    setError(null);
-  }, [state]);
+  /** اتمام فرآیند: تا انتهای سند اسکرول کن، بعد پنجرهٔ چاپ را باز کن */
+  const finish = () => {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    window.setTimeout(() => openPrintDialog(state.title), 600);
+  };
 
   return (
     <>
@@ -102,11 +122,12 @@ export default function Wizard() {
               <button
                 key={s}
                 type="button"
+                // فقط برگشت به مراحل قبلی مجاز است، نه پرش به جلو
+                disabled={i >= index}
+                tabIndex={-1}
                 className={`progress-step${i === index ? ' current' : ''}${
                   i < index ? ' done' : ''
                 }`}
-                // فقط به مراحلی که قبلاً دیده شده‌اند می‌شود پرید
-                disabled={i > maxReached}
                 aria-current={i === index ? 'step' : undefined}
                 onClick={() => goTo(i)}
               >
@@ -120,19 +141,14 @@ export default function Wizard() {
         <main className="card">
           {/* key باعث اجرای انیمیشن fade+slide هنگام تعویض مرحله می‌شود */}
           <div className="step-container" key={current}>
-            {current === 'person' && <StepPerson state={state} dispatch={dispatch} />}
-            {current === 'triage' && <StepTriage state={state} dispatch={dispatch} />}
+            {current === 'start' && <StepStart state={state} dispatch={dispatch} />}
+            {current === 'request' && <StepRequest state={state} dispatch={dispatch} />}
             {current === 'problem' && <StepProblem state={state} dispatch={dispatch} />}
             {current === 'criteria' && <StepCriteria state={state} dispatch={dispatch} />}
             {current === 'bug' && <StepBug state={state} dispatch={dispatch} />}
             {current === 'priority' && <StepPriority state={state} dispatch={dispatch} />}
             {current === 'review' && <ReviewStep state={state} />}
           </div>
-          {error && (
-            <p className="step-error" role="alert">
-              {error}
-            </p>
-          )}
         </main>
 
         <nav className="navbar">
@@ -145,11 +161,29 @@ export default function Wizard() {
             >
               → قبلی
             </button>
-            <span className="navbar-status">
-              مرحله {toFaDigits(index + 1)} از {toFaDigits(steps.length)}
+
+            <span className="navbar-center">
+              <span className="navbar-status">
+                مرحله {toFaDigits(index + 1)} از {toFaDigits(steps.length)}
+              </span>
+              {!isLast && !canAdvance && (
+                <span className="navbar-missing" aria-live="polite">
+                  برای ادامه: {missing.join('، ')}
+                </span>
+              )}
             </span>
-            {!isLast && (
-              <button type="button" className="btn primary" onClick={goNext}>
+
+            {isLast ? (
+              <button type="button" className="btn primary" onClick={finish}>
+                اتمام فرآیند
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn primary"
+                onClick={goNext}
+                disabled={!canAdvance}
+              >
                 بعدی ←
               </button>
             )}

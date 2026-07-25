@@ -1,5 +1,6 @@
 import type { FormState } from '../state';
 import {
+  docTypeLabel,
   filledItems,
   isBug,
   isFastTrack,
@@ -65,6 +66,7 @@ export default function PrintDocument({ state }: Props) {
                   : ''
               }
             />
+            <Row label="نوع سند" value={docTypeLabel(state.docType)} />
             <Row label="نوع درخواست" value={requestTypesLabel(state.requestTypes)} />
             <Row label="عنوان درخواست" value={state.title} />
             <Row label="محصول هدف" value={state.product ?? ''} />

@@ -17,6 +17,37 @@ export type Priority = 'critical' | 'high' | 'medium' | 'low';
 /** پاسخ گزاره‌های مسیر بررسی: «بله» یا «خیر یا نمی‌دانم» */
 export type YesNo = 'yes' | 'no' | null;
 
+/** نوع سندی که تولید می‌شود */
+export type DocType = 'tid' | 'prd';
+
+export const DOC_TYPES: {
+  value: DocType;
+  label: string;
+  english: string;
+  hint: string;
+  available: boolean;
+}[] = [
+  {
+    value: 'tid',
+    label: 'سند اطلاعات تسک',
+    english: 'Task Information Document — TID',
+    hint: 'برای یک کار مشخص و قابل تحویل: قابلیت، بهبود، باگ یا وظیفهٔ فنی',
+    available: true,
+  },
+  {
+    value: 'prd',
+    label: 'سند نیازمندی محصول',
+    english: 'Product Requirements Document — PRD',
+    hint: 'برای تعریف یک محصول یا قابلیت بزرگ با چند تسک — به‌زودی',
+    available: false,
+  },
+];
+
+export function docTypeLabel(t: DocType | null): string {
+  const item = DOC_TYPES.find((d) => d.value === t);
+  return item ? `${item.label} (${item.english.split('—')[1].trim()})` : '—';
+}
+
 /** شناسهٔ ویژه برای درخواست‌دهنده‌ای که در فهرست نیست */
 export const OTHER_PERSON_ID = '__other__';
 
@@ -24,6 +55,7 @@ export const OTHER_PERSON_ID = '__other__';
 export type ListKey = 'criteria' | 'outOfScope' | 'successMetrics';
 
 export interface FormState {
+  docType: DocType | null;
   personId: string | null;
   /** نام و سمت دستی — فقط وقتی personId برابر OTHER_PERSON_ID است */
   customName: string;
@@ -53,6 +85,7 @@ export interface FormState {
 }
 
 export const initialState: FormState = {
+  docType: null,
   personId: null,
   customName: '',
   customRole: '',
@@ -65,8 +98,8 @@ export const initialState: FormState = {
   currentState: '',
   desiredState: '',
   businessValue: '',
-  criteria: ['', ''],
-  outOfScope: ['', ''],
+  criteria: [''],
+  outOfScope: [''],
   successMetrics: [''],
   bugSteps: '',
   bugObserved: '',
@@ -238,8 +271,8 @@ export function priorityLabel(p: Priority | null): string {
 // ---------- مراحل ویزارد (پویا بر اساس نوع درخواست) ----------
 
 export type StepId =
-  | 'person'
-  | 'triage'
+  | 'start'
+  | 'request'
   | 'problem'
   | 'criteria'
   | 'bug'
@@ -248,7 +281,7 @@ export type StepId =
 
 /** فهرست مراحل قابل‌نمایش؛ مرحلهٔ باگ فقط وقتی «باگ» بین نوع‌ها باشد */
 export function visibleSteps(state: FormState): StepId[] {
-  const steps: StepId[] = ['person', 'triage', 'problem', 'criteria'];
+  const steps: StepId[] = ['start', 'request', 'problem', 'criteria'];
   if (isBug(state)) steps.push('bug');
   steps.push('priority', 'review');
   return steps;

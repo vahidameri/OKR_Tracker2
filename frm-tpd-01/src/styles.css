@@ -1,14 +1,33 @@
-/* ---------- متغیرهای پالت ---------- */
+/* ---------- پالت رنگی، برگرفته از لوگو ---------- */
 :root {
-  --navy: #1b2a4a;
-  --blue: #3e5f9e;
-  --ice: #e9eef8;
-  --ice-2: #f4f6fa;
-  --green: #2f7d5c;
-  --red: #a83f36;
-  --amber: #d99a2b;
-  --text: #1b2a4a;
-  --text-soft: #647190;
+  /* سبز لوگو و مشتقات آن */
+  --brand: #22c88c;        /* سبز اصلی لوگو */
+  --brand-deep: #0e7a57;   /* سبز تیره — دکمه‌ها و سرتیترها */
+  --brand-mid: #12946a;
+  --brand-soft: #7fe0b5;   /* مینت روشن کاشی لوگو */
+  --brand-100: #dcf6ea;
+  --brand-50: #f0fbf6;
+
+  --accent: #f2c42b;       /* زرد لوگو — تأکیدهای کوچک */
+  --accent-deep: #a97f07;
+
+  --ink: #12261f;          /* مشکی مایل به سبز — متن اصلی */
+  --ink-soft: #5b7a6e;
+  --line: #dce9e3;
+  --line-soft: #eaf3ef;
+  --surface: #f3faf7;
+
+  --red: #c0453b;
+
+  /* نام‌های قدیمی، تا ارجاع‌های موجود نشکنند */
+  --navy: var(--brand-deep);
+  --blue: var(--brand-mid);
+  --ice: var(--brand-100);
+  --ice-2: var(--brand-50);
+  --green: var(--brand-deep);
+  --amber: var(--accent-deep);
+  --text: var(--ink);
+  --text-soft: var(--ink-soft);
 }
 
 /* ---------- پایه ---------- */
@@ -27,7 +46,7 @@ body {
   margin: 0;
   font-family: 'Vazirmatn', Tahoma, sans-serif;
   color: var(--text);
-  background: linear-gradient(180deg, #ffffff 0%, #eef2f9 100%);
+  background: linear-gradient(180deg, #ffffff 0%, var(--surface) 100%);
   background-attachment: fixed;
   min-height: 100vh;
   line-height: 1.9;
@@ -36,7 +55,7 @@ body {
 /* نوار اسکرول باریک و هم‌رنگ پالت — دسکتاپ */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #c3cde2 transparent;
+  scrollbar-color: #a9d8c4 transparent;
 }
 
 ::-webkit-scrollbar {
@@ -49,14 +68,14 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c9d3e6;
+  background: #b3ddca;
   border: 3px solid transparent;
   background-clip: content-box;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8b6d2;
+  background: #8ecdb1;
   background-clip: content-box;
 }
 
@@ -88,7 +107,7 @@ textarea {
 .form-code {
   text-align: center;
   font-size: 12px;
-  color: #7383a3;
+  color: var(--ink-soft);
   letter-spacing: 0.02em;
   margin: 0 0 18px;
 }
@@ -137,7 +156,7 @@ textarea {
 
 .progress-step.done::before,
 .progress-step.current::before {
-  background: #b9c8e4;
+  background: var(--brand-soft);
 }
 
 .progress-dot {
@@ -151,7 +170,7 @@ textarea {
   border-radius: 50%;
   background: #fff;
   border: 2px solid var(--ice);
-  color: #97a3bd;
+  color: #9ab5a9;
   font-size: 12.5px;
   font-weight: 700;
   transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease,
@@ -159,8 +178,8 @@ textarea {
 }
 
 .progress-step.done .progress-dot {
-  background: #b9c8e4;
-  border-color: #b9c8e4;
+  background: var(--brand-soft);
+  border-color: var(--brand-soft);
   color: #fff;
 }
 
@@ -169,7 +188,7 @@ textarea {
   border-color: var(--navy);
   color: #fff;
   transform: scale(1.12);
-  box-shadow: 0 4px 14px rgba(27, 42, 74, 0.28);
+  box-shadow: 0 4px 14px rgba(14, 122, 87, 0.28);
 }
 
 .progress-step:not(:disabled):hover .progress-dot {
@@ -179,7 +198,7 @@ textarea {
 .progress-name {
   font-size: 11.5px;
   line-height: 1.5;
-  color: #8a94ad;
+  color: var(--ink-soft);
   text-align: center;
   transition: color 0.25s ease;
 }
@@ -193,8 +212,8 @@ textarea {
 .card {
   background: #fff;
   border-radius: 24px;
-  box-shadow: 0 1px 2px rgba(27, 42, 74, 0.04),
-    0 20px 60px rgba(27, 42, 74, 0.08);
+  box-shadow: 0 1px 2px rgba(14, 122, 87, 0.05),
+    0 20px 60px rgba(14, 122, 87, 0.10);
   padding: clamp(28px, 4vw, 56px);
 }
 
@@ -251,7 +270,7 @@ textarea {
 
 /* دیوایدر بین سؤالات */
 .field + .field {
-  border-top: 1px solid #edf1f8;
+  border-top: 1px solid var(--line-soft);
   padding-top: 22px;
 }
 
@@ -262,17 +281,17 @@ textarea {
 .field-disabled-note {
   margin: 0;
   font-size: 12.5px;
-  color: #8a94ad;
+  color: var(--ink-soft);
   background: var(--ice-2);
-  border: 1px dashed #d7deed;
+  border: 1px dashed var(--line);
   border-radius: 12px;
   padding: 11px 16px;
 }
 
 .field-skipped {
   font-size: 11px;
-  color: #7a86a5;
-  background: #eef1f7;
+  color: var(--ink-soft);
+  background: var(--line-soft);
   border-radius: 999px;
   padding: 1px 10px;
 }
@@ -307,7 +326,7 @@ textarea {
 
 .field-optional {
   font-size: 11px;
-  color: #8a94ad;
+  color: var(--ink-soft);
   background: var(--ice-2);
   border-radius: 999px;
   padding: 1px 10px;
@@ -316,23 +335,23 @@ textarea {
 .text-input,
 .text-area {
   width: 100%;
-  border: 1.5px solid #dbe2ee;
+  border: 1.5px solid var(--line);
   border-radius: 12px;
   padding: 12px 15px;
   font-size: 15px;
   line-height: 2;
-  background: #fcfdff;
+  background: #fbfefc;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .text-input:hover,
 .text-area:hover {
-  border-color: #c3cde2;
+  border-color: #bcdccd;
 }
 
 .text-input::placeholder,
 .text-area::placeholder {
-  color: #adb7cb;
+  color: #a7c0b4;
 }
 
 .text-area {
@@ -345,7 +364,7 @@ textarea {
   outline: none;
   background: #fff;
   border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(62, 95, 158, 0.15);
+  box-shadow: 0 0 0 3px rgba(34, 200, 140, 0.20);
 }
 
 .text-input + .text-input {
@@ -355,7 +374,7 @@ textarea {
 .word-counter {
   margin: 2px 0 0;
   font-size: 12px;
-  color: #8a94ad;
+  color: var(--ink-soft);
 }
 
 .word-counter.over {
@@ -377,7 +396,7 @@ textarea {
   gap: 2px;
   text-align: right;
   background: #fff;
-  border: 1.5px solid #d7deed;
+  border: 1.5px solid var(--line);
   border-radius: 14px;
   padding: 10px 16px;
   cursor: pointer;
@@ -411,8 +430,8 @@ textarea {
   width: 16px;
   height: 16px;
   border-radius: 5px;
-  background: #eef2f9;
-  color: #9aa5bd;
+  background: var(--brand-50);
+  color: #8fae9f;
   font-size: 11px;
   transition: background 0.2s ease, color 0.2s ease;
 }
@@ -424,13 +443,12 @@ textarea {
 
 .chip-hint {
   font-size: 11.5px;
-  color: #7a86a5;
+  color: var(--ink-soft);
 }
 
 /* ---------- دراپ‌داون اشخاص ---------- */
 .person-select {
   position: relative;
-  max-width: 460px;
 }
 
 .person-trigger {
@@ -440,7 +458,7 @@ textarea {
   justify-content: space-between;
   gap: 12px;
   background: #fff;
-  border: 1.5px solid #d7deed;
+  border: 1.5px solid var(--line);
   border-radius: 14px;
   padding: 14px 18px;
   font-size: 16px;
@@ -453,7 +471,7 @@ textarea {
 }
 
 .person-trigger.placeholder {
-  color: #8a94ad;
+  color: var(--ink-soft);
 }
 
 .person-trigger-inner {
@@ -464,7 +482,7 @@ textarea {
 }
 
 .person-caret {
-  color: #8a94ad;
+  color: var(--ink-soft);
   font-size: 12px;
 }
 
@@ -475,16 +493,16 @@ textarea {
   left: 0;
   z-index: 30;
   background: #fff;
-  border: 1px solid #e2e8f4;
+  border: 1px solid var(--line);
   border-radius: 16px;
-  box-shadow: 0 16px 48px rgba(27, 42, 74, 0.14);
+  box-shadow: 0 16px 48px rgba(14, 122, 87, 0.16);
   padding: 10px;
   animation: step-in 0.2s ease both;
 }
 
 .person-search {
   width: 100%;
-  border: 1.5px solid #d7deed;
+  border: 1.5px solid var(--line);
   border-radius: 10px;
   padding: 9px 12px;
   font-size: 14px;
@@ -535,13 +553,13 @@ textarea {
 
 .person-role {
   font-size: 12px;
-  color: #8a94ad;
+  color: var(--ink-soft);
 }
 
 /* گزینهٔ «نام من در فهرست نیست» — جدا از بقیه */
 .person-option.other {
   margin-top: 4px;
-  border-top: 1px dashed #d7deed;
+  border-top: 1px dashed var(--line);
   border-radius: 0 0 10px 10px;
   padding-top: 12px;
 }
@@ -556,6 +574,56 @@ textarea {
   color: var(--green);
 }
 
+/* ---------- کارت‌های انتخاب نوع سند ---------- */
+.chip-cards {
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chip-cards .chip {
+  width: 100%;
+  gap: 5px;
+  padding: 18px 22px;
+  border-radius: 16px;
+  border-width: 2px;
+}
+
+.chip-cards .chip-label {
+  font-size: 15.5px;
+}
+
+.chip-cards .chip-hint {
+  font-size: 12.5px;
+  line-height: 1.9;
+}
+
+.chip-off {
+  cursor: not-allowed;
+  opacity: 0.55;
+  background: var(--brand-50);
+}
+
+.chip-off:hover {
+  border-color: var(--line);
+  transform: none;
+}
+
+.chip-badge {
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--accent-deep);
+  background: #fdf4d8;
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.chip-cards .chip {
+  position: relative;
+}
+
 /* ---------- راهنمای «؟» ---------- */
 .helptip {
   display: inline-flex;
@@ -566,9 +634,9 @@ textarea {
   height: 19px;
   padding: 0;
   border-radius: 50%;
-  border: 1.5px solid #c3cde2;
+  border: 1.5px solid #bcdccd;
   background: #fff;
-  color: #7a86a5;
+  color: var(--ink-soft);
   font-size: 12px;
   font-weight: 700;
   line-height: 1;
@@ -599,7 +667,7 @@ textarea {
   text-align: right;
   border-radius: 12px;
   padding: 11px 15px;
-  box-shadow: 0 12px 32px rgba(27, 42, 74, 0.22);
+  box-shadow: 0 12px 32px rgba(14, 122, 87, 0.24);
   animation: step-in 0.18s ease both;
 }
 
@@ -622,7 +690,7 @@ textarea {
   align-items: center;
   justify-content: center;
   height: 44px;
-  color: #9aa5bd;
+  color: #8fae9f;
   font-size: 13px;
   font-weight: 700;
 }
@@ -637,7 +705,7 @@ textarea {
   border: none;
   border-radius: 9px;
   background: transparent;
-  color: #b6c0d4;
+  color: #a7c0b4;
   font-size: 13px;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
@@ -697,7 +765,7 @@ textarea {
   height: 20px;
   margin-top: 4px;
   border-radius: 50%;
-  background: #dfe6f4;
+  background: var(--brand-100);
   color: var(--blue);
   font-size: 11.5px;
   font-weight: 700;
@@ -707,7 +775,7 @@ textarea {
   margin: 0;
   font-size: 12.5px;
   line-height: 2;
-  color: #8a94ad;
+  color: var(--ink-soft);
   background: var(--ice-2);
   border-radius: 12px;
   padding: 10px 16px;
@@ -719,7 +787,7 @@ textarea {
 }
 
 .toggle {
-  border: 1.5px solid #d7deed;
+  border: 1.5px solid var(--line);
   background: #fff;
   border-radius: 999px;
   padding: 6px 16px;
@@ -743,7 +811,7 @@ textarea {
 }
 
 .fasttrack-badge {
-  background: #eaf5ef;
+  background: #e4f7ee;
   border: 1.5px solid var(--green);
   color: var(--green);
   font-weight: 700;
@@ -775,7 +843,7 @@ textarea {
 
 .score-caption {
   font-size: 13px;
-  color: #7a86a5;
+  color: var(--ink-soft);
 }
 
 .score-note {
@@ -783,14 +851,14 @@ textarea {
   text-align: center;
   font-size: 12.5px;
   line-height: 1.9;
-  color: #8a94ad;
+  color: var(--ink-soft);
   background: var(--ice-2);
   border-radius: 12px;
   padding: 10px 16px;
 }
 
 .improve-box {
-  background: #fdf6e9;
+  background: #fdf8e8;
   border: 1.5px solid var(--amber);
   border-radius: 14px;
   padding: 14px 18px;
@@ -811,7 +879,7 @@ textarea {
 }
 
 .summary-card {
-  border: 1px solid #e2e8f4;
+  border: 1px solid var(--line);
   border-radius: 16px;
   overflow: hidden;
 }
@@ -829,7 +897,7 @@ textarea {
 }
 
 .summary-label {
-  color: #7a86a5;
+  color: var(--ink-soft);
   font-weight: 500;
 }
 
@@ -847,7 +915,7 @@ textarea {
 .print-note {
   text-align: center;
   font-size: 12.5px;
-  color: #8a94ad;
+  color: var(--ink-soft);
   margin: 0;
 }
 
@@ -870,7 +938,7 @@ textarea {
   left: 0;
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(10px);
-  border-top: 1px solid #e6ebf5;
+  border-top: 1px solid var(--line);
   padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
   z-index: 20;
 }
@@ -885,10 +953,38 @@ textarea {
   padding: 0 24px;
 }
 
+.navbar-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  text-align: center;
+}
+
 .navbar-status {
   font-size: 12.5px;
   font-weight: 500;
-  color: #8a94ad;
+  color: var(--ink-soft);
+}
+
+.navbar-missing {
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--accent-deep);
+  max-width: 460px;
+}
+
+.btn.primary:disabled {
+  background: #c8d9d1;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn.primary:disabled:hover {
+  background: #c8d9d1;
+  transform: none;
 }
 
 /* ---------- دکمه‌ها ---------- */
@@ -906,12 +1002,12 @@ textarea {
 .btn.primary {
   background: var(--navy);
   color: #fff;
-  box-shadow: 0 8px 24px rgba(27, 42, 74, 0.25);
+  box-shadow: 0 8px 24px rgba(14, 122, 87, 0.26);
 }
 
 .btn.primary:hover {
   transform: translateY(-1px);
-  background: #24365c;
+  background: var(--brand-mid);
 }
 
 .btn.ghost {
@@ -936,7 +1032,7 @@ textarea {
 }
 
 .btn.subtle:hover {
-  background: #dde6f5;
+  background: #c9efdd;
 }
 
 /* ---------- صفحه‌های باریک ----------
@@ -988,7 +1084,7 @@ textarea {
   #print-doc {
     display: block;
     font-family: 'Vazirmatn', Tahoma, sans-serif;
-    color: #1b2a4a;
+    color: var(--ink);
     font-size: 11px;
     line-height: 1.9;
     print-color-adjust: exact;
@@ -996,7 +1092,7 @@ textarea {
   }
 
   .doc-header {
-    background: #1b2a4a;
+    background: var(--brand-deep);
     color: #fff;
     border-radius: 8px;
     padding: 14px 18px;
@@ -1019,7 +1115,7 @@ textarea {
     display: flex;
     flex-wrap: wrap;
     gap: 6px 18px;
-    background: #e9eef8;
+    background: var(--brand-100);
     border-radius: 6px;
     padding: 7px 14px;
     margin: 10px 0 14px;
@@ -1033,7 +1129,7 @@ textarea {
   }
 
   .doc-section-title {
-    background: #3e5f9e;
+    background: var(--brand-mid);
     color: #fff;
     font-size: 11.5px;
     font-weight: 700;
@@ -1044,26 +1140,26 @@ textarea {
 
   /* نوار عنوان بخش مدیر برنامه: خاکستری-قهوه‌ای متمایز */
   .doc-section-title.pm {
-    background: #6e6257;
+    background: #6b6a56;
   }
 
   .doc-table {
     width: 100%;
     border-collapse: collapse;
-    border: 1px solid #d7deed;
+    border: 1px solid var(--line);
   }
 
   .doc-table th,
   .doc-table td {
-    border: 1px solid #d7deed;
+    border: 1px solid var(--line);
     padding: 5px 10px;
     vertical-align: top;
     text-align: right;
   }
 
   .doc-table th {
-    background: #f4f6fa;
-    color: #5c6a8a;
+    background: var(--brand-50);
+    color: var(--ink-soft);
     font-weight: 600;
     width: 30%;
     white-space: nowrap;
@@ -1093,9 +1189,9 @@ textarea {
 
   .doc-fasttrack {
     display: inline-block;
-    background: #eaf5ef;
-    border: 1px solid #2f7d5c;
-    color: #2f7d5c;
+    background: #e4f7ee;
+    border: 1px solid var(--brand-deep);
+    color: var(--brand-deep);
     font-weight: 700;
     border-radius: 999px;
     padding: 1px 12px;
@@ -1105,8 +1201,8 @@ textarea {
     margin-top: 14px;
     text-align: center;
     font-size: 9.5px;
-    color: #7a86a5;
-    border-top: 1px solid #e2e8f4;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--line);
     padding-top: 8px;
   }
 }

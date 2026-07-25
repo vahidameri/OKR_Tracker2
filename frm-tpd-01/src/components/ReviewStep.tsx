@@ -5,28 +5,17 @@ import {
   isBug,
   isFastTrack,
   priorityLabel,
+  docTypeLabel,
   requestTypesLabel,
   requesterInfo,
   severityLabel,
 } from '../state';
 import { computeScore } from '../lib/scoring';
+import { openPrintDialog } from '../lib/print';
 import { toFaDigits, todayJalaliLabel } from '../lib/jalali';
 
 interface Props {
   state: FormState;
-}
-
-/** تغییر عنوان صفحه برای نام‌گذاری خودکار فایل PDF، سپس چاپ و بازگرداندن عنوان */
-function handlePrint(title: string) {
-  const prevTitle = document.title;
-  const firstWords = title.trim().split(/\s+/).filter(Boolean).slice(0, 5).join(' ');
-  document.title = `FRM-TPD-01_${firstWords || 'درخواست کار'}`;
-  const restore = () => {
-    document.title = prevTitle;
-    window.removeEventListener('afterprint', restore);
-  };
-  window.addEventListener('afterprint', restore);
-  window.print();
 }
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
@@ -87,6 +76,7 @@ export default function ReviewStep({ state }: Props) {
               : ''
           }
         />
+        <SummaryRow label="نوع سند" value={docTypeLabel(state.docType)} />
         <SummaryRow label="تاریخ ثبت" value={todayJalaliLabel()} />
         <SummaryRow
           label="مسیر بررسی"
@@ -110,7 +100,7 @@ export default function ReviewStep({ state }: Props) {
       <button
         type="button"
         className="btn primary big-print"
-        onClick={() => handlePrint(state.title)}
+        onClick={() => openPrintDialog(state.title)}
       >
         دریافت PDF
       </button>

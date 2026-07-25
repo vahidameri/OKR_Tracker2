@@ -37,6 +37,7 @@ export default function HelpTip({ text, label }: Props) {
       <button
         type="button"
         className={`helptip-btn${open ? ' open' : ''}`}
+        tabIndex={-1}
         aria-label={`راهنمای ${label}`}
         aria-expanded={open}
         aria-controls={id}

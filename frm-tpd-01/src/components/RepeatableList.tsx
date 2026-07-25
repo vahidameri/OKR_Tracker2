@@ -68,6 +68,7 @@ export default function RepeatableList({
           <button
             type="button"
             className="repeat-remove"
+            tabIndex={-1}
             aria-label={`حذف ${itemName} ${index + 1}`}
             disabled={items.length <= minItems}
             onClick={() => dispatch({ type: 'listRemove', key: listKey, index })}

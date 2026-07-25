@@ -25,7 +25,7 @@ export default function StepCriteria({ state, dispatch }: Props) {
           items={state.criteria}
           dispatch={dispatch}
           itemName="معیار"
-          addLabel="معیار دیگر"
+          addLabel="افزودن معیار"
           multiline
           placeholders={[
             'نمونه: در کلاس‌های بالای ۲۰۰ نفر، ارسال تکلیف در کمتر از ۲ ثانیه کامل می‌شود.',
@@ -47,7 +47,7 @@ export default function StepCriteria({ state, dispatch }: Props) {
           items={state.outOfScope}
           dispatch={dispatch}
           itemName="مورد"
-          addLabel="مورد دیگر"
+          addLabel="افزودن مورد"
           placeholders={[
             'نمونه: بازطراحی ظاهر صفحهٔ تکالیف',
             'نمونه: پشتیبانی از نسخهٔ وب',
@@ -69,7 +69,7 @@ export default function StepCriteria({ state, dispatch }: Props) {
           items={state.successMetrics}
           dispatch={dispatch}
           itemName="سنجه"
-          addLabel="سنجهٔ دیگر"
+          addLabel="افزودن سنجه"
           placeholders={[
             'نمونه: میانگین زمان ارسال تکلیف زیر ۲ ثانیه در داشبورد',
             'سنجهٔ بعدی…',

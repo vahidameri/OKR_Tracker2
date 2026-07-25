@@ -1,33 +1,39 @@
 // اعتبارسنجی نرم هر مرحله — پیام‌ها مؤدبانه و مشخص
 
 import type { FormState, StepId } from '../state';
-import { OTHER_PERSON_ID, filledItems, triageAnswered } from '../state';
+import { OTHER_PERSON_ID, filledItems, isSkipped, triageAnswered } from '../state';
 
 /** فهرست چیزهایی که برای عبور از این مرحله کم است (خالی = معتبر) */
 export function stepMissing(step: StepId, state: FormState): string[] {
   const missing: string[] = [];
   switch (step) {
-    case 'person':
+    case 'start':
+      if (!state.docType) missing.push('نوع سند');
       if (!state.personId) {
         missing.push('انتخاب نام درخواست‌دهنده');
       } else if (state.personId === OTHER_PERSON_ID) {
         if (!state.customName.trim()) missing.push('نام و نام خانوادگی');
         if (!state.customRole.trim()) missing.push('سمت سازمانی');
       }
-      break;
-    case 'triage':
-      if (!triageAnswered(state)) missing.push('پاسخ به هر چهار گزارهٔ مسیر بررسی');
-      if (state.requestTypes.length === 0) missing.push('دست‌کم یک نوع درخواست');
       if (!state.title.trim()) missing.push('عنوان درخواست');
+      break;
+    case 'request':
+      if (state.requestTypes.length === 0) missing.push('دست‌کم یک نوع درخواست');
       if (!state.product) missing.push('محصول هدف');
+      if (!triageAnswered(state)) missing.push('پاسخ به هر چهار گزارهٔ مسیر بررسی');
       break;
     case 'problem':
       if (!state.problem.trim()) missing.push('صورت‌مسئله');
+      if (!state.currentState.trim()) missing.push('وضعیت فعلی');
       if (!state.desiredState.trim()) missing.push('وضعیت مطلوب');
+      if (!isSkipped(state, 'businessValue') && !state.businessValue.trim())
+        missing.push('ارزش کسب‌وکاری');
       break;
     case 'criteria':
       if (filledItems(state.criteria).length === 0)
         missing.push('دست‌کم یک معیار پذیرش');
+      if (!isSkipped(state, 'outOfScope') && filledItems(state.outOfScope).length === 0)
+        missing.push('دست‌کم یک مورد خارج از دامنه');
       break;
     case 'bug':
       if (!state.bugSteps.trim()) missing.push('مراحل بازتولید');

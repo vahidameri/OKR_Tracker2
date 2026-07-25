@@ -556,6 +556,17 @@ textarea {
   color: #7a86a5;
 }
 
+.score-note {
+  margin: -16px 0 0;
+  text-align: center;
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: #8a94ad;
+  background: var(--ice-2);
+  border-radius: 12px;
+  padding: 10px 16px;
+}
+
 .improve-box {
   background: #fdf6e9;
   border: 1.5px solid var(--amber);

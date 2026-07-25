@@ -59,6 +59,12 @@ export default function ReviewStep({ state }: Props) {
         <div className="score-caption">امتیاز آمادگی از {toFaDigits(100)}</div>
       </div>
 
+      {/* یادداشت موقت — تا زمانی که نمره‌دهی محتوا‌محور اضافه شود */}
+      <p className="score-note">
+        این بخش در حال تکمیل است؛ فعلاً امتیاز صرفاً بر اساس فیلدهای تکمیل‌شده محاسبه
+        می‌شود و کیفیت محتوای نوشته‌شده را نمی‌سنجد.
+      </p>
+
       {score.missing.length > 0 && (
         <div className="improve-box">
           <strong>برای بهترشدن سند</strong>

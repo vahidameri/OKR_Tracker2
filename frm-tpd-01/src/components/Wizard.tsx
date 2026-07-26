@@ -177,7 +177,7 @@ export default function Wizard() {
                 tabIndex={-1}
                 className={`progress-step${i === index ? ' current' : ''}${
                   i < index ? ' done' : ''
-                }`}
+                }${i > index ? ' future' : ''}`}
                 aria-current={i === index ? 'step' : undefined}
                 onClick={() => goTo(i)}
               >

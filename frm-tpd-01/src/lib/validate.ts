@@ -52,11 +52,11 @@ export function stepMissing(step: StepId, state: FormState): string[] {
       if (!state.bugSeverity) missing.push('شدت و دامنهٔ اثر');
       break;
     case 'scope':
-      // دو مورد اول «خارج از دامنه» الزامی است، نه فقط یکی
+      // هر کدام که الزامی باشد، دست‌کم دو مورد پرشده می‌خواهد؛ یکی کافی نیست
       if (fieldRequired(state, 'outOfScope') && filled(state.outOfScope).length < 2)
         missing.push('دو مورد «خارج از دامنه»');
-      if (fieldRequired(state, 'successMetrics') && filled(state.successMetrics).length === 0)
-        missing.push('دست‌کم یک سنجهٔ موفقیت');
+      if (fieldRequired(state, 'successMetrics') && filled(state.successMetrics).length < 2)
+        missing.push('دو «سنجهٔ موفقیت»');
       break;
     case 'priority':
       if (!state.priority) missing.push('اولویت پیشنهادی');

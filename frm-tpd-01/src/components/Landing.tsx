@@ -47,9 +47,9 @@ export default function Landing({
       <div className="landing-head">
         <Logo size={64} />
         <h1 className="landing-title">فرم ثبت درخواست کار</h1>
-        <p className="landing-sub">دپارتمان فناوری و محصول (CPTO) — همراه اول</p>
+        <p className="landing-sub">دپارتمان فناوری و محصول — همراه اول</p>
         <p className="landing-meta">
-          FRM-TPD-01 · نسخهٔ ۲٫۰ · {todayJalaliLabel()}
+          FRM-TPD-01 · نسخهٔ ۳٫۰ · {todayJalaliLabel()}
         </p>
       </div>
 

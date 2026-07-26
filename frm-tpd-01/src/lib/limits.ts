@@ -16,10 +16,6 @@ export const GOOD_LENGTH = {
   scopeItem: 8,
   /** هر سنجهٔ موفقیت */
   metric: 8,
-  bugSteps: 25,
-  bugObserved: 10,
-  bugExpected: 10,
-  bugEnv: 5,
 } as const;
 
 /** طول مؤثر یک متن (بدون فاصله‌های ابتدا و انتها) */

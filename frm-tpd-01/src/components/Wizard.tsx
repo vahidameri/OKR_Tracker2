@@ -15,7 +15,6 @@ import Landing from './Landing';
 import StepRequest from './steps/StepRequest';
 import StepProblem from './steps/StepProblem';
 import StepCriteria from './steps/StepCriteria';
-import StepBug from './steps/StepBug';
 import StepPriority from './steps/StepPriority';
 import ReviewStep from './ReviewStep';
 import PrintDocument from './PrintDocument';
@@ -27,7 +26,6 @@ const STEP_NAMES: Record<StepId, string> = {
   request: 'نوع و مسیر',
   problem: 'شرح مسئله',
   criteria: 'معیارها و دامنه',
-  bug: 'جزئیات باگ',
   priority: 'اولویت',
   review: 'مرور و دریافت',
 };
@@ -39,7 +37,7 @@ export default function Wizard() {
   const [started, setStarted] = useState(false);
 
   const steps = useMemo(() => visibleSteps(state), [state]);
-  // اگر مرحلهٔ باگ حذف شد و index از انتها گذشت، به آخرین مرحله برگرد
+  // اگر مرحله‌ای حذف شد و index از انتها گذشت، به آخرین مرحله برگرد
   const index = Math.min(stepIndex, steps.length - 1);
   const current: StepId = steps[index];
   const isLast = index === steps.length - 1;
@@ -96,7 +94,7 @@ export default function Wizard() {
     return () => window.removeEventListener('popstate', onPop);
   }, [steps]);
 
-  // اگر فهرست مراحل عوض شد (افزودن/حذف مرحلهٔ باگ)، آدرس را هم‌گام کن
+  // اگر فهرست مراحل عوض شد (افزودن/حذف مرحلهٔ دامنه)، آدرس را هم‌گام کن
   useEffect(() => {
     if (started) replaceStep(steps[index]);
   }, [started, steps, index]);
@@ -156,7 +154,7 @@ export default function Wizard() {
             <div className="brand-text">
               <span className="brand-title">فرم ثبت درخواست کار</span>
               <span className="brand-sub">
-                FRM-TPD-01 · نسخهٔ ۲٫۰ — دپارتمان فناوری و محصول (CPTO)
+                FRM-TPD-01 · نسخهٔ ۳٫۰ — دپارتمان فناوری و محصول
               </span>
             </div>
           </div>
@@ -193,7 +191,6 @@ export default function Wizard() {
             {current === 'request' && <StepRequest state={state} dispatch={dispatch} />}
             {current === 'problem' && <StepProblem state={state} dispatch={dispatch} />}
             {current === 'criteria' && <StepCriteria state={state} dispatch={dispatch} />}
-            {current === 'bug' && <StepBug state={state} dispatch={dispatch} />}
             {current === 'priority' && <StepPriority state={state} dispatch={dispatch} />}
             {current === 'review' && <ReviewStep state={state} />}
           </div>

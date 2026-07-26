@@ -9,6 +9,9 @@
   --brand-50: #f0fbf6;
 
   --accent: #f2c42b;       /* زرد لوگو — تأکیدهای کوچک */
+  --accent-bright: #ffd541;/* زرد روشن — تأکید و برجسته‌سازی */
+  --accent-soft: #fff4cc;  /* زمینهٔ کم‌رنگ همان زرد */
+  --accent-line: #ffe89a;
   --accent-deep: #a97f07;
 
   --ink: #12261f;          /* مشکی مایل به سبز — متن اصلی */
@@ -195,6 +198,27 @@ textarea {
   padding-top: 22px;
 }
 
+.helptip-list {
+  display: block;
+  margin: 8px 0 0;
+  padding-inline-start: 16px;
+  list-style: none;
+}
+
+.helptip-list li {
+  position: relative;
+  margin-top: 5px;
+  padding-inline-start: 2px;
+}
+
+.helptip-list li::before {
+  content: '·';
+  position: absolute;
+  inset-inline-start: -12px;
+  color: var(--accent-bright);
+  font-weight: 800;
+}
+
 .landing-custom {
   display: flex;
   flex-direction: column;
@@ -249,6 +273,8 @@ textarea {
 .brand-text {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   line-height: 1.6;
 }
 
@@ -300,13 +326,17 @@ textarea {
   height: 28px;
 }
 
-/* در RTL خط باید از مرکز این دایره به سمت راست، یعنی به مرحلهٔ قبلی، برود */
+/*
+ * در RTL خط باید از مرکز این دایره به سمت راست، یعنی به مرحلهٔ قبلی، برود.
+ * دو سرش ۲۲px از مرکزها عقب کشیده شده تا به دایره‌ها — که شعاعشان ۱۴px است و
+ * دایرهٔ مرحلهٔ فعال بزرگ‌تر هم می‌شود — نچسبد و با سایه‌اش تداخل نکند.
+ */
 .progress-dot-wrap::before {
   content: '';
   position: absolute;
   top: 50%;
-  left: 50%;
-  width: 100%;
+  left: calc(50% + 22px);
+  width: calc(100% - 44px);
   height: 2px;
   margin-top: -1px;
   background: var(--ice);
@@ -895,6 +925,7 @@ textarea {
   border-radius: 12px;
   padding: 11px 15px;
   box-shadow: 0 12px 32px rgba(14, 122, 87, 0.24);
+  border-top: 3px solid var(--accent-bright);
   animation: step-in 0.18s ease both;
 }
 
@@ -1145,15 +1176,28 @@ textarea {
 }
 
 .improve-box {
-  background: #fdf8e8;
-  border: 1.5px solid #e8c05c;
+  position: relative;
+  background: var(--accent-soft);
+  border: 1.5px solid var(--accent-line);
   border-radius: 14px;
   padding: 14px 18px;
   font-size: 13.5px;
+  overflow: hidden;
+}
+
+/* نوار زرد روشن سمت راست جعبه */
+.improve-box::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: var(--accent-bright);
 }
 
 .improve-box strong {
-  color: #a37015;
+  color: var(--accent-deep);
 }
 
 .improve-box ul {
@@ -1472,6 +1516,11 @@ textarea {
 
   .doc-criteria li {
     margin-bottom: 3px;
+  }
+
+  .doc-later {
+    color: #555;
+    font-style: italic;
   }
 
   .doc-fasttrack {

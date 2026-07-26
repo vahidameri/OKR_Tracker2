@@ -1,10 +1,9 @@
 import StepShell from '../StepShell';
 import ChipGroup from '../ChipGroup';
-import ChipMultiGroup from '../ChipMultiGroup';
 import Field from '../Field';
 import FastTrackQuiz from '../FastTrackQuiz';
-import type { Action, FormState } from '../../state';
-import { REQUEST_TYPES, isOtherProduct } from '../../state';
+import type { Action, FormState, RequestType } from '../../state';
+import { REQUEST_TYPES, isOtherProduct, isOtherRequestType } from '../../state';
 import { PRODUCTS } from '../../data/people';
 
 interface Props {
@@ -21,15 +20,31 @@ export default function StepRequest({ state, dispatch }: Props) {
       <Field
         number={1}
         label="نوع درخواست"
-        help="می‌توانید بیش از یک نوع را انتخاب کنید — مثلاً کاری که هم یک باگ را رفع می‌کند و هم قابلیتی اضافه می‌کند. اگر «باگ» را انتخاب کنید، یک مرحلهٔ اضافه برای جزئیات فنی باگ به فرم اضافه می‌شود."
+        help="یک دسته را انتخاب کنید؛ همان تعیین می‌کند در مراحل بعد چه چیزهایی از شما پرسیده شود. اگر درخواست شما در هیچ‌یک از پنج دستهٔ اول جا نمی‌گیرد، «سایر» را بزنید و در کادری که باز می‌شود کوتاه توضیح بدهید."
       >
-        <ChipMultiGroup
+        <ChipGroup
           ariaLabel="نوع درخواست"
           columns={3}
           options={REQUEST_TYPES}
-          values={state.requestTypes}
-          onToggle={(value) => dispatch({ type: 'toggleRequestType', value })}
+          value={state.requestType}
+          onChange={(value: RequestType) =>
+            dispatch({ type: 'selectRequestType', value })
+          }
         />
+        {/* «سایر» که انتخاب شد، خودِ کاربر دستهٔ درخواست را توضیح می‌دهد */}
+        {isOtherRequestType(state) && (
+          <input
+            type="text"
+            className="text-input inline-other"
+            value={state.customRequestType}
+            placeholder="این درخواست از چه جنسی است؟ — نمونه: هماهنگی با تیم حقوقی برای متن قرارداد"
+            aria-label="توضیح نوع درخواست"
+            autoFocus
+            onChange={(e) =>
+              dispatch({ type: 'patch', patch: { customRequestType: e.target.value } })
+            }
+          />
+        )}
       </Field>
 
       <Field

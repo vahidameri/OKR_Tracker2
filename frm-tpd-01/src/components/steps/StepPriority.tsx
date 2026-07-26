@@ -2,7 +2,14 @@ import StepShell from '../StepShell';
 import ChipGroup from '../ChipGroup';
 import Field from '../Field';
 import type { Action, FormState } from '../../state';
-import { PRIORITIES, disabledReason, fieldEnabled, isFastTrack } from '../../state';
+import {
+  PRIORITIES,
+  SEVERITIES,
+  disabledReason,
+  fieldEnabled,
+  isBug,
+  isFastTrack,
+} from '../../state';
 
 interface Props {
   state: FormState;
@@ -10,6 +17,10 @@ interface Props {
 }
 
 export default function StepPriority({ state, dispatch }: Props) {
+  // برای باگ، «ارزش کسب‌وکاری» غیرفعال است و به‌جایش شدت اثر اینجا پرسیده می‌شود
+  const bug = isBug(state);
+  let n = 1;
+
   return (
     <StepShell
       title="اولویت و وابستگی‌ها"
@@ -19,8 +30,26 @@ export default function StepPriority({ state, dispatch }: Props) {
           : 'تعیین می‌کند این درخواست با چه فوریتی و در کنار چه وابستگی‌هایی بررسی شود'
       }
     >
+      {bug && (
+        <Field
+          number={n++}
+          label="شدت و دامنهٔ اثر"
+          help="برای باگ، جای «ارزش کسب‌وکاری» را این فیلد می‌گیرد: چقدر از کار کاربر مختل شده و چند نفر درگیرند. «بالا» وقتی است که مسیر اصلی از کار افتاده و هیچ راه دور زدنی وجود ندارد؛ اگر راه جایگزینی هست، «متوسط» است."
+        >
+          <ChipGroup
+            ariaLabel="شدت و دامنهٔ اثر"
+            columns={3}
+            options={SEVERITIES}
+            value={state.bugSeverity}
+            onChange={(bugSeverity) =>
+              dispatch({ type: 'patch', patch: { bugSeverity } })
+            }
+          />
+        </Field>
+      )}
+
       <Field
-        number={1}
+        number={n++}
         label="اولویت پیشنهادی"
         help="اولویت یعنی «چقدر زود باید انجام شود»، بر اساس اثر آن روی کار جاری و اهداف فصل — نه بر اساس اینکه چقدر برای شما مهم است. اگر همهٔ درخواست‌ها «بحرانی» باشند، عملاً هیچ‌کدام نیستند. «بحرانی» را وقتی بزنید که کاری همین حالا متوقف شده و راه دور زدنی وجود ندارد. این ورودیِ تصمیم است؛ اولویت نهایی با توافق مدیر برنامه و لیدها تعیین می‌شود."
       >
@@ -34,7 +63,7 @@ export default function StepPriority({ state, dispatch }: Props) {
       </Field>
 
       <Field
-        number={2}
+        number={n++}
         label="تاریخ نیاز و دلیل واقعی آن"
         optional
         help="تاریخ بدون دلیل قابل برنامه‌ریزی نیست و «هرچه زودتر» تاریخ نیست. اگر مهلت واقعی دارید، به یک رویداد مشخص وصلش کنید: شروع سال تحصیلی، یک کمپین، یک الزام قانونی، یا وابستگی تیم دیگر. اگر تاریخ الزام‌آوری ندارید، این فیلد را خالی بگذارید."
@@ -51,7 +80,7 @@ export default function StepPriority({ state, dispatch }: Props) {
       </Field>
 
       <Field
-        number={3}
+        number={n++}
         label="وابستگی‌ها و پیوست‌ها"
         optional
         disabled={!fieldEnabled(state, 'dependencies')}

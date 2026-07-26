@@ -10,7 +10,6 @@ export const STEP_PATHS: Record<StepId, string> = {
   request: '/request',
   problem: '/problem',
   criteria: '/criteria',
-  bug: '/bug',
   priority: '/priority',
   review: '/review',
 };

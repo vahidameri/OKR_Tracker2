@@ -2,7 +2,14 @@
 // به‌جای آن در امتیاز آمادگی دخیل می‌شود.
 
 import type { FormState, StepId } from '../state';
-import { OTHER_PERSON_ID, fieldRequired, isOtherProduct, triageAnswered } from '../state';
+import {
+  OTHER_PERSON_ID,
+  fieldRequired,
+  isBug,
+  isOtherProduct,
+  isOtherRequestType,
+  triageAnswered,
+} from '../state';
 import { filled } from './limits';
 
 /** چیزهایی که برای شروع فرآیند از صفحهٔ آغازین لازم است */
@@ -24,7 +31,9 @@ export function stepMissing(step: StepId, state: FormState): string[] {
   const missing: string[] = [];
   switch (step) {
     case 'request':
-      if (state.requestTypes.length === 0) missing.push('دست‌کم یک نوع درخواست');
+      if (!state.requestType) missing.push('نوع درخواست');
+      else if (isOtherRequestType(state) && !state.customRequestType.trim())
+        missing.push('توضیح نوع درخواست');
       if (!state.product) missing.push('محصول هدف');
       else if (isOtherProduct(state) && !state.customProduct.trim())
         missing.push('نام محصول');
@@ -40,16 +49,14 @@ export function stepMissing(step: StepId, state: FormState): string[] {
         missing.push('ارزش کسب‌وکاری');
       break;
     case 'criteria':
-      if (fieldRequired(state, 'criteria') && filled(state.criteria).length === 0)
-        missing.push('دست‌کم یک معیار پذیرش');
-      if (fieldRequired(state, 'outOfScope') && filled(state.outOfScope).length === 0)
-        missing.push('دست‌کم یک مورد خارج از دامنه');
-      break;
-    case 'bug':
-      if (!state.bugSteps.trim()) missing.push('مراحل بازتولید');
-      if (!state.bugSeverity) missing.push('شدت پیشنهادی');
+      // دو مورد اول «خارج از دامنه» الزامی است، نه فقط یکی
+      if (fieldRequired(state, 'outOfScope') && filled(state.outOfScope).length < 2)
+        missing.push('دو مورد «خارج از دامنه»');
+      if (fieldRequired(state, 'successMetrics') && filled(state.successMetrics).length === 0)
+        missing.push('دست‌کم یک سنجهٔ موفقیت');
       break;
     case 'priority':
+      if (isBug(state) && !state.bugSeverity) missing.push('شدت و دامنهٔ اثر');
       if (!state.priority) missing.push('اولویت پیشنهادی');
       break;
     case 'review':

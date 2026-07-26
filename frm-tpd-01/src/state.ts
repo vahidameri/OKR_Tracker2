@@ -3,14 +3,14 @@
 import type { Product } from './data/people';
 import { OTHER_PRODUCT, findPerson } from './data/people';
 
-/** شش دستهٔ درخواست — هر درخواستی در یکی (یا چند تای) از اینها جا می‌گیرد */
+/** شش دستهٔ درخواست — هر درخواست دقیقاً در یکی از اینها جا می‌گیرد */
 export type RequestType =
   | 'feature'
   | 'improvement'
   | 'bug'
   | 'tech'
   | 'data'
-  | 'feasibility';
+  | 'other';
 
 export type Severity = 'high' | 'medium' | 'low';
 export type Priority = 'critical' | 'high' | 'medium' | 'low';
@@ -52,7 +52,7 @@ export function docTypeLabel(t: DocType | null): string {
 export const OTHER_PERSON_ID = '__other__';
 
 /** کلیدهای فهرست‌های تکرارشونده */
-export type ListKey = 'criteria' | 'outOfScope' | 'successMetrics';
+export type ListKey = 'outOfScope' | 'successMetrics';
 
 export interface FormState {
   docType: DocType | null;
@@ -62,7 +62,10 @@ export interface FormState {
   customRole: string;
   /** مسیر بررسی — اول از همه پرسیده می‌شود و ادامهٔ فرم را فیلتر می‌کند */
   fastTrack: [YesNo, YesNo, YesNo, YesNo];
-  requestTypes: RequestType[];
+  /** نوع درخواست — تک‌انتخابی */
+  requestType: RequestType | null;
+  /** توضیح دستی نوع درخواست — فقط وقتی requestType برابر «سایر» است */
+  customRequestType: string;
   title: string;
   product: Product | null;
   /** نام محصول دستی — فقط وقتی product برابر «سایر» است */
@@ -73,13 +76,9 @@ export interface FormState {
   currentState: string;
   desiredState: string;
   businessValue: string;
-  criteria: string[];
   outOfScope: string[];
   successMetrics: string[];
-  bugSteps: string;
-  bugObserved: string;
-  bugExpected: string;
-  bugEnv: string;
+  /** شدت و دامنهٔ اثر — فقط برای باگ، در مرحلهٔ اولویت پرسیده می‌شود */
   bugSeverity: Severity | null;
   priority: Priority | null;
   neededDate: string;
@@ -92,7 +91,8 @@ export const initialState: FormState = {
   customName: '',
   customRole: '',
   fastTrack: [null, null, null, null],
-  requestTypes: [],
+  requestType: null,
+  customRequestType: '',
   title: '',
   product: null,
   customProduct: '',
@@ -101,13 +101,9 @@ export const initialState: FormState = {
   currentState: '',
   desiredState: '',
   businessValue: '',
-  criteria: [''],
-  outOfScope: [''],
-  successMetrics: [''],
-  bugSteps: '',
-  bugObserved: '',
-  bugExpected: '',
-  bugEnv: '',
+  // «خارج از دامنه» و «سنجهٔ موفقیت» دست‌کم دو مورد دارند
+  outOfScope: ['', ''],
+  successMetrics: ['', ''],
   bugSeverity: null,
   priority: null,
   neededDate: '',
@@ -118,7 +114,7 @@ export type Action =
   | { type: 'patch'; patch: Partial<FormState> }
   | { type: 'selectPerson'; id: string }
   | { type: 'selectProduct'; product: Product }
-  | { type: 'toggleRequestType'; value: RequestType }
+  | { type: 'selectRequestType'; value: RequestType }
   | { type: 'setFastTrack'; index: number; value: YesNo }
   | { type: 'listAdd'; key: ListKey }
   | { type: 'listRemove'; key: ListKey; index: number }
@@ -139,15 +135,8 @@ export function reducer(state: FormState, action: Action): FormState {
     }
     case 'selectProduct':
       return { ...state, product: action.product, productTouched: true };
-    case 'toggleRequestType': {
-      const has = state.requestTypes.includes(action.value);
-      return {
-        ...state,
-        requestTypes: has
-          ? state.requestTypes.filter((t) => t !== action.value)
-          : [...state.requestTypes, action.value],
-      };
-    }
+    case 'selectRequestType':
+      return { ...state, requestType: action.value };
     case 'setFastTrack': {
       const fastTrack = [...state.fastTrack] as FormState['fastTrack'];
       fastTrack[action.index] = action.value;
@@ -172,7 +161,12 @@ export function reducer(state: FormState, action: Action): FormState {
 
 /** آیا این درخواست از نوع باگ است؟ */
 export function isBug(state: FormState): boolean {
-  return state.requestTypes.includes('bug');
+  return state.requestType === 'bug';
+}
+
+/** آیا نوع درخواست همان گزینهٔ «سایر» است؟ */
+export function isOtherRequestType(state: FormState): boolean {
+  return state.requestType === 'other';
 }
 
 /** آیا درخواست واجد شرایط مسیر سریع است؟ (هر چهار پاسخ «بله») */
@@ -196,40 +190,41 @@ export type GatedField =
   | 'dependencies';
 
 /**
- * هر نوع درخواست فقط اطلاعاتی را می‌خواهد که واقعاً به آن نیاز دارد.
- * required = باید پر شود، optional = نمایش داده می‌شود ولی اجباری نیست،
+ * جدول الزامات: هر نوع درخواست فقط اطلاعاتی را می‌خواهد که واقعاً به آن نیاز
+ * دارد. required = باید پر شود، optional = نمایش داده می‌شود ولی اجباری نیست،
  * هرچه در هیچ‌کدام نباشد غیرفعال می‌شود.
+ *
+ * «صورت‌مسئله» در هیچ‌کدام نیست چون همیشه و برای همهٔ نوع‌ها الزامی است.
+ * «معیارهای پذیرش» هم اینجا نیست؛ در این فرم اصلاً پر نمی‌شود.
  */
 const TYPE_FIELDS: Record<
   RequestType,
   { required: GatedField[]; optional: GatedField[] }
 > = {
   feature: {
-    required: ['currentState', 'desiredState', 'businessValue', 'criteria', 'outOfScope'],
-    optional: ['successMetrics', 'dependencies'],
+    required: ['desiredState', 'businessValue', 'outOfScope', 'successMetrics'],
+    optional: ['currentState', 'dependencies'],
   },
   improvement: {
-    required: ['currentState', 'desiredState', 'businessValue', 'criteria', 'outOfScope'],
-    optional: ['successMetrics', 'dependencies'],
+    required: ['currentState', 'desiredState', 'businessValue', 'successMetrics'],
+    optional: ['outOfScope', 'dependencies'],
+  },
+  // ارزش کسب‌وکاری برای باگ غیرفعال است؛ به‌جایش «شدت و دامنهٔ اثر» پرسیده می‌شود
+  bug: {
+    required: ['currentState', 'desiredState'],
+    optional: ['dependencies'],
   },
   tech: {
-    required: ['currentState', 'desiredState', 'businessValue', 'criteria', 'outOfScope'],
-    optional: ['dependencies'],
+    required: ['currentState', 'desiredState', 'businessValue'],
+    optional: ['outOfScope', 'successMetrics', 'dependencies'],
   },
-  // جزئیات باگ در مرحلهٔ اختصاصی خودش گرفته می‌شود
-  bug: {
-    required: ['currentState', 'desiredState', 'criteria'],
-    optional: ['dependencies'],
-  },
-  // خروجی گزارش خودش سند پذیرش است؛ شرح وضعیت هم کمک‌کننده است نه الزامی
   data: {
-    required: [],
-    optional: ['currentState', 'desiredState', 'dependencies'],
+    required: ['desiredState', 'businessValue'],
+    optional: ['currentState', 'outOfScope', 'dependencies'],
   },
-  // هنوز نمی‌دانیم شدنی است، پس معیار پذیرش و سنجه هنوز قابل تعریف نیست
-  feasibility: {
-    required: ['currentState', 'desiredState', 'businessValue', 'outOfScope'],
-    optional: ['dependencies'],
+  other: {
+    required: [],
+    optional: ['currentState', 'desiredState', 'businessValue', 'dependencies'],
   },
 };
 
@@ -243,40 +238,39 @@ const FAST_TRACK_SKIPPED: GatedField[] = [
 
 /** آیا این فیلد برای وضعیت فعلی فرم فعال است؟ */
 export function fieldEnabled(state: FormState, field: GatedField): boolean {
+  // معیارهای پذیرش در این فرم پر نمی‌شود؛ روی خود تسک نوشته می‌شود
+  if (field === 'criteria') return false;
   if (isFastTrack(state) && FAST_TRACK_SKIPPED.includes(field)) return false;
-  if (state.requestTypes.length === 0) return true;
-  return state.requestTypes.some(
-    (t) =>
-      TYPE_FIELDS[t].required.includes(field) ||
-      TYPE_FIELDS[t].optional.includes(field),
-  );
+  if (!state.requestType) return true;
+  const fields = TYPE_FIELDS[state.requestType];
+  return fields.required.includes(field) || fields.optional.includes(field);
 }
 
 /** آیا پرکردن این فیلد الزامی است؟ (فقط وقتی فعال هم باشد) */
 export function fieldRequired(state: FormState, field: GatedField): boolean {
   if (!fieldEnabled(state, field)) return false;
-  if (state.requestTypes.length === 0) return true;
-  return state.requestTypes.some((t) => TYPE_FIELDS[t].required.includes(field));
+  if (!state.requestType) return true;
+  return TYPE_FIELDS[state.requestType].required.includes(field);
 }
 
 /** توضیح اینکه چرا این فیلد غیرفعال شده است */
 export function disabledReason(state: FormState, field: GatedField): string {
+  if (field === 'criteria') {
+    return 'در این فرم پر نمی‌شود. پس از بررسی، به‌همراه تیم فنی روی خود تسک نوشته می‌شود.';
+  }
   if (isFastTrack(state) && FAST_TRACK_SKIPPED.includes(field)) {
     return 'چون این درخواست در مسیر سریع قرار گرفته، این بخش لازم نیست.';
   }
-  const labels = state.requestTypes
-    .map((t) => REQUEST_TYPES.find((r) => r.value === t)?.label ?? t)
-    .join(' و ');
-  return `برای نوع درخواست «${labels}» این بخش لازم نیست.`;
+  if (field === 'businessValue' && isBug(state)) {
+    return 'برای باگ لازم نیست؛ به‌جایش «شدت و دامنهٔ اثر» در مرحلهٔ اولویت پرسیده می‌شود.';
+  }
+  const label = requestTypeName(state.requestType);
+  return `برای نوع درخواست «${label}» این بخش لازم نیست.`;
 }
 
 /** آیا مرحلهٔ معیارها اصلاً فیلد فعالی دارد؟ */
 export function criteriaStepNeeded(state: FormState): boolean {
-  return (
-    fieldEnabled(state, 'criteria') ||
-    fieldEnabled(state, 'outOfScope') ||
-    fieldEnabled(state, 'successMetrics')
-  );
+  return fieldEnabled(state, 'outOfScope') || fieldEnabled(state, 'successMetrics');
 }
 
 /** موارد غیرخالی یک فهرست تکرارشونده */
@@ -329,12 +323,36 @@ export const REQUEST_TYPES: {
   label: string;
   hint: string;
 }[] = [
-  { value: 'feature', label: 'قابلیت جدید', hint: 'چیزی که امروز وجود ندارد' },
-  { value: 'improvement', label: 'بهبود', hint: 'هست، اما باید بهتر شود' },
-  { value: 'bug', label: 'باگ', hint: 'هست، اما درست کار نمی‌کند' },
-  { value: 'tech', label: 'وظیفهٔ فنی', hint: 'زیرساخت، پایداری یا بدهی فنی' },
-  { value: 'data', label: 'داده و گزارش', hint: 'استخراج داده، داشبورد یا گزارش' },
-  { value: 'feasibility', label: 'امکان‌سنجی', hint: 'هنوز نمی‌دانیم شدنی است یا نه' },
+  {
+    value: 'feature',
+    label: 'قابلیت جدید',
+    hint: 'نیازی که امروز هیچ راهکاری برایش وجود ندارد',
+  },
+  {
+    value: 'improvement',
+    label: 'بهبود و تغییر',
+    hint: 'راهکار موجود کار می‌کند، اما باید بهتر یا متفاوت شود',
+  },
+  {
+    value: 'bug',
+    label: 'رفع اشکال (باگ)',
+    hint: 'رفتار فعلی با رفتار مورد انتظار مغایرت دارد',
+  },
+  {
+    value: 'tech',
+    label: 'کار فنی و زیرساختی',
+    hint: 'تغییری در لایهٔ فنی، بدون اثر مستقیم بر تجربهٔ کاربر',
+  },
+  {
+    value: 'data',
+    label: 'داده و گزارش',
+    hint: 'نیاز به دسترسی، سنجش یا تحلیل داده، بدون تغییر در محصول',
+  },
+  {
+    value: 'other',
+    label: 'سایر',
+    hint: 'خارج از پنج دستهٔ بالا؛ نیازمند توضیح در متن درخواست',
+  },
 ];
 
 export type Tone = 'critical' | 'high' | 'medium' | 'low';
@@ -370,11 +388,19 @@ export const FAST_TRACK_QUESTIONS = [
   'تکلیف محصولی آن روشن است و تصمیم تازه‌ای از مدیر محصول نمی‌خواهد.',
 ];
 
-export function requestTypesLabel(types: RequestType[]): string {
-  if (types.length === 0) return '—';
-  return types
-    .map((t) => REQUEST_TYPES.find((r) => r.value === t)?.label ?? t)
-    .join(' · ');
+/** نام کوتاه یک نوع درخواست */
+export function requestTypeName(type: RequestType | null): string {
+  return REQUEST_TYPES.find((r) => r.value === type)?.label ?? '—';
+}
+
+/** نوع درخواست برای نمایش و سند — با «سایر» توضیح خودِ کاربر هم می‌آید */
+export function requestTypeLabel(state: FormState): string {
+  if (!state.requestType) return '—';
+  const name = requestTypeName(state.requestType);
+  if (isOtherRequestType(state) && state.customRequestType.trim()) {
+    return `${name} — ${state.customRequestType.trim()}`;
+  }
+  return name;
 }
 
 export function severityLabel(s: Severity | null): string {
@@ -389,19 +415,12 @@ export function priorityLabel(p: Priority | null): string {
 
 // ---------- مراحل ویزارد (پویا بر اساس نوع درخواست) ----------
 
-export type StepId =
-  | 'request'
-  | 'problem'
-  | 'criteria'
-  | 'bug'
-  | 'priority'
-  | 'review';
+export type StepId = 'request' | 'problem' | 'criteria' | 'priority' | 'review';
 
-/** فهرست مراحل قابل‌نمایش؛ مرحلهٔ باگ فقط وقتی «باگ» بین نوع‌ها باشد */
+/** فهرست مراحل قابل‌نمایش؛ مرحلهٔ دامنه فقط وقتی فیلد فعالی داشته باشد */
 export function visibleSteps(state: FormState): StepId[] {
   const steps: StepId[] = ['request', 'problem'];
   if (criteriaStepNeeded(state)) steps.push('criteria');
-  if (isBug(state)) steps.push('bug');
   steps.push('priority', 'review');
   return steps;
 }

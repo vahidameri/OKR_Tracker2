@@ -8,10 +8,14 @@ interface Props {
   label: string;
   /** متن راهنمای علامت سؤال — جایگزین توضیح زیر برچسب است */
   help?: string;
+  /** نکته‌های وابسته به نوع درخواست، زیر متن راهنما */
+  helpBullets?: string[];
   optional?: boolean;
   /** وقتی مسیر سریع این سؤال را غیرضروری می‌کند */
   disabled?: boolean;
   disabledNote?: string;
+  /** برچسب کوچک کنار عنوان وقتی فیلد غیرفعال است (پیش‌فرض: «لازم نیست») */
+  disabledLabel?: string;
   /** با انیمیشن ظاهر شود — برای فیلدهایی که مرحله‌به‌مرحله باز می‌شوند */
   reveal?: boolean;
   children: ReactNode;
@@ -22,9 +26,11 @@ export default function Field({
   number,
   label,
   help,
+  helpBullets,
   optional,
   disabled,
   disabledNote,
+  disabledLabel = 'لازم نیست',
   reveal,
   children,
 }: Props) {
@@ -37,9 +43,9 @@ export default function Field({
           {toFaDigits(number)}
         </span>
         <span className="field-label">{label}</span>
-        {help && <HelpTip text={help} label={label} />}
+        {help && <HelpTip text={help} bullets={helpBullets} label={label} />}
         {optional && !disabled && <span className="field-optional">اختیاری</span>}
-        {disabled && <span className="field-skipped">لازم نیست</span>}
+        {disabled && <span className="field-skipped">{disabledLabel}</span>}
       </div>
       {disabled ? (
         <p className="field-disabled-note">{disabledNote}</p>

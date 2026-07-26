@@ -2,7 +2,7 @@
 // طول پاسخ‌ها اینجا دخیل است: پاسخ کوتاه نیمی از امتیاز محور خودش را می‌گیرد.
 
 import type { FormState } from '../state';
-import { fieldEnabled, isBug } from '../state';
+import { fieldEnabled } from '../state';
 import { GOOD_LENGTH, filled, len, lengthRatio, listRatio } from './limits';
 
 export interface ScoreResult {
@@ -40,14 +40,14 @@ export function computeScore(state: FormState): ScoreResult {
   });
 
   parts.push({
-    weight: 14,
+    weight: 22,
     ratio: lengthRatio(state.problem, GOOD_LENGTH.problem),
     missing: textGap('صورت‌مسئله', state.problem, GOOD_LENGTH.problem),
   });
 
   if (fieldEnabled(state, 'currentState')) {
     parts.push({
-      weight: 7,
+      weight: 14,
       ratio: lengthRatio(state.currentState, GOOD_LENGTH.currentState),
       missing: textGap('وضعیت فعلی', state.currentState, GOOD_LENGTH.currentState),
     });
@@ -55,23 +55,9 @@ export function computeScore(state: FormState): ScoreResult {
 
   if (fieldEnabled(state, 'desiredState')) {
     parts.push({
-      weight: 8,
+      weight: 18,
       ratio: lengthRatio(state.desiredState, GOOD_LENGTH.desiredState),
       missing: textGap('وضعیت مطلوب', state.desiredState, GOOD_LENGTH.desiredState),
-    });
-  }
-
-  if (fieldEnabled(state, 'criteria')) {
-    const n = filled(state.criteria).length;
-    parts.push({
-      weight: 25,
-      ratio: listRatio(state.criteria, GOOD_LENGTH.criterion),
-      missing:
-        n === 0
-          ? 'هیچ معیار پذیرشی نوشته نشده است.'
-          : listRatio(state.criteria, GOOD_LENGTH.criterion) < 1
-            ? 'معیارهای پذیرش را کامل‌تر یا بیشتر کنید (دو معیار روشن).'
-            : undefined,
     });
   }
 
@@ -102,29 +88,18 @@ export function computeScore(state: FormState): ScoreResult {
   }
 
   if (fieldEnabled(state, 'successMetrics')) {
+    const n = filled(state.successMetrics).length;
     parts.push({
-      weight: 5,
-      ratio: Math.min(1, filled(state.successMetrics).length),
-      missing: '«سنجهٔ موفقیت» خالی است.',
+      weight: 14,
+      ratio: listRatio(state.successMetrics, GOOD_LENGTH.metric),
+      missing:
+        n === 0
+          ? '«سنجهٔ موفقیت» خالی است.'
+          : 'سنجه‌های موفقیت را کامل‌تر یا بیشتر کنید.',
     });
   }
 
-  // اطلاعات فنی: برای باگ سه‌قسمتی، در غیر این صورت وابستگی‌ها
-  if (isBug(state)) {
-    const bug: [string, string, number][] = [
-      ['محیط، نسخه و دستگاه', state.bugEnv, GOOD_LENGTH.bugEnv],
-      ['نتیجهٔ مشاهده‌شده', state.bugObserved, GOOD_LENGTH.bugObserved],
-      ['نتیجهٔ مورد انتظار', state.bugExpected, GOOD_LENGTH.bugExpected],
-      ['مراحل بازتولید', state.bugSteps, GOOD_LENGTH.bugSteps],
-    ];
-    for (const [label, value, good] of bug) {
-      parts.push({
-        weight: 4,
-        ratio: lengthRatio(value, good),
-        missing: textGap(label, value, good),
-      });
-    }
-  } else if (fieldEnabled(state, 'dependencies')) {
+  if (fieldEnabled(state, 'dependencies')) {
     parts.push({
       weight: 12,
       ratio: state.dependencies.trim() ? 1 : 0,

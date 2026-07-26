@@ -16,28 +16,16 @@ export default function StepCriteria({ state, dispatch }: Props) {
       title="معیارهای پذیرش و دامنه"
       subtitle="از کجا می‌فهمیم این کار درست انجام شده است؟"
     >
+      {/* معیارهای پذیرش در این فرم پر نمی‌شود؛ فقط نشان می‌دهیم کجا نوشته می‌شود */}
       <Field
         number={1}
         label="معیارهای پذیرش"
-        optional={fieldEnabled(state, 'criteria') && !fieldRequired(state, 'criteria')}
-        disabled={!fieldEnabled(state, 'criteria')}
+        disabled
+        disabledLabel="روی خود تسک"
         disabledNote={disabledReason(state, 'criteria')}
-        help="معیار پذیرش یعنی شرطی که اگر برقرار باشد، همه قبول دارند کار تمام شده است. هر معیار باید قابل مشاهده یا اندازه‌گیری باشد — یعنی دو نفر با دیدن نتیجه به یک جواب برسند. «سریع‌تر شود» معیار نیست؛ «زیر ۲ ثانیه کامل شود» معیار است. هر تعداد که لازم دارید اضافه کنید؛ اگر برایتان راحت‌تر است می‌توانید از قالب «با آنکه… وقتی… آنگاه…» استفاده کنید، اما اجباری نیست."
+        help="معیار پذیرش یعنی شرطی که اگر برقرار باشد، همه قبول دارند کار تمام شده است. نوشتنش به جزئیات فنی راهکار وابسته است، پس در این فرم پر نمی‌شود: پس از بررسی اولیه، مدیر برنامه به‌همراه تیم فنی معیارها را روی خود تسک می‌نویسد."
       >
-        <RepeatableList
-          listKey="criteria"
-          items={state.criteria}
-          dispatch={dispatch}
-          itemName="معیار"
-          minChars={GOOD_LENGTH.criterion}
-          addLabel="افزودن معیار"
-          multiline
-          placeholders={[
-            'نمونه: در کلاس‌های بالای ۲۰۰ نفر، ارسال تکلیف در کمتر از ۲ ثانیه کامل می‌شود.',
-            'نمونه: اگر ارسال ناموفق بود، پیام خطای مشخص با امکان تلاش دوباره نمایش داده می‌شود.',
-            'معیار بعدی…',
-          ]}
-        />
+        <></>
       </Field>
 
       <Field
@@ -46,13 +34,14 @@ export default function StepCriteria({ state, dispatch }: Props) {
         optional={fieldEnabled(state, 'outOfScope') && !fieldRequired(state, 'outOfScope')}
         disabled={!fieldEnabled(state, 'outOfScope')}
         disabledNote={disabledReason(state, 'outOfScope')}
-        help="مرز کار را مشخص می‌کند و جلوی بزرگ‌شدن ناخواستهٔ تسک را می‌گیرد. چیزهایی را بنویسید که کسی ممکن است انتظارشان را داشته باشد اما جزو این درخواست نیستند — مثلاً «بازطراحی ظاهر صفحه» یا «پشتیبانی از نسخهٔ وب». نوشتن «هیچ» به کسی کمک نمی‌کند."
+        help="چه چیزهایی عمداً جزو این درخواست نیست؟ این فیلد از خزش دامنه در مراحل بعد جلوگیری می‌کند. چیزهایی را بنویسید که کسی ممکن است انتظارشان را داشته باشد اما جزو این کار نیستند — مثلاً «بازطراحی ظاهر صفحه» یا «پشتیبانی از نسخهٔ وب». نوشتن «هیچ» به کسی کمک نمی‌کند."
       >
         <RepeatableList
           listKey="outOfScope"
           items={state.outOfScope}
           dispatch={dispatch}
           itemName="مورد"
+          minItems={2}
           minChars={GOOD_LENGTH.scopeItem}
           addLabel="افزودن مورد"
           placeholders={[
@@ -66,20 +55,24 @@ export default function StepCriteria({ state, dispatch }: Props) {
       <Field
         number={3}
         label="سنجهٔ موفقیت"
-        optional
+        optional={
+          fieldEnabled(state, 'successMetrics') && !fieldRequired(state, 'successMetrics')
+        }
         disabled={!fieldEnabled(state, 'successMetrics')}
         disabledNote={disabledReason(state, 'successMetrics')}
-        help="عددی که چند هفته پس از انجام کار بتوان اندازه گرفت و فهمید ارزشش را داشت یا نه. با معیار پذیرش فرق دارد: معیار پذیرش می‌گوید کار درست ساخته شده، سنجهٔ موفقیت می‌گوید کار درستی ساخته شده."
+        help="سه ماه پس از تحویل، با کدام عدد قضاوت می‌کنیم که درست بوده؟ اگر عددی به ذهنتان نمی‌رسد، احتمالاً ارزش کسب‌وکاری هم به‌اندازهٔ کافی مشخص نیست. با معیار پذیرش فرق دارد: معیار پذیرش می‌گوید کار درست ساخته شده، سنجهٔ موفقیت می‌گوید کار درستی ساخته شده."
       >
         <RepeatableList
           listKey="successMetrics"
           items={state.successMetrics}
           dispatch={dispatch}
           itemName="سنجه"
+          minItems={2}
           minChars={GOOD_LENGTH.metric}
           addLabel="افزودن سنجه"
           placeholders={[
             'نمونه: میانگین زمان ارسال تکلیف زیر ۲ ثانیه در داشبورد',
+            'نمونه: کاهش تیکت‌های پشتیبانی دربارهٔ ارسال تکلیف به نصف',
             'سنجهٔ بعدی…',
           ]}
         />

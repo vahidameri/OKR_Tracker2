@@ -7,7 +7,7 @@ import {
   priorityLabel,
   productLabel,
   docTypeLabel,
-  requestTypesLabel,
+  requestTypeLabel,
   requesterInfo,
   severityLabel,
 } from '../state';
@@ -32,7 +32,7 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 export default function ReviewStep({ state }: Props) {
   const score = computeScore(state);
   const requester = requesterInfo(state);
-  const criteria = filledItems(state.criteria);
+  const outOfScope = filledItems(state.outOfScope);
   const fastTrack = isFastTrack(state);
 
   return (
@@ -76,17 +76,17 @@ export default function ReviewStep({ state }: Props) {
           label="مسیر بررسی"
           value={fastTrack ? '✓ مسیر سریع (Fast-Track)' : 'مسیر عادی'}
         />
-        <SummaryRow label="نوع درخواست" value={requestTypesLabel(state.requestTypes)} />
+        <SummaryRow label="نوع درخواست" value={requestTypeLabel(state)} />
         <SummaryRow label="عنوان" value={state.title} />
         <SummaryRow label="محصول هدف" value={productLabel(state)} />
         <SummaryRow label="صورت‌مسئله" value={state.problem} />
         <SummaryRow label="وضعیت مطلوب" value={state.desiredState} />
         <SummaryRow
-          label="معیارهای پذیرش"
-          value={criteria.map((c, i) => `${toFaDigits(i + 1)}. ${c}`).join('\n')}
+          label="خارج از دامنه"
+          value={outOfScope.map((c, i) => `${toFaDigits(i + 1)}. ${c}`).join('\n')}
         />
         {isBug(state) && (
-          <SummaryRow label="شدت باگ" value={severityLabel(state.bugSeverity)} />
+          <SummaryRow label="شدت و دامنهٔ اثر" value={severityLabel(state.bugSeverity)} />
         )}
         <SummaryRow label="اولویت پیشنهادی" value={priorityLabel(state.priority)} />
       </div>

@@ -31,7 +31,16 @@ const MIME = {
 };
 
 if (!existsSync(ROOT)) {
-  console.error('پوشهٔ dist پیدا نشد. اول دستور «npm run build» را اجرا کنید.');
+  const deps = resolve(import.meta.dirname, 'node_modules');
+  console.error('\n  پوشهٔ dist پیدا نشد.\n');
+  if (!existsSync(deps)) {
+    console.error('  اول وابستگی‌ها را نصب کنید، بعد build بگیرید:\n');
+    console.error('    npm install');
+  } else {
+    console.error('  اول build بگیرید:\n');
+  }
+  console.error('    npm run build');
+  console.error('    npm run serve\n');
   process.exit(1);
 }
 

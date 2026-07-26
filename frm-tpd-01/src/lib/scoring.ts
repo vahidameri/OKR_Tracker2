@@ -98,15 +98,17 @@ export function computeScore(state: FormState): ScoreResult {
     });
   }
 
+  // برخلاف «خارج از دامنه»، یک سنجهٔ کامل امتیاز کامل این محور را می‌گیرد
   if (fieldEnabled(state, 'successMetrics')) {
-    const n = filled(state.successMetrics).length;
+    const items = filled(state.successMetrics);
+    const best = items.reduce((max, i) => Math.max(max, i.length), 0);
     parts.push({
       weight: 14,
-      ratio: listRatio(state.successMetrics, GOOD_LENGTH.metric),
+      ratio: best === 0 ? 0 : best >= GOOD_LENGTH.metric ? 1 : 0.5,
       missing:
-        n === 0
+        items.length === 0
           ? '«سنجهٔ موفقیت» خالی است.'
-          : 'سنجه‌های موفقیت را کامل‌تر یا بیشتر کنید.',
+          : 'سنجهٔ موفقیت خیلی کوتاه است؛ کمی کامل‌ترش کنید.',
     });
   }
 

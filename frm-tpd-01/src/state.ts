@@ -103,9 +103,9 @@ export const initialState: FormState = {
   currentState: '',
   desiredState: '',
   businessValue: '',
-  // «خارج از دامنه» و «سنجهٔ موفقیت» دست‌کم دو مورد دارند
+  // «خارج از دامنه» دو مورد لازم دارد، سنجهٔ موفقیت یکی
   outOfScope: ['', ''],
-  successMetrics: ['', ''],
+  successMetrics: [''],
   bugEnv: '',
   bugSeverity: null,
   priority: null,

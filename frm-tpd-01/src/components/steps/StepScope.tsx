@@ -57,7 +57,7 @@ export default function StepScope({ state, dispatch }: Props) {
           items={state.successMetrics}
           dispatch={dispatch}
           itemName="سنجه"
-          minItems={2}
+          minItems={1}
           minChars={GOOD_LENGTH.metric}
           addLabel="افزودن سنجه"
           placeholders={[

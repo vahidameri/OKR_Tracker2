@@ -87,7 +87,10 @@ export default function ReviewStep({ state }: Props) {
           value={outOfScope.map((c, i) => `${toFaDigits(i + 1)}. ${c}`).join('\n')}
         />
         {isBug(state) && (
-          <SummaryRow label="شدت و دامنهٔ اثر" value={severityLabel(state.bugSeverity)} />
+          <>
+            <SummaryRow label="محیط، نسخه و دستگاه" value={state.bugEnv} />
+            <SummaryRow label="شدت و دامنهٔ اثر" value={severityLabel(state.bugSeverity)} />
+          </>
         )}
         <SummaryRow label="اولویت پیشنهادی" value={priorityLabel(state.priority)} />
       </div>

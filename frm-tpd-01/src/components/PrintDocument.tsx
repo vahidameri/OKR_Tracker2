@@ -103,7 +103,10 @@ export default function PrintDocument({ state }: Props) {
             <Row label="خارج از دامنه" value={outOfScope} />
             <Row label="سنجهٔ موفقیت" value={successMetrics} />
             {isBug(state) && (
-              <Row label="شدت و دامنهٔ اثر" value={severityLabel(state.bugSeverity)} />
+              <>
+                <Row label="محیط، نسخه و دستگاه" value={state.bugEnv} />
+                <Row label="شدت و دامنهٔ اثر" value={severityLabel(state.bugSeverity)} />
+              </>
             )}
             <Row label="اولویت پیشنهادی" value={priorityLabel(state.priority)} />
             <Row label="تاریخ نیاز و دلیل" value={state.neededDate} />

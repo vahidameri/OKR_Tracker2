@@ -4,11 +4,9 @@ import Field from '../Field';
 import type { Action, FormState } from '../../state';
 import {
   PRIORITIES,
-  SEVERITIES,
   disabledBadge,
   disabledReason,
   fieldEnabled,
-  isBug,
   isFastTrack,
 } from '../../state';
 
@@ -18,8 +16,6 @@ interface Props {
 }
 
 export default function StepPriority({ state, dispatch }: Props) {
-  // برای باگ، «ارزش کسب‌وکاری» غیرفعال است و به‌جایش شدت اثر اینجا پرسیده می‌شود
-  const bug = isBug(state);
   let n = 1;
 
   return (
@@ -31,24 +27,6 @@ export default function StepPriority({ state, dispatch }: Props) {
           : 'تعیین می‌کند این درخواست با چه فوریتی و در کنار چه وابستگی‌هایی بررسی شود'
       }
     >
-      {bug && (
-        <Field
-          number={n++}
-          label="شدت و دامنهٔ اثر"
-          help="برای باگ، جای «ارزش کسب‌وکاری» را این فیلد می‌گیرد: چقدر از کار کاربر مختل شده و چند نفر درگیرند. «بالا» وقتی است که مسیر اصلی از کار افتاده و هیچ راه دور زدنی وجود ندارد؛ اگر راه جایگزینی هست، «متوسط» است."
-        >
-          <ChipGroup
-            ariaLabel="شدت و دامنهٔ اثر"
-            columns={3}
-            options={SEVERITIES}
-            value={state.bugSeverity}
-            onChange={(bugSeverity) =>
-              dispatch({ type: 'patch', patch: { bugSeverity } })
-            }
-          />
-        </Field>
-      )}
-
       <Field
         number={n++}
         label="اولویت پیشنهادی"

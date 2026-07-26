@@ -9,6 +9,7 @@ export const LANDING_PATH = '/';
 export const STEP_PATHS: Record<StepId, string> = {
   request: '/request',
   problem: '/problem',
+  bug: '/bug',
   scope: '/scope',
   priority: '/priority',
   review: '/review',

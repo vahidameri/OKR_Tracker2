@@ -2,7 +2,7 @@
 // طول پاسخ‌ها اینجا دخیل است: پاسخ کوتاه نیمی از امتیاز محور خودش را می‌گیرد.
 
 import type { FormState } from '../state';
-import { fieldEnabled } from '../state';
+import { fieldEnabled, isBug } from '../state';
 import { GOOD_LENGTH, filled, len, lengthRatio, listRatio } from './limits';
 
 export interface ScoreResult {
@@ -107,6 +107,15 @@ export function computeScore(state: FormState): ScoreResult {
         n === 0
           ? '«سنجهٔ موفقیت» خالی است.'
           : 'سنجه‌های موفقیت را کامل‌تر یا بیشتر کنید.',
+    });
+  }
+
+  // برای باگ، محیط و نسخه همان‌قدر مهم است که برای بقیه «ارزش کسب‌وکاری»
+  if (isBug(state)) {
+    parts.push({
+      weight: 14,
+      ratio: lengthRatio(state.bugEnv, GOOD_LENGTH.bugEnv),
+      missing: textGap('محیط، نسخه و دستگاه', state.bugEnv, GOOD_LENGTH.bugEnv),
     });
   }
 

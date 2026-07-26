@@ -14,6 +14,7 @@ import { toFaDigits } from '../lib/jalali';
 import Landing from './Landing';
 import StepRequest from './steps/StepRequest';
 import StepProblem from './steps/StepProblem';
+import StepBug from './steps/StepBug';
 import StepScope from './steps/StepScope';
 import StepPriority from './steps/StepPriority';
 import ReviewStep from './ReviewStep';
@@ -26,6 +27,7 @@ import { canPrint, computeScore } from '../lib/scoring';
 const STEP_NAMES: Record<StepId, string> = {
   request: 'نوع و مسیر',
   problem: 'شرح مسئله',
+  bug: 'جزئیات باگ',
   scope: 'دامنه و سنجه',
   priority: 'اولویت',
   review: 'مرور و دریافت',
@@ -193,6 +195,7 @@ export default function Wizard() {
           <div className="step-container" key={current}>
             {current === 'request' && <StepRequest state={state} dispatch={dispatch} />}
             {current === 'problem' && <StepProblem state={state} dispatch={dispatch} />}
+            {current === 'bug' && <StepBug state={state} dispatch={dispatch} />}
             {current === 'scope' && <StepScope state={state} dispatch={dispatch} />}
             {current === 'priority' && <StepPriority state={state} dispatch={dispatch} />}
             {current === 'review' && <ReviewStep state={state} />}

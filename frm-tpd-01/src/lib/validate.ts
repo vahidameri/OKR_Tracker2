@@ -5,7 +5,6 @@ import type { FormState, StepId } from '../state';
 import {
   OTHER_PERSON_ID,
   fieldRequired,
-  isBug,
   isOtherProduct,
   isOtherRequestType,
   triageAnswered,
@@ -48,6 +47,10 @@ export function stepMissing(step: StepId, state: FormState): string[] {
       if (fieldRequired(state, 'businessValue') && !state.businessValue.trim())
         missing.push('ارزش کسب‌وکاری');
       break;
+    case 'bug':
+      if (!state.bugEnv.trim()) missing.push('محیط، نسخه و دستگاه');
+      if (!state.bugSeverity) missing.push('شدت و دامنهٔ اثر');
+      break;
     case 'scope':
       // دو مورد اول «خارج از دامنه» الزامی است، نه فقط یکی
       if (fieldRequired(state, 'outOfScope') && filled(state.outOfScope).length < 2)
@@ -56,7 +59,6 @@ export function stepMissing(step: StepId, state: FormState): string[] {
         missing.push('دست‌کم یک سنجهٔ موفقیت');
       break;
     case 'priority':
-      if (isBug(state) && !state.bugSeverity) missing.push('شدت و دامنهٔ اثر');
       if (!state.priority) missing.push('اولویت پیشنهادی');
       break;
     case 'review':

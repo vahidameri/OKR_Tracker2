@@ -78,7 +78,9 @@ export interface FormState {
   businessValue: string;
   outOfScope: string[];
   successMetrics: string[];
-  /** شدت و دامنهٔ اثر — فقط برای باگ، در مرحلهٔ اولویت پرسیده می‌شود */
+  /** محیط، نسخه و دستگاه — فقط برای باگ */
+  bugEnv: string;
+  /** شدت و دامنهٔ اثر — فقط برای باگ */
   bugSeverity: Severity | null;
   priority: Priority | null;
   neededDate: string;
@@ -104,6 +106,7 @@ export const initialState: FormState = {
   // «خارج از دامنه» و «سنجهٔ موفقیت» دست‌کم دو مورد دارند
   outOfScope: ['', ''],
   successMetrics: ['', ''],
+  bugEnv: '',
   bugSeverity: null,
   priority: null,
   neededDate: '',
@@ -419,11 +422,15 @@ export function priorityLabel(p: Priority | null): string {
 
 // ---------- مراحل ویزارد (پویا بر اساس نوع درخواست) ----------
 
-export type StepId = 'request' | 'problem' | 'scope' | 'priority' | 'review';
+export type StepId = 'request' | 'problem' | 'bug' | 'scope' | 'priority' | 'review';
 
-/** فهرست مراحل قابل‌نمایش؛ مرحلهٔ دامنه فقط وقتی فیلد فعالی داشته باشد */
+/**
+ * فهرست مراحل قابل‌نمایش. مرحلهٔ باگ فقط برای درخواست باگ می‌آید و مرحلهٔ
+ * دامنه فقط وقتی دست‌کم یکی از فیلدهایش فعال باشد.
+ */
 export function visibleSteps(state: FormState): StepId[] {
   const steps: StepId[] = ['request', 'problem'];
+  if (isBug(state)) steps.push('bug');
   if (scopeStepNeeded(state)) steps.push('scope');
   steps.push('priority', 'review');
   return steps;

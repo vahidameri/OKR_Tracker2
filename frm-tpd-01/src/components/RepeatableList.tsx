@@ -94,9 +94,6 @@ export default function RepeatableList({
         >
           + {addLabel}
         </button>
-        <span className="repeat-hint">
-          هر {itemName} از {toFaDigits(minChars)} کاراکتر امتیاز کامل می‌گیرد
-        </span>
       </div>
     </div>
   );

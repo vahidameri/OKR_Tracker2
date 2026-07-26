@@ -12,6 +12,8 @@ interface Props {
   /** وقتی مسیر سریع این سؤال را غیرضروری می‌کند */
   disabled?: boolean;
   disabledNote?: string;
+  /** با انیمیشن ظاهر شود — برای فیلدهایی که مرحله‌به‌مرحله باز می‌شوند */
+  reveal?: boolean;
   children: ReactNode;
 }
 
@@ -23,10 +25,13 @@ export default function Field({
   optional,
   disabled,
   disabledNote,
+  reveal,
   children,
 }: Props) {
   return (
-    <div className={`field${disabled ? ' is-disabled' : ''}`}>
+    <div
+      className={`field${disabled ? ' is-disabled' : ''}${reveal ? ' reveal' : ''}`}
+    >
       <div className="field-label-row">
         <span className="field-number" aria-hidden>
           {toFaDigits(number)}

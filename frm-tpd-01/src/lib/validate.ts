@@ -2,7 +2,7 @@
 // به‌جای آن در امتیاز آمادگی دخیل می‌شود.
 
 import type { FormState, StepId } from '../state';
-import { OTHER_PERSON_ID, fieldRequired, triageAnswered } from '../state';
+import { OTHER_PERSON_ID, fieldRequired, isOtherProduct, triageAnswered } from '../state';
 import { filled } from './limits';
 
 /** چیزهایی که برای شروع فرآیند از صفحهٔ آغازین لازم است */
@@ -26,6 +26,8 @@ export function stepMissing(step: StepId, state: FormState): string[] {
     case 'request':
       if (state.requestTypes.length === 0) missing.push('دست‌کم یک نوع درخواست');
       if (!state.product) missing.push('محصول هدف');
+      else if (isOtherProduct(state) && !state.customProduct.trim())
+        missing.push('نام محصول');
       if (!triageAnswered(state)) missing.push('پاسخ به هر چهار گزارهٔ مسیر بررسی');
       break;
     case 'problem':

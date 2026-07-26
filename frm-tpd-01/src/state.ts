@@ -1,16 +1,16 @@
 // state کل ویزارد — فقط در حافظهٔ session؛ هیچ ذخیره‌سازی یا ارسالی وجود ندارد
 
 import type { Product } from './data/people';
-import { findPerson } from './data/people';
+import { OTHER_PRODUCT, findPerson } from './data/people';
 
+/** شش دستهٔ درخواست — هر درخواستی در یکی (یا چند تای) از اینها جا می‌گیرد */
 export type RequestType =
   | 'feature'
   | 'improvement'
   | 'bug'
   | 'tech'
   | 'data'
-  | 'feasibility'
-  | 'other';
+  | 'feasibility';
 
 export type Severity = 'high' | 'medium' | 'low';
 export type Priority = 'critical' | 'high' | 'medium' | 'low';
@@ -65,6 +65,8 @@ export interface FormState {
   requestTypes: RequestType[];
   title: string;
   product: Product | null;
+  /** نام محصول دستی — فقط وقتی product برابر «سایر» است */
+  customProduct: string;
   /** آیا کاربر محصول را دستی تغییر داده؟ (برای پیش‌انتخاب خودکار) */
   productTouched: boolean;
   problem: string;
@@ -93,6 +95,7 @@ export const initialState: FormState = {
   requestTypes: [],
   title: '',
   product: null,
+  customProduct: '',
   productTouched: false,
   problem: '',
   currentState: '',
@@ -209,10 +212,6 @@ const TYPE_FIELDS: Record<
     required: ['currentState', 'desiredState', 'businessValue', 'criteria', 'outOfScope'],
     optional: ['successMetrics', 'dependencies'],
   },
-  other: {
-    required: ['currentState', 'desiredState', 'businessValue', 'criteria', 'outOfScope'],
-    optional: ['successMetrics', 'dependencies'],
-  },
   tech: {
     required: ['currentState', 'desiredState', 'businessValue', 'criteria', 'outOfScope'],
     optional: ['dependencies'],
@@ -295,6 +294,34 @@ export function requesterInfo(state: FormState): { name: string; role: string } 
   return person ? { name: person.name, role: person.role } : null;
 }
 
+/** آیا محصول انتخاب‌شده همان گزینهٔ «سایر» است؟ */
+export function isOtherProduct(state: FormState): boolean {
+  return state.product === OTHER_PRODUCT;
+}
+
+/** نام محصول برای نمایش و سند — با «سایر» متنِ خودِ کاربر جایگزین می‌شود */
+export function productLabel(state: FormState): string {
+  if (!state.product) return '';
+  if (isOtherProduct(state)) return state.customProduct.trim() || 'سایر';
+  return state.product;
+}
+
+// ---------- صفحهٔ آغازین: فیلدها یکی‌یکی ظاهر می‌شوند ----------
+
+/** عنوان درخواست پر شده است؟ */
+export function titleDone(state: FormState): boolean {
+  return state.title.trim().length > 0;
+}
+
+/** نام و سمت درخواست‌دهنده کامل است؟ */
+export function requesterDone(state: FormState): boolean {
+  if (!state.personId) return false;
+  if (state.personId === OTHER_PERSON_ID) {
+    return state.customName.trim().length > 0 && state.customRole.trim().length > 0;
+  }
+  return true;
+}
+
 // ---------- برچسب‌های ثابت UI و سند ----------
 
 export const REQUEST_TYPES: {
@@ -305,10 +332,9 @@ export const REQUEST_TYPES: {
   { value: 'feature', label: 'قابلیت جدید', hint: 'چیزی که امروز وجود ندارد' },
   { value: 'improvement', label: 'بهبود', hint: 'هست، اما باید بهتر شود' },
   { value: 'bug', label: 'باگ', hint: 'هست، اما درست کار نمی‌کند' },
-  { value: 'tech', label: 'وظیفهٔ فنی', hint: 'زیرساخت یا بدهی فنی' },
-  { value: 'data', label: 'داده و گزارش', hint: 'استخراج داده یا داشبورد' },
-  { value: 'feasibility', label: 'امکان‌سنجی', hint: 'هنوز نمی‌دانیم شدنی است' },
-  { value: 'other', label: 'سایر', hint: 'مدیر برنامه دسته‌بندی می‌کند' },
+  { value: 'tech', label: 'وظیفهٔ فنی', hint: 'زیرساخت، پایداری یا بدهی فنی' },
+  { value: 'data', label: 'داده و گزارش', hint: 'استخراج داده، داشبورد یا گزارش' },
+  { value: 'feasibility', label: 'امکان‌سنجی', hint: 'هنوز نمی‌دانیم شدنی است یا نه' },
 ];
 
 export type Tone = 'critical' | 'high' | 'medium' | 'low';

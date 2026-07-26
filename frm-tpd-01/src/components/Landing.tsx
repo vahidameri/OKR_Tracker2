@@ -4,7 +4,13 @@ import Field from './Field';
 import CharCount from './CharCount';
 import Logo from './Logo';
 import type { Action, DocType, FormState } from '../state';
-import { DOC_TYPES, OTHER_PERSON_ID, requesterInfo } from '../state';
+import {
+  DOC_TYPES,
+  OTHER_PERSON_ID,
+  requesterDone,
+  requesterInfo,
+  titleDone,
+} from '../state';
 import { GOOD_LENGTH } from '../lib/limits';
 import { todayJalaliLabel } from '../lib/jalali';
 
@@ -19,6 +25,9 @@ interface Props {
 /**
  * صفحهٔ آغازین — پیش از شروع ویزارد. عنوان، درخواست‌دهنده و نوع سند اینجا
  * گرفته می‌شود و شمارش مراحل تازه از صفحهٔ بعد شروع می‌شود.
+ *
+ * فیلدها یکی‌یکی ظاهر می‌شوند: تا عنوان نوشته نشود سؤال دوم دیده نمی‌شود و
+ * تا نام و سمت کامل نشود نوبت به نوع سند نمی‌رسد.
  */
 export default function Landing({
   state,
@@ -29,6 +38,8 @@ export default function Landing({
 }: Props) {
   const isOther = state.personId === OTHER_PERSON_ID;
   const requester = requesterInfo(state);
+  const showRequester = titleDone(state);
+  const showDocType = showRequester && requesterDone(state);
   let n = 1;
 
   return (
@@ -60,9 +71,11 @@ export default function Landing({
           <CharCount value={state.title} good={GOOD_LENGTH.title} />
         </Field>
 
+        {showRequester && (
         <Field
           number={n++}
           label="نام و سمت درخواست‌دهنده"
+          reveal
           help="نام خود را از فهرست انتخاب کنید. فهرست بر اساس نام خانوادگی مرتب شده و می‌توانید داخل آن جست‌وجو کنید. اگر نامتان در فهرست نبود، آخرین گزینه را انتخاب کنید تا نام و سمت را خودتان وارد کنید."
         >
           <PersonSelect
@@ -97,10 +110,13 @@ export default function Landing({
             </div>
           )}
         </Field>
+        )}
 
+        {showDocType && (
         <Field
           number={n++}
           label="نوع سند"
+          reveal
           help="سند اطلاعات تسک (TID) برای یک کار مشخص و قابل تحویل است — قابلیت، بهبود، باگ یا وظیفهٔ فنی. سند نیازمندی محصول (PRD) برای تعریف یک محصول یا قابلیت بزرگ با چند تسک است و هنوز در دسترس نیست."
         >
           <ChipGroup
@@ -119,26 +135,30 @@ export default function Landing({
             }
           />
         </Field>
+        )}
 
-        <div className="landing-foot">
-          <button
-            type="button"
-            className="btn primary landing-start"
-            disabled={!canStart}
-            onClick={onStart}
-          >
-            شروع فرآیند ←
-          </button>
-          {!canStart && (
-            <p className="landing-missing" aria-live="polite">
-              برای شروع: {missing.join('، ')}
-            </p>
-          )}
-        </div>
+        {showDocType && (
+          <div className="landing-foot reveal">
+            <button
+              type="button"
+              className="btn primary landing-start"
+              disabled={!canStart}
+              onClick={onStart}
+            >
+              شروع فرآیند ←
+            </button>
+            {!canStart && (
+              <p className="landing-missing" aria-live="polite">
+                برای شروع: {missing.join('، ')}
+              </p>
+            )}
+          </div>
+        )}
 
         <p className="landing-note">
-          پر کردن فرم حدود ۵ تا ۱۰ دقیقه طول می‌کشد. هیچ اطلاعاتی ذخیره یا ارسال
-          نمی‌شود؛ در پایان یک فایل PDF می‌گیرید و آن را به تسک پیوست می‌کنید.
+          پر کردن این فرم نهایتاً ۵ دقیقه زمان می‌برد. هیچ اطلاعاتی ذخیره یا
+          ارسال نمی‌شود؛ در پایان یک فایل PDF می‌گیرید و آن را به تسک پیوست
+          می‌کنید.
         </p>
       </div>
     </div>

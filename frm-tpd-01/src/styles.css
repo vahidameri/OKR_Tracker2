@@ -201,6 +201,12 @@ textarea {
   gap: 8px;
 }
 
+/* ورودی متنی که پس از انتخاب گزینهٔ «سایر» ظاهر می‌شود */
+.inline-other {
+  margin-top: 10px;
+  animation: reveal-in 0.28s ease backwards;
+}
+
 .landing-foot {
   display: flex;
   flex-direction: column;
@@ -386,6 +392,22 @@ textarea {
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+/*
+ * ظاهرشدن پله‌ای فیلدهای صفحهٔ آغازین. عمداً backwards است نه both: با both
+ * یک transform همانی روی عنصر باقی می‌ماند و همان برای فرزندان position:fixed
+ * یک containing block می‌سازد (همان اشکالی که در فهرست افراد داشتیم).
+ */
+.reveal {
+  animation: reveal-in 0.32s ease backwards;
+}
+
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
 }
 
@@ -929,11 +951,6 @@ textarea {
   gap: 12px;
   flex-wrap: wrap;
   margin-right: 36px;
-}
-
-.repeat-hint {
-  font-size: 11.5px;
-  color: #9ab5a9;
 }
 
 .repeat-index {

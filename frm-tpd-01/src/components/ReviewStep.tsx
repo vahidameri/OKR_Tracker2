@@ -5,6 +5,7 @@ import {
   isBug,
   isFastTrack,
   priorityLabel,
+  productLabel,
   docTypeLabel,
   requestTypesLabel,
   requesterInfo,
@@ -77,7 +78,7 @@ export default function ReviewStep({ state }: Props) {
         />
         <SummaryRow label="نوع درخواست" value={requestTypesLabel(state.requestTypes)} />
         <SummaryRow label="عنوان" value={state.title} />
-        <SummaryRow label="محصول هدف" value={state.product ?? ''} />
+        <SummaryRow label="محصول هدف" value={productLabel(state)} />
         <SummaryRow label="صورت‌مسئله" value={state.problem} />
         <SummaryRow label="وضعیت مطلوب" value={state.desiredState} />
         <SummaryRow

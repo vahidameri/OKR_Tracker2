@@ -4,7 +4,7 @@ import ChipMultiGroup from '../ChipMultiGroup';
 import Field from '../Field';
 import FastTrackQuiz from '../FastTrackQuiz';
 import type { Action, FormState } from '../../state';
-import { REQUEST_TYPES } from '../../state';
+import { REQUEST_TYPES, isOtherProduct } from '../../state';
 import { PRODUCTS } from '../../data/people';
 
 interface Props {
@@ -25,7 +25,7 @@ export default function StepRequest({ state, dispatch }: Props) {
       >
         <ChipMultiGroup
           ariaLabel="نوع درخواست"
-          columns={4}
+          columns={3}
           options={REQUEST_TYPES}
           values={state.requestTypes}
           onToggle={(value) => dispatch({ type: 'toggleRequestType', value })}
@@ -35,7 +35,7 @@ export default function StepRequest({ state, dispatch }: Props) {
       <Field
         number={2}
         label="محصول هدف"
-        help="محصولی که این کار روی آن انجام می‌شود؛ تعیین می‌کند درخواست به کدام تیم و کدام لید ارجاع شود. بر اساس نام شما پیش‌انتخاب شده و قابل تغییر است. اگر مطمئن نیستید یا به چند محصول مربوط است، «سایر» را بزنید تا مدیر برنامه تعیین کند."
+        help="محصولی که این کار روی آن انجام می‌شود؛ تعیین می‌کند درخواست به کدام تیم و کدام لید ارجاع شود. بر اساس نام شما پیش‌انتخاب شده و قابل تغییر است. اگر محصول موردنظرتان در فهرست نیست، «سایر» را بزنید و نامش را بنویسید."
       >
         <ChipGroup
           ariaLabel="محصول هدف"
@@ -44,6 +44,20 @@ export default function StepRequest({ state, dispatch }: Props) {
           value={state.product}
           onChange={(product) => dispatch({ type: 'selectProduct', product })}
         />
+        {/* «سایر» که انتخاب شد، نام محصول را خود کاربر می‌نویسد */}
+        {isOtherProduct(state) && (
+          <input
+            type="text"
+            className="text-input inline-other"
+            value={state.customProduct}
+            placeholder="نام محصول یا سرویس — نمونه: سامانهٔ احراز هویت"
+            aria-label="نام محصول"
+            autoFocus
+            onChange={(e) =>
+              dispatch({ type: 'patch', patch: { customProduct: e.target.value } })
+            }
+          />
+        )}
       </Field>
 
       <Field

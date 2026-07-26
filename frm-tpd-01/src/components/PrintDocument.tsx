@@ -5,6 +5,7 @@ import {
   isBug,
   isFastTrack,
   priorityLabel,
+  productLabel,
   requestTypesLabel,
   requesterInfo,
   severityLabel,
@@ -69,7 +70,7 @@ export default function PrintDocument({ state }: Props) {
             <Row label="نوع سند" value={docTypeLabel(state.docType)} />
             <Row label="نوع درخواست" value={requestTypesLabel(state.requestTypes)} />
             <Row label="عنوان درخواست" value={state.title} />
-            <Row label="محصول هدف" value={state.product ?? ''} />
+            <Row label="محصول هدف" value={productLabel(state)} />
             <tr>
               <th>مسیر بررسی (خودکار)</th>
               <td>

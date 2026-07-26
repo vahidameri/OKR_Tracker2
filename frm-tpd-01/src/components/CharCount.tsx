@@ -8,8 +8,8 @@ interface Props {
 }
 
 /**
- * شمارندهٔ زندهٔ کاراکتر. طول پیشنهادی اجباری نیست؛ فقط نشان می‌دهد از کجا
- * پاسخ برای امتیاز آمادگی کامل حساب می‌شود.
+ * شمارندهٔ زندهٔ کاراکتر. هیچ حد و حدودی اعلام نمی‌کند؛ فقط طول پاسخ را
+ * نشان می‌دهد و رنگش از روی طول پیشنهادیِ امتیاز آمادگی تعیین می‌شود.
  */
 export default function CharCount({ value, good }: Props) {
   const n = len(value);
@@ -17,9 +17,7 @@ export default function CharCount({ value, good }: Props) {
   const ok = n >= good;
   return (
     <p className={`char-count${ok ? ' ok' : ' short'}`} aria-live="polite">
-      {ok
-        ? `${toFaDigits(n)} کاراکتر`
-        : `${toFaDigits(n)} کاراکتر · از ${toFaDigits(good)} کاراکتر امتیاز کامل می‌گیرد`}
+      {toFaDigits(n)} کاراکتر
     </p>
   );
 }

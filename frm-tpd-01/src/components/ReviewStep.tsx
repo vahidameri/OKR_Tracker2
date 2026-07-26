@@ -11,7 +11,7 @@ import {
   requesterInfo,
   severityLabel,
 } from '../state';
-import { computeScore } from '../lib/scoring';
+import { MIN_PRINT_SCORE, canPrint, computeScore } from '../lib/scoring';
 import { openPrintDialog } from '../lib/print';
 import ScoreRing from './ScoreRing';
 import { toFaDigits, todayJalaliLabel } from '../lib/jalali';
@@ -34,6 +34,7 @@ export default function ReviewStep({ state }: Props) {
   const requester = requesterInfo(state);
   const outOfScope = filledItems(state.outOfScope);
   const fastTrack = isFastTrack(state);
+  const printable = canPrint(score.total);
 
   return (
     <StepShell
@@ -94,13 +95,22 @@ export default function ReviewStep({ state }: Props) {
       <button
         type="button"
         className="btn primary big-print"
+        disabled={!printable}
         onClick={() => openPrintDialog(state.title)}
       >
         دریافت PDF
       </button>
-      <p className="print-note">
-        پنجرهٔ چاپ باز می‌شود؛ «ذخیره به‌صورت PDF» را انتخاب کنید و فایل را پیوست تسک کنید.
-      </p>
+      {printable ? (
+        <p className="print-note">
+          پنجرهٔ چاپ باز می‌شود؛ «ذخیره به‌صورت PDF» را انتخاب کنید و فایل را پیوست تسک
+          کنید.
+        </p>
+      ) : (
+        <p className="print-block" aria-live="polite">
+          امتیاز آمادگی زیر {toFaDigits(MIN_PRINT_SCORE)} است و سند هنوز قابل دریافت
+          نیست. با دکمهٔ «قبلی» برگردید و موارد بالا را کامل کنید.
+        </p>
+      )}
     </StepShell>
   );
 }

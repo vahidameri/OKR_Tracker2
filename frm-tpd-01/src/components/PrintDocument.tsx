@@ -100,13 +100,6 @@ export default function PrintDocument({ state }: Props) {
         <h2 className="doc-section-title">بخش ۳ — دامنه و اولویت</h2>
         <table className="doc-table">
           <tbody>
-            <tr>
-              <th>معیارهای پذیرش</th>
-              {/* در فرم پر نمی‌شود؛ پس از بررسی همراه تیم فنی روی تسک نوشته می‌شود */}
-              <td className="doc-later">
-                پس از بررسی اولیه، همراه تیم فنی روی خود تسک نوشته می‌شود.
-              </td>
-            </tr>
             <Row label="خارج از دامنه" value={outOfScope} />
             <Row label="سنجهٔ موفقیت" value={successMetrics} />
             {isBug(state) && (

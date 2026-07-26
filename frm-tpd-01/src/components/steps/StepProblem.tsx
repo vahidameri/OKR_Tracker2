@@ -2,7 +2,7 @@ import StepShell from '../StepShell';
 import Field from '../Field';
 import CharCount from '../CharCount';
 import type { Action, FormState, GatedField, RequestType } from '../../state';
-import { disabledReason, fieldEnabled, fieldRequired } from '../../state';
+import { disabledBadge, disabledReason, fieldEnabled, fieldRequired } from '../../state';
 import { GOOD_LENGTH } from '../../lib/limits';
 
 interface Props {
@@ -94,6 +94,7 @@ export default function StepProblem({ state, dispatch }: Props) {
             helpBullets={bulletsFor(f.perType, state.requestType)}
             optional={optional}
             disabled={skipped}
+            disabledLabel={gated !== null ? disabledBadge(state, gated) : undefined}
             disabledNote={gated !== null ? disabledReason(state, gated) : undefined}
           >
             <textarea

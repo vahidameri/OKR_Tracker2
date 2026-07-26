@@ -10,6 +10,17 @@ export interface ScoreResult {
   missing: string[];
 }
 
+/**
+ * حد پایین امتیاز برای گرفتن سند. زیر این عدد، سند آن‌قدر ناقص است که بررسی‌اش
+ * وقت هر دو طرف را می‌گیرد، پس دکمهٔ دریافت PDF قفل می‌شود.
+ */
+export const MIN_PRINT_SCORE = 70;
+
+/** آیا با این امتیاز اجازهٔ دریافت سند هست؟ */
+export function canPrint(total: number): boolean {
+  return total >= MIN_PRINT_SCORE;
+}
+
 interface Component {
   weight: number;
   /** میزان تکمیل، بین ۰ تا ۱ */

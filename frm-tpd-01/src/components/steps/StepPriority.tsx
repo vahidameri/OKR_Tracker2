@@ -5,6 +5,7 @@ import type { Action, FormState } from '../../state';
 import {
   PRIORITIES,
   SEVERITIES,
+  disabledBadge,
   disabledReason,
   fieldEnabled,
   isBug,
@@ -84,6 +85,7 @@ export default function StepPriority({ state, dispatch }: Props) {
         label="وابستگی‌ها و پیوست‌ها"
         optional
         disabled={!fieldEnabled(state, 'dependencies')}
+        disabledLabel={disabledBadge(state, 'dependencies')}
         disabledNote={disabledReason(state, 'dependencies')}
         help="هر چیزی که انجام این کار به آن گره خورده: تیم یا سرویس دیگری که باید کاری انجام دهد، تصمیمی که هنوز گرفته نشده، یا مستند و اسکرین‌شاتی که به فهم مسئله کمک می‌کند. فایل را مستقیم اینجا نگذارید؛ فقط لینک درایو سازمانی بدهید و از درج دادهٔ محرمانه یا اطلاعات شخصی کاربران خودداری کنید."
       >

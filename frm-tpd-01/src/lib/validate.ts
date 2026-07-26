@@ -48,7 +48,7 @@ export function stepMissing(step: StepId, state: FormState): string[] {
       if (fieldRequired(state, 'businessValue') && !state.businessValue.trim())
         missing.push('ارزش کسب‌وکاری');
       break;
-    case 'criteria':
+    case 'scope':
       // دو مورد اول «خارج از دامنه» الزامی است، نه فقط یکی
       if (fieldRequired(state, 'outOfScope') && filled(state.outOfScope).length < 2)
         missing.push('دو مورد «خارج از دامنه»');

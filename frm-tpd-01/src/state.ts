@@ -184,7 +184,6 @@ export type GatedField =
   | 'currentState'
   | 'desiredState'
   | 'businessValue'
-  | 'criteria'
   | 'outOfScope'
   | 'successMetrics'
   | 'dependencies';
@@ -195,7 +194,6 @@ export type GatedField =
  * هرچه در هیچ‌کدام نباشد غیرفعال می‌شود.
  *
  * «صورت‌مسئله» در هیچ‌کدام نیست چون همیشه و برای همهٔ نوع‌ها الزامی است.
- * «معیارهای پذیرش» هم اینجا نیست؛ در این فرم اصلاً پر نمی‌شود.
  */
 const TYPE_FIELDS: Record<
   RequestType,
@@ -238,8 +236,6 @@ const FAST_TRACK_SKIPPED: GatedField[] = [
 
 /** آیا این فیلد برای وضعیت فعلی فرم فعال است؟ */
 export function fieldEnabled(state: FormState, field: GatedField): boolean {
-  // معیارهای پذیرش در این فرم پر نمی‌شود؛ روی خود تسک نوشته می‌شود
-  if (field === 'criteria') return false;
   if (isFastTrack(state) && FAST_TRACK_SKIPPED.includes(field)) return false;
   if (!state.requestType) return true;
   const fields = TYPE_FIELDS[state.requestType];
@@ -255,9 +251,6 @@ export function fieldRequired(state: FormState, field: GatedField): boolean {
 
 /** توضیح اینکه چرا این فیلد غیرفعال شده است */
 export function disabledReason(state: FormState, field: GatedField): string {
-  if (field === 'criteria') {
-    return 'در این فرم پر نمی‌شود. پس از بررسی، به‌همراه تیم فنی روی خود تسک نوشته می‌شود.';
-  }
   if (isFastTrack(state) && FAST_TRACK_SKIPPED.includes(field)) {
     return 'چون این درخواست در مسیر سریع قرار گرفته، این بخش لازم نیست.';
   }
@@ -268,8 +261,19 @@ export function disabledReason(state: FormState, field: GatedField): string {
   return `برای نوع درخواست «${label}» این بخش لازم نیست.`;
 }
 
-/** آیا مرحلهٔ معیارها اصلاً فیلد فعالی دارد؟ */
-export function criteriaStepNeeded(state: FormState): boolean {
+/**
+ * برچسب کوچک کنار عنوان فیلد غیرفعال — می‌گوید *چرا* غیرفعال است، نه فقط
+ * اینکه لازم نیست.
+ */
+export function disabledBadge(state: FormState, field: GatedField): string {
+  if (isFastTrack(state) && FAST_TRACK_SKIPPED.includes(field)) {
+    return 'در مسیر سریع لازم نیست';
+  }
+  return `برای «${requestTypeName(state.requestType)}» لازم نیست`;
+}
+
+/** آیا مرحلهٔ دامنه اصلاً فیلد فعالی دارد؟ */
+export function scopeStepNeeded(state: FormState): boolean {
   return fieldEnabled(state, 'outOfScope') || fieldEnabled(state, 'successMetrics');
 }
 
@@ -341,12 +345,12 @@ export const REQUEST_TYPES: {
   {
     value: 'tech',
     label: 'کار فنی و زیرساختی',
-    hint: 'تغییری در لایهٔ فنی، بدون اثر مستقیم بر تجربهٔ کاربر',
+    hint: 'تغییر در زیرساخت، معماری یا بدهی فنی',
   },
   {
     value: 'data',
     label: 'داده و گزارش',
-    hint: 'نیاز به دسترسی، سنجش یا تحلیل داده، بدون تغییر در محصول',
+    hint: 'دسترسی، سنجش یا تحلیل داده، برای استفادهٔ داخلی',
   },
   {
     value: 'other',
@@ -415,12 +419,12 @@ export function priorityLabel(p: Priority | null): string {
 
 // ---------- مراحل ویزارد (پویا بر اساس نوع درخواست) ----------
 
-export type StepId = 'request' | 'problem' | 'criteria' | 'priority' | 'review';
+export type StepId = 'request' | 'problem' | 'scope' | 'priority' | 'review';
 
 /** فهرست مراحل قابل‌نمایش؛ مرحلهٔ دامنه فقط وقتی فیلد فعالی داشته باشد */
 export function visibleSteps(state: FormState): StepId[] {
   const steps: StepId[] = ['request', 'problem'];
-  if (criteriaStepNeeded(state)) steps.push('criteria');
+  if (scopeStepNeeded(state)) steps.push('scope');
   steps.push('priority', 'review');
   return steps;
 }

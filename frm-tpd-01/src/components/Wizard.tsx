@@ -14,18 +14,19 @@ import { toFaDigits } from '../lib/jalali';
 import Landing from './Landing';
 import StepRequest from './steps/StepRequest';
 import StepProblem from './steps/StepProblem';
-import StepCriteria from './steps/StepCriteria';
+import StepScope from './steps/StepScope';
 import StepPriority from './steps/StepPriority';
 import ReviewStep from './ReviewStep';
 import PrintDocument from './PrintDocument';
 import Logo from './Logo';
 import { openPrintDialog } from '../lib/print';
+import { canPrint, computeScore } from '../lib/scoring';
 
 /** نام کوتاه هر مرحله برای نوار پیشرفت */
 const STEP_NAMES: Record<StepId, string> = {
   request: 'نوع و مسیر',
   problem: 'شرح مسئله',
-  criteria: 'معیارها و دامنه',
+  scope: 'دامنه و سنجه',
   priority: 'اولویت',
   review: 'مرور و دریافت',
 };
@@ -44,6 +45,8 @@ export default function Wizard() {
 
   const missing = stepMissing(current, state);
   const canAdvance = missing.length === 0;
+  // در مرحلهٔ آخر، دکمه فقط با امتیاز آمادگی کافی باز می‌شود
+  const canFinish = canPrint(computeScore(state).total);
 
   const goTo = useCallback(
     (next: number, viaHistory = false) => {
@@ -190,7 +193,7 @@ export default function Wizard() {
           <div className="step-container" key={current}>
             {current === 'request' && <StepRequest state={state} dispatch={dispatch} />}
             {current === 'problem' && <StepProblem state={state} dispatch={dispatch} />}
-            {current === 'criteria' && <StepCriteria state={state} dispatch={dispatch} />}
+            {current === 'scope' && <StepScope state={state} dispatch={dispatch} />}
             {current === 'priority' && <StepPriority state={state} dispatch={dispatch} />}
             {current === 'review' && <ReviewStep state={state} />}
           </div>
@@ -215,10 +218,20 @@ export default function Wizard() {
                   برای ادامه: {missing.join('، ')}
                 </span>
               )}
+              {isLast && !canFinish && (
+                <span className="navbar-missing" aria-live="polite">
+                  امتیاز آمادگی برای دریافت سند کافی نیست
+                </span>
+              )}
             </span>
 
             {isLast ? (
-              <button type="button" className="btn primary" onClick={finish}>
+              <button
+                type="button"
+                className="btn primary"
+                onClick={finish}
+                disabled={!canFinish}
+              >
                 اتمام فرآیند
               </button>
             ) : (

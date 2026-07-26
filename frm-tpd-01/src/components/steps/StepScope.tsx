@@ -2,7 +2,7 @@ import StepShell from '../StepShell';
 import Field from '../Field';
 import RepeatableList from '../RepeatableList';
 import type { Action, FormState } from '../../state';
-import { disabledReason, fieldEnabled, fieldRequired } from '../../state';
+import { disabledBadge, disabledReason, fieldEnabled, fieldRequired } from '../../state';
 import { GOOD_LENGTH } from '../../lib/limits';
 
 interface Props {
@@ -10,29 +10,18 @@ interface Props {
   dispatch: React.Dispatch<Action>;
 }
 
-export default function StepCriteria({ state, dispatch }: Props) {
+export default function StepScope({ state, dispatch }: Props) {
   return (
     <StepShell
-      title="معیارهای پذیرش و دامنه"
-      subtitle="از کجا می‌فهمیم این کار درست انجام شده است؟"
+      title="دامنه و سنجهٔ موفقیت"
+      subtitle="مرز این کار کجاست و چطور می‌فهمیم ارزشش را داشت؟"
     >
-      {/* معیارهای پذیرش در این فرم پر نمی‌شود؛ فقط نشان می‌دهیم کجا نوشته می‌شود */}
       <Field
         number={1}
-        label="معیارهای پذیرش"
-        disabled
-        disabledLabel="روی خود تسک"
-        disabledNote={disabledReason(state, 'criteria')}
-        help="معیار پذیرش یعنی شرطی که اگر برقرار باشد، همه قبول دارند کار تمام شده است. نوشتنش به جزئیات فنی راهکار وابسته است، پس در این فرم پر نمی‌شود: پس از بررسی اولیه، مدیر برنامه به‌همراه تیم فنی معیارها را روی خود تسک می‌نویسد."
-      >
-        <></>
-      </Field>
-
-      <Field
-        number={2}
         label="خارج از دامنه"
         optional={fieldEnabled(state, 'outOfScope') && !fieldRequired(state, 'outOfScope')}
         disabled={!fieldEnabled(state, 'outOfScope')}
+        disabledLabel={disabledBadge(state, 'outOfScope')}
         disabledNote={disabledReason(state, 'outOfScope')}
         help="چه چیزهایی عمداً جزو این درخواست نیست؟ این فیلد از خزش دامنه در مراحل بعد جلوگیری می‌کند. چیزهایی را بنویسید که کسی ممکن است انتظارشان را داشته باشد اما جزو این کار نیستند — مثلاً «بازطراحی ظاهر صفحه» یا «پشتیبانی از نسخهٔ وب». نوشتن «هیچ» به کسی کمک نمی‌کند."
       >
@@ -53,14 +42,15 @@ export default function StepCriteria({ state, dispatch }: Props) {
       </Field>
 
       <Field
-        number={3}
+        number={2}
         label="سنجهٔ موفقیت"
         optional={
           fieldEnabled(state, 'successMetrics') && !fieldRequired(state, 'successMetrics')
         }
         disabled={!fieldEnabled(state, 'successMetrics')}
+        disabledLabel={disabledBadge(state, 'successMetrics')}
         disabledNote={disabledReason(state, 'successMetrics')}
-        help="سه ماه پس از تحویل، با کدام عدد قضاوت می‌کنیم که درست بوده؟ اگر عددی به ذهنتان نمی‌رسد، احتمالاً ارزش کسب‌وکاری هم به‌اندازهٔ کافی مشخص نیست. با معیار پذیرش فرق دارد: معیار پذیرش می‌گوید کار درست ساخته شده، سنجهٔ موفقیت می‌گوید کار درستی ساخته شده."
+        help="سه ماه پس از تحویل، با کدام عدد قضاوت می‌کنیم که درست بوده؟ اگر عددی به ذهنتان نمی‌رسد، احتمالاً ارزش کسب‌وکاری هم به‌اندازهٔ کافی مشخص نیست. سنجهٔ موفقیت می‌گوید کارِ درستی ساخته شده — با معیار پذیرش که می‌گوید کار درست ساخته شده و بعداً همراه تیم فنی روی خود تسک نوشته می‌شود، فرق دارد."
       >
         <RepeatableList
           listKey="successMetrics"

@@ -334,6 +334,9 @@ textarea {
   padding: 12px;
   box-shadow: 0 18px 48px rgba(14, 122, 87, 0.2);
   animation: step-in 0.16s ease backwards;
+  /* در پنجره‌های کوتاه، خودِ پنل اسکرول می‌گیرد تا هیچ روزی بیرون نماند */
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .datepicker-head {

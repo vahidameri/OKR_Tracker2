@@ -28,10 +28,12 @@ const EDGE = 12;
 interface PanelBox {
   top: number;
   left: number;
+  maxHeight: number;
 }
 
 const PANEL_WIDTH = 290;
-const PANEL_HEIGHT = 340;
+/** فقط برای اولین فریم، تا ارتفاع واقعی پنل اندازه‌گیری شود */
+const PANEL_HEIGHT_GUESS = 340;
 
 /**
  * تقویم شمسی — بدون هیچ وابستگی خارجی، روی همان توابع تبدیل خودمان.
@@ -53,20 +55,39 @@ export default function DatePicker({ value, onChange, ariaLabel }: Props) {
     jm: (selected ?? today).jm,
   }));
 
+  /**
+   * پنل fixed است، پس اسکرول صفحه به آن نمی‌رسد؛ اگر بخشی‌اش بیرون پنجره
+   * بیفتد آن بخش برای همیشه دست‌نیافتنی می‌شود. بنابراین ارتفاع واقعی پنل را
+   * اندازه می‌گیریم و موقعیتش را داخل پنجره مهار می‌کنیم؛ اگر پنجره آن‌قدر
+   * کوتاه بود که اصلاً جا نشود، خودِ پنل اسکرول داخلی می‌گیرد.
+   */
   const measure = useCallback(() => {
     const rect = rootRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const below = window.innerHeight - rect.bottom - EDGE;
-    // اگر پایین جا نبود، بالای دکمه باز شود
-    const flip = below < PANEL_HEIGHT && rect.top > below;
-    const top = flip ? rect.top - PANEL_HEIGHT - 8 : rect.bottom + 8;
+    const vh = window.innerHeight;
+    const maxHeight = vh - EDGE * 2;
+    const height = Math.min(
+      panelRef.current?.offsetHeight || PANEL_HEIGHT_GUESS,
+      maxHeight,
+    );
+    const below = vh - rect.bottom - EDGE;
+    const above = rect.top - EDGE;
+    // پایینِ دکمه اگر جا شد، وگرنه بالای آن؛ در هر حال داخل پنجره مهار می‌شود
+    const openBelow = height <= below || below >= above;
+    let top = openBelow ? rect.bottom + 8 : rect.top - height - 8;
+    top = Math.max(EDGE, Math.min(top, vh - EDGE - height));
     const left = Math.min(
       Math.max(EDGE, rect.right - PANEL_WIDTH),
       window.innerWidth - PANEL_WIDTH - EDGE,
     );
-    const next = { top: Math.max(EDGE, top), left };
+    const next = { top, left, maxHeight };
     setBox((prev) =>
-      prev && prev.top === next.top && prev.left === next.left ? prev : next,
+      prev &&
+      prev.top === next.top &&
+      prev.left === next.left &&
+      prev.maxHeight === next.maxHeight
+        ? prev
+        : next,
     );
   }, []);
 
@@ -169,7 +190,12 @@ export default function DatePicker({ value, onChange, ariaLabel }: Props) {
             ref={panelRef}
             role="dialog"
             aria-label="تقویم"
-            style={{ top: box.top, left: box.left, width: PANEL_WIDTH }}
+            style={{
+              top: box.top,
+              left: box.left,
+              width: PANEL_WIDTH,
+              maxHeight: box.maxHeight,
+            }}
           >
             <div className="datepicker-head">
               {/* در RTL، «ماه قبل» سمت راست می‌نشیند */}

@@ -60,6 +60,9 @@ export function stepMissing(step: StepId, state: FormState): string[] {
       break;
     case 'priority':
       if (!state.priority) missing.push('اولویت پیشنهادی');
+      // تاریخ اختیاری است، ولی تاریخِ بی‌دلیل قابل برنامه‌ریزی نیست
+      if (state.neededDate && !state.neededReason.trim())
+        missing.push('دلیل تاریخ نیاز');
       break;
     case 'review':
       break;

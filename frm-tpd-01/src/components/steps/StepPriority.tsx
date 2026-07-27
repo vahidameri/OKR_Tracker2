@@ -1,5 +1,6 @@
 import StepShell from '../StepShell';
 import ChipGroup from '../ChipGroup';
+import DatePicker from '../DatePicker';
 import Field from '../Field';
 import type { Action, FormState } from '../../state';
 import {
@@ -45,17 +46,27 @@ export default function StepPriority({ state, dispatch }: Props) {
         number={n++}
         label="تاریخ نیاز و دلیل واقعی آن"
         optional
-        help="تاریخ بدون دلیل قابل برنامه‌ریزی نیست و «هرچه زودتر» تاریخ نیست. اگر مهلت واقعی دارید، به یک رویداد مشخص وصلش کنید: شروع سال تحصیلی، یک کمپین، یک الزام قانونی، یا وابستگی تیم دیگر. اگر تاریخ الزام‌آوری ندارید، این فیلد را خالی بگذارید."
+        help="تاریخ بدون دلیل قابل برنامه‌ریزی نیست و «هرچه زودتر» تاریخ نیست. اول تاریخ را از تقویم انتخاب کنید، بعد بنویسید چه چیزی آن را الزام‌آور می‌کند: شروع سال تحصیلی، یک کمپین، یک الزام قانونی، یا وابستگی تیم دیگر. اگر مهلت واقعی ندارید، تاریخ را خالی بگذارید — این هیچ ایرادی ندارد."
       >
-        <input
-          type="text"
-          className="text-input"
+        <DatePicker
           value={state.neededDate}
-          placeholder="نمونه: تا ۱۵ شهریور — پیش از شروع سال تحصیلی"
-          onChange={(e) =>
-            dispatch({ type: 'patch', patch: { neededDate: e.target.value } })
-          }
+          ariaLabel="تاریخ نیاز"
+          onChange={(neededDate) => dispatch({ type: 'patch', patch: { neededDate } })}
         />
+        {/* دلیل فقط پس از انتخاب تاریخ معنا دارد، پس همان‌جا ظاهر می‌شود */}
+        {state.neededDate && (
+          <input
+            type="text"
+            className="text-input inline-other"
+            value={state.neededReason}
+            placeholder="این تاریخ را چه چیزی الزام‌آور می‌کند؟ — نمونه: پیش از شروع سال تحصیلی"
+            aria-label="دلیل تاریخ نیاز"
+            autoFocus
+            onChange={(e) =>
+              dispatch({ type: 'patch', patch: { neededReason: e.target.value } })
+            }
+          />
+        )}
       </Field>
 
       <Field

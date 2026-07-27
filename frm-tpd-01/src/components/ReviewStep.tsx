@@ -4,6 +4,7 @@ import {
   filledItems,
   isBug,
   isFastTrack,
+  neededDateLabel,
   priorityLabel,
   productLabel,
   docTypeLabel,
@@ -93,6 +94,7 @@ export default function ReviewStep({ state }: Props) {
           </>
         )}
         <SummaryRow label="اولویت پیشنهادی" value={priorityLabel(state.priority)} />
+        <SummaryRow label="تاریخ نیاز" value={neededDateLabel(state)} />
       </div>
 
       <button

@@ -2,6 +2,7 @@
 
 import type { Product } from './data/people';
 import { OTHER_PRODUCT, findPerson } from './data/people';
+import { formatJalaliKey } from './lib/jalali';
 
 /** شش دستهٔ درخواست — هر درخواست دقیقاً در یکی از اینها جا می‌گیرد */
 export type RequestType =
@@ -83,7 +84,10 @@ export interface FormState {
   /** شدت و دامنهٔ اثر — فقط برای باگ */
   bugSeverity: Severity | null;
   priority: Priority | null;
+  /** تاریخ نیاز به شکل کلید شمسی، نمونه: ‎1405-06-15 */
   neededDate: string;
+  /** دلیل همان تاریخ — بدون دلیل، تاریخ قابل برنامه‌ریزی نیست */
+  neededReason: string;
   dependencies: string;
 }
 
@@ -110,6 +114,7 @@ export const initialState: FormState = {
   bugSeverity: null,
   priority: null,
   neededDate: '',
+  neededReason: '',
   dependencies: '',
 };
 
@@ -408,6 +413,14 @@ export function requestTypeLabel(state: FormState): string {
     return `${name} — ${state.customRequestType.trim()}`;
   }
   return name;
+}
+
+/** تاریخ نیاز و دلیلش، یکجا برای صفحهٔ مرور و سند */
+export function neededDateLabel(state: FormState): string {
+  const date = formatJalaliKey(state.neededDate);
+  if (!date) return '';
+  const reason = state.neededReason.trim();
+  return reason ? `${date} — ${reason}` : date;
 }
 
 export function severityLabel(s: Severity | null): string {

@@ -4,6 +4,7 @@ import {
   filledItems,
   isBug,
   isFastTrack,
+  neededDateLabel,
   priorityLabel,
   productLabel,
   requestTypeLabel,
@@ -109,7 +110,7 @@ export default function PrintDocument({ state }: Props) {
               </>
             )}
             <Row label="اولویت پیشنهادی" value={priorityLabel(state.priority)} />
-            <Row label="تاریخ نیاز و دلیل" value={state.neededDate} />
+            <Row label="تاریخ نیاز و دلیل" value={neededDateLabel(state)} />
             <Row label="وابستگی‌ها و پیوست‌ها" value={state.dependencies} />
           </tbody>
         </table>

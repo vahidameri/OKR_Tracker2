@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { JalaliDate } from '../lib/jalali';
 import {
   JALALI_MONTHS,
@@ -22,29 +21,18 @@ interface Props {
   ariaLabel: string;
 }
 
-/** فاصلهٔ امن از لبهٔ پنجره */
-const EDGE = 12;
-
-interface PanelBox {
-  top: number;
-  left: number;
-  maxHeight: number;
-}
-
-const PANEL_WIDTH = 290;
-/** فقط برای اولین فریم، تا ارتفاع واقعی پنل اندازه‌گیری شود */
-const PANEL_HEIGHT_GUESS = 340;
-
 /**
  * تقویم شمسی — بدون هیچ وابستگی خارجی، روی همان توابع تبدیل خودمان.
- * مثل فهرست افراد، پنل با portal داخل body می‌رود چون انیمیشن مرحله یک
- * transform همانی روی کارت باقی می‌گذارد و همان برای عناصر fixed یک
- * containing block می‌سازد.
+ *
+ * عمداً inline باز می‌شود و شناور (position: fixed) نیست. پنل شناور بیرون از
+ * جریان صفحه است، پس اگر پایینش از لبهٔ پنجره بزند بیرون، اسکرول صفحه هرگز به
+ * آن نمی‌رسد — و اگر پنجرهٔ مرورگر از ناحیهٔ قابل‌دیدن نمایشگر بلندتر باشد
+ * (مثلاً زیر نوار وظیفه ادامه پیدا کند) هیچ محاسبه‌ای هم نمی‌تواند بفهمد.
+ * وقتی تقویم داخل خود فرم باز می‌شود، مثل هر محتوای دیگری صفحه را بلندتر
+ * می‌کند و با اسکرول عادی در دسترس است.
  */
 export default function DatePicker({ value, onChange, ariaLabel }: Props) {
   const [open, setOpen] = useState(false);
-  const [box, setBox] = useState<PanelBox | null>(null);
-  const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const today = useMemo(() => jalaliToday(), []);
@@ -55,83 +43,25 @@ export default function DatePicker({ value, onChange, ariaLabel }: Props) {
     jm: (selected ?? today).jm,
   }));
 
-  /**
-   * پنل fixed است، پس اسکرول صفحه به آن نمی‌رسد؛ اگر بخشی‌اش بیرون پنجره
-   * بیفتد آن بخش برای همیشه دست‌نیافتنی می‌شود. بنابراین ارتفاع واقعی پنل را
-   * اندازه می‌گیریم و موقعیتش را داخل پنجره مهار می‌کنیم؛ اگر پنجره آن‌قدر
-   * کوتاه بود که اصلاً جا نشود، خودِ پنل اسکرول داخلی می‌گیرد.
-   */
-  const measure = useCallback(() => {
-    const rect = rootRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const vh = window.innerHeight;
-    const maxHeight = vh - EDGE * 2;
-    const height = Math.min(
-      panelRef.current?.offsetHeight || PANEL_HEIGHT_GUESS,
-      maxHeight,
-    );
-    const below = vh - rect.bottom - EDGE;
-    const above = rect.top - EDGE;
-    // پایینِ دکمه اگر جا شد، وگرنه بالای آن؛ در هر حال داخل پنجره مهار می‌شود
-    const openBelow = height <= below || below >= above;
-    let top = openBelow ? rect.bottom + 8 : rect.top - height - 8;
-    top = Math.max(EDGE, Math.min(top, vh - EDGE - height));
-    const left = Math.min(
-      Math.max(EDGE, rect.right - PANEL_WIDTH),
-      window.innerWidth - PANEL_WIDTH - EDGE,
-    );
-    const next = { top, left, maxHeight };
-    setBox((prev) =>
-      prev &&
-      prev.top === next.top &&
-      prev.left === next.left &&
-      prev.maxHeight === next.maxHeight
-        ? prev
-        : next,
-    );
-  }, []);
-
-  // بستن با کلیک بیرون
   useEffect(() => {
     if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (!rootRef.current?.contains(target) && !panelRef.current?.contains(target)) {
-        setOpen(false);
-      }
-    };
+    const start = selected ?? today;
+    setView({ jy: start.jy, jm: start.jm });
+    // اگر تقویم پایین‌تر از لبهٔ پنجره باز شد، خودش را به دید بیاورد
+    panelRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false);
     };
-    document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
+    return () => document.removeEventListener('keydown', onKey);
+    // فقط با بازشدن اجرا شود، نه با هر تغییر تاریخ
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
-
-  useEffect(() => {
-    if (!open) {
-      setBox(null);
-      return;
-    }
-    const start = selected ?? today;
-    setView({ jy: start.jy, jm: start.jm });
-    // موقعیت دکمه ممکن است پس از بازشدن هم جابه‌جا شود؛ هر فریم دنبالش می‌کنیم
-    let frame = 0;
-    const follow = () => {
-      measure();
-      frame = requestAnimationFrame(follow);
-    };
-    follow();
-    return () => cancelAnimationFrame(frame);
-  }, [open, measure, selected, today]);
 
   const shiftMonth = (delta: number) => {
     setView((v) => {
       const raw = v.jm - 1 + delta;
-      return { jy: v.jy + Math.floor(raw / 12), jm: ((raw % 12) + 12) % 12 + 1 };
+      return { jy: v.jy + Math.floor(raw / 12), jm: (((raw % 12) + 12) % 12) + 1 };
     });
   };
 
@@ -154,113 +84,104 @@ export default function DatePicker({ value, onChange, ariaLabel }: Props) {
     !!a && a.jy === view.jy && a.jm === view.jm && a.jd === jd;
 
   return (
-    <div className="datepicker" ref={rootRef}>
-      <button
-        type="button"
-        className={`datepicker-trigger${selected ? ' has-value' : ''}`}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-label={ariaLabel}
-        onClick={() => setOpen((o) => !o)}
-      >
-        <span className="datepicker-icon" aria-hidden>
-          ▤
-        </span>
-        <span className="datepicker-value">
-          {selected ? formatJalali(selected) : 'انتخاب تاریخ از تقویم'}
-        </span>
-      </button>
-
-      {selected && (
+    <div className="datepicker">
+      <div className="datepicker-bar">
         <button
           type="button"
-          className="datepicker-clear"
-          tabIndex={-1}
-          onClick={() => onChange('')}
+          className={`datepicker-trigger${selected ? ' has-value' : ''}${
+            open ? ' open' : ''
+          }`}
+          aria-expanded={open}
+          aria-label={ariaLabel}
+          onClick={() => setOpen((o) => !o)}
         >
-          پاک‌کردن تاریخ
+          <span className="datepicker-icon" aria-hidden>
+            ▤
+          </span>
+          <span className="datepicker-value">
+            {selected ? formatJalali(selected) : 'انتخاب تاریخ از تقویم'}
+          </span>
+          <span className="datepicker-caret" aria-hidden>
+            {open ? '▲' : '▼'}
+          </span>
         </button>
-      )}
-
-      {open &&
-        box &&
-        createPortal(
-          <div
-            className="datepicker-panel"
-            ref={panelRef}
-            role="dialog"
-            aria-label="تقویم"
-            style={{
-              top: box.top,
-              left: box.left,
-              width: PANEL_WIDTH,
-              maxHeight: box.maxHeight,
-            }}
+        {selected && (
+          <button
+            type="button"
+            className="datepicker-clear"
+            tabIndex={-1}
+            onClick={() => onChange('')}
           >
-            <div className="datepicker-head">
-              {/* در RTL، «ماه قبل» سمت راست می‌نشیند */}
-              <button
-                type="button"
-                className="datepicker-nav"
-                aria-label="ماه قبل"
-                onClick={() => shiftMonth(-1)}
-              >
-                ›
-              </button>
-              <span className="datepicker-title">
-                {JALALI_MONTHS[view.jm - 1]} {toFaDigits(view.jy)}
-              </span>
-              <button
-                type="button"
-                className="datepicker-nav"
-                aria-label="ماه بعد"
-                onClick={() => shiftMonth(1)}
-              >
-                ‹
-              </button>
-            </div>
-
-            <div className="datepicker-grid" role="grid">
-              {JALALI_WEEKDAYS.map((w) => (
-                <span className="datepicker-weekday" key={w} aria-hidden>
-                  {w}
-                </span>
-              ))}
-              {cells.map((jd, i) =>
-                jd === null ? (
-                  <span key={`x${i}`} />
-                ) : (
-                  <button
-                    key={jd}
-                    type="button"
-                    className={`datepicker-day${sameDay(selected, jd) ? ' selected' : ''}${
-                      sameDay(today, jd) ? ' today' : ''
-                    }`}
-                    disabled={isPast(jd)}
-                    aria-current={sameDay(today, jd) ? 'date' : undefined}
-                    onClick={() => pick(jd)}
-                  >
-                    {toFaDigits(jd)}
-                  </button>
-                ),
-              )}
-            </div>
-
-            <div className="datepicker-foot">
-              <button
-                type="button"
-                className="datepicker-today"
-                onClick={() => {
-                  onChange(jalaliKey(today));
-                  setOpen(false);
-                }}
-              >
-                امروز — {formatJalali(today)}
-              </button>
-            </div>
-          </div>,
-          document.body,
+            پاک‌کردن
+          </button>
         )}
+      </div>
+
+      {open && (
+        <div className="datepicker-panel" ref={panelRef} role="group" aria-label="تقویم">
+          <div className="datepicker-head">
+            {/* در RTL، «ماه قبل» سمت راست می‌نشیند */}
+            <button
+              type="button"
+              className="datepicker-nav"
+              aria-label="ماه قبل"
+              onClick={() => shiftMonth(-1)}
+            >
+              ›
+            </button>
+            <span className="datepicker-title">
+              {JALALI_MONTHS[view.jm - 1]} {toFaDigits(view.jy)}
+            </span>
+            <button
+              type="button"
+              className="datepicker-nav"
+              aria-label="ماه بعد"
+              onClick={() => shiftMonth(1)}
+            >
+              ‹
+            </button>
+          </div>
+
+          <div className="datepicker-grid" role="grid">
+            {JALALI_WEEKDAYS.map((w) => (
+              <span className="datepicker-weekday" key={w} aria-hidden>
+                {w}
+              </span>
+            ))}
+            {cells.map((jd, i) =>
+              jd === null ? (
+                <span key={`x${i}`} />
+              ) : (
+                <button
+                  key={jd}
+                  type="button"
+                  className={`datepicker-day${sameDay(selected, jd) ? ' selected' : ''}${
+                    sameDay(today, jd) ? ' today' : ''
+                  }`}
+                  disabled={isPast(jd)}
+                  aria-current={sameDay(today, jd) ? 'date' : undefined}
+                  onClick={() => pick(jd)}
+                >
+                  {toFaDigits(jd)}
+                </button>
+              ),
+            )}
+          </div>
+
+          <div className="datepicker-foot">
+            <button
+              type="button"
+              className="datepicker-today"
+              onClick={() => {
+                onChange(jalaliKey(today));
+                setOpen(false);
+              }}
+            >
+              امروز — {formatJalali(today)}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

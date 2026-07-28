@@ -7,8 +7,10 @@ import { prisma } from '@/lib/prisma';
 import { roleLabel } from '@/lib/roles';
 
 const links: SideLink[] = [
-  { href: '/team', label: 'OKRهای من', icon: 'myokrs' },
+  { href: '/team', label: 'داشبورد', icon: 'dashboard' },
+  { href: '/team/okrs', label: 'OKRهای من', icon: 'myokrs' },
   { href: '/team/checkin', label: 'ثبت وضعیت هفتگی', icon: 'checkin' },
+  { href: '/team/summary', label: 'خلاصه وضعیت', icon: 'summary' },
 ];
 
 export default async function TeamLayout({ children }: { children: React.ReactNode }) {

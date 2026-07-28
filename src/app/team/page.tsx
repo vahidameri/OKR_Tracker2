@@ -2,6 +2,8 @@ import { AlertTriangle, ClipboardCheck } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { AutoStatusBadge, StatusBadge } from '@/components/ui/badge';
+import { Pct, Signed } from '@/components/ui/pct';
+import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { TrendChart } from '@/components/charts/trend-chart';
@@ -107,7 +109,7 @@ export default async function TeamHomePage({
         <div>
           <h1 className="text-xl font-black">OKRهای تیم {activeTeam.name}</h1>
           <p className="text-sm text-muted-foreground">
-            مسئول تیم: {activeTeam.leadName ?? '—'} · پیشرفت وزنی: <b>{teamProgress}٪</b>
+            مسئول تیم: {activeTeam.leadName ?? '—'} · پیشرفت وزنی: <b><Pct value={teamProgress} /></b>
           </p>
         </div>
         <Link
@@ -347,7 +349,13 @@ export default async function TeamHomePage({
               const expected = tkrExpected(tkr);
               const pace = expected === null ? null : progress - expected;
               return (
-                <div key={tkr.id} className="rounded-lg border border-border bg-card p-3">
+                <div
+                  key={tkr.id}
+                  className={cn(
+                    'rounded-lg border p-3 transition-colors',
+                    thisWeekCheckIn ? 'border-emerald-200 bg-emerald-50/40' : 'border-border bg-card'
+                  )}
+                >
                   <div className="flex flex-wrap items-center gap-3">
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-black text-muted-foreground">
                       {idx + 1}
@@ -363,16 +371,19 @@ export default async function TeamHomePage({
                         {METRIC_LABELS[tkr.keyResult.metricType]} · وزن: {tkr.weight}
                         {tkr.keyResult.metricType === 'NUMERIC' &&
                           ` · تارگت: ${formatCompact(target)} ${tkr.keyResult.unit ?? ''}`}
+                        {latest && ` · آخرین ثبت: ${formatJalali(latest.weekStartDate)}`}
                       </p>
                     </div>
                     <div className="w-full sm:w-52">
                       <ProgressBar value={progress} size="sm" />
                       {pace !== null && (
                         <p
-                          className={`mt-0.5 text-[11px] font-bold ${pace >= 0 ? 'text-primary' : 'text-amber-700'}`}
+                          className={`mt-0.5 flex items-center gap-1 text-[11px] font-bold ${pace >= 0 ? 'text-primary' : 'text-amber-700'}`}
                         >
-                          {pace >= 0 ? '↑ جلوتر از برنامه' : '↓ عقب از برنامه'} ({pace >= 0 ? '+' : ''}
-                          {pace})
+                          {pace >= 0 ? '↑ جلوتر از برنامه' : '↓ عقب از برنامه'}
+                          <span className="text-muted-foreground">
+                            (<Signed value={pace} />)
+                          </span>
                         </p>
                       )}
                     </div>
@@ -382,9 +393,6 @@ export default async function TeamHomePage({
                       ) : (
                         <span className="text-xs text-muted-foreground">بدون چک‌این</span>
                       )}
-                      <span className="text-[11px] text-muted-foreground">
-                        {latest ? `آخرین ثبت: ${formatJalali(latest.weekStartDate)}` : ''}
-                      </span>
                     </div>
                     <CheckinModalButton
                       teamKeyResultId={tkr.id}

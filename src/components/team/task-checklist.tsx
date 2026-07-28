@@ -1,5 +1,6 @@
 'use client';
 
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -82,7 +83,7 @@ export function TaskChecklist({
 
       {items.length === 0 && (
         <p className="text-xs text-muted-foreground">
-          می‌توانید ریز-کارهای این KR را به‌صورت تسک اضافه کنید تا پیشرفت خودکار محاسبه شود (اختیاری).
+          می‌توانید این KR را به تسک‌های کوچک‌تر تقسیم کنید تا رهگیری آن برایتان آسان‌تر شود.
         </p>
       )}
 
@@ -113,8 +114,14 @@ export function TaskChecklist({
             }
           }}
         />
-        <Button size="sm" variant="outline" onClick={add} disabled={busy || !newTitle.trim()}>
-          + افزودن
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={add}
+          disabled={busy || !newTitle.trim()}
+          className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap"
+        >
+          <Plus className="h-4 w-4" /> افزودن
         </Button>
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}

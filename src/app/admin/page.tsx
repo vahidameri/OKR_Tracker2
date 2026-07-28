@@ -14,6 +14,7 @@ import { StatusDonut } from '@/components/charts/status-donut';
 import { TrendChart } from '@/components/charts/trend-chart';
 import { CycleTimeBar } from '@/components/cycle-time-bar';
 import { JalaliCalendar } from '@/components/jalali-calendar';
+import { Pct } from '@/components/ui/pct';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatJalaliLong } from '@/lib/jalali';
 import { LeaderboardTable } from '@/components/leaderboard-table';
@@ -51,10 +52,10 @@ export default async function AdminDashboard() {
     trend.length >= 2 ? trend[trend.length - 1].progress - trend[trend.length - 2].progress : null;
 
   const tiles = [
-    { key: 'ON_TRACK', label: 'در مسیر', value: totals.onTrack, Icon: Circle, accent: 'text-emerald-600', bar: 'bg-emerald-500', ring: 'bg-emerald-50 text-emerald-600' },
+    { key: 'ON_TRACK', label: 'در مسیر', value: totals.onTrack, Icon: Circle, accent: 'text-teal-600', bar: 'bg-teal-500', ring: 'bg-teal-50 text-teal-600' },
     { key: 'AT_RISK', label: 'در ریسک', value: totals.atRisk, Icon: AlertTriangle, accent: 'text-amber-600', bar: 'bg-amber-500', ring: 'bg-amber-50 text-amber-600' },
     { key: 'BLOCKED', label: 'بلاک‌شده', value: totals.blocked, Icon: AlertTriangle, accent: 'text-red-600', bar: 'bg-red-500', ring: 'bg-red-50 text-red-600' },
-    { key: 'COMPLETED', label: 'تکمیل‌شده', value: totals.completed, Icon: CheckCircle2, accent: 'text-blue-600', bar: 'bg-blue-500', ring: 'bg-blue-50 text-blue-600' },
+    { key: 'COMPLETED', label: 'تکمیل‌شده', value: totals.completed, Icon: CheckCircle2, accent: 'text-emerald-600', bar: 'bg-emerald-500', ring: 'bg-emerald-50 text-emerald-600' },
   ];
 
   return (
@@ -87,7 +88,7 @@ export default async function AdminDashboard() {
                 </span>
                 <ArrowUpLeft className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
               </div>
-              <p className="mt-2 text-4xl font-black text-primary">{departmentProgress}٪</p>
+              <p className="mt-2 text-4xl font-black text-primary"><Pct value={departmentProgress} /></p>
               {trendDelta !== null && (
                 <p
                   className={`mt-1 flex items-center gap-1 text-xs font-bold ${
@@ -256,8 +257,8 @@ export default async function AdminDashboard() {
                             strokeDasharray={`${(o.progress / 100) * 97.4} 97.4`}
                           />
                         </svg>
-                        <span className="absolute inset-0 flex items-center justify-center text-sm font-black tabular-nums">
-                          {o.progress}٪
+                        <span className="absolute inset-0 flex items-center justify-center text-sm font-black">
+                          <Pct value={o.progress} />
                         </span>
                       </div>
                     </div>
@@ -270,7 +271,7 @@ export default async function AdminDashboard() {
                     <Sparkline data={teamTrend.map((t) => ({ progress: t.progress }))} />
 
                     <div className="grid grid-cols-4 gap-1.5 text-center text-[11px]">
-                      <span className="rounded-lg bg-emerald-50 py-1 font-bold text-emerald-700">
+                      <span className="rounded-lg bg-teal-50 py-1 font-bold text-teal-700">
                         {o.statusCounts.ON_TRACK}
                         <span className="block text-[9px] font-normal">مسیر</span>
                       </span>
@@ -282,7 +283,7 @@ export default async function AdminDashboard() {
                         {o.statusCounts.BLOCKED}
                         <span className="block text-[9px] font-normal">بلاک</span>
                       </span>
-                      <span className="rounded-lg bg-blue-50 py-1 font-bold text-blue-600">
+                      <span className="rounded-lg bg-emerald-50 py-1 font-bold text-emerald-600">
                         {o.statusCounts.COMPLETED}
                         <span className="block text-[9px] font-normal">تکمیل</span>
                       </span>

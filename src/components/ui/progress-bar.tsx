@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
+import { Pct } from '@/components/ui/pct';
 
-/** نوار پیشرفت به سبک مرجع: ضخیم، گرد، سبزآبی؛ کهربایی/قرمز وقتی عقب است */
+/** نوار پیشرفت: ۱۰۰٪=سبز، بالا=فیروزه‌ای، میانه=کهربایی، پایین=قرمز */
 export function ProgressBar({
   value,
   className,
@@ -11,7 +12,14 @@ export function ProgressBar({
   size?: 'sm' | 'md';
 }) {
   const clamped = Math.min(Math.max(value, 0), 100);
-  const color = clamped >= 60 ? 'bg-primary' : clamped >= 30 ? 'bg-amber-500' : 'bg-red-500';
+  const color =
+    clamped >= 100
+      ? 'bg-emerald-500'
+      : clamped >= 60
+        ? 'bg-primary'
+        : clamped >= 30
+          ? 'bg-amber-500'
+          : 'bg-red-500';
   return (
     <div className={cn('flex items-center gap-2', className)}>
       <div
@@ -22,7 +30,7 @@ export function ProgressBar({
       >
         <div className={cn('h-full rounded-full transition-all', color)} style={{ width: `${clamped}%` }} />
       </div>
-      <span className="w-10 text-left text-xs font-bold tabular-nums text-muted-foreground">{clamped}٪</span>
+      <Pct value={clamped} className="w-10 text-left text-xs font-bold text-muted-foreground" />
     </div>
   );
 }

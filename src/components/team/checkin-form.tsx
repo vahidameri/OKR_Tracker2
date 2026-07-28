@@ -169,9 +169,9 @@ export function CheckInForm({ teamKeyResultId, metricType, unit, tasks = [], exi
               <div className="flex flex-wrap gap-2">
                 {(
                   [
-                    ['NO', 'خیر', 'border-[#D03B3B] bg-[#D03B3B] text-white', 'border-border bg-card text-[#D03B3B] hover:border-red-400'],
+                    ['NO', 'خیر', 'border-red-500 bg-red-500 text-white', 'border-border bg-card text-red-600 hover:border-red-400'],
                     ['IN_PROGRESS', 'در حال انجام', 'border-amber-500 bg-amber-500 text-white', 'border-border bg-card text-amber-700 hover:border-amber-400'],
-                    ['YES', 'بله', 'border-primary bg-primary text-white', 'border-border bg-card text-primary hover:border-primary/50'],
+                    ['YES', 'بله', 'border-emerald-600 bg-emerald-600 text-white', 'border-border bg-card text-emerald-700 hover:border-emerald-400'],
                   ] as const
                 ).map(([key, label, activeCls, idleCls]) => (
                   <button
@@ -203,10 +203,10 @@ export function CheckInForm({ teamKeyResultId, metricType, unit, tasks = [], exi
         <div className="flex flex-wrap gap-2">
           {(
             [
-              ['ON_TRACK', 'در مسیر', 'border-emerald-600 bg-emerald-600 text-white', 'border-border text-emerald-700 hover:border-emerald-400'],
+              ['ON_TRACK', 'در مسیر', 'border-teal-600 bg-teal-600 text-white', 'border-border text-teal-700 hover:border-teal-400'],
               ['AT_RISK', 'در ریسک', 'border-amber-500 bg-amber-500 text-white', 'border-border text-amber-700 hover:border-amber-400'],
-              ['BLOCKED', '🔒 بلاک‌شده', 'border-[#D03B3B] bg-[#D03B3B] text-white', 'border-border text-[#D03B3B] hover:border-red-400'],
-              ['COMPLETED', '✔ تکمیل‌شده', 'border-primary bg-primary text-white', 'border-border text-primary hover:border-primary/50'],
+              ['BLOCKED', '🔒 بلاک‌شده', 'border-red-500 bg-red-500 text-white', 'border-border text-red-600 hover:border-red-400'],
+              ['COMPLETED', '✔ تکمیل‌شده', 'border-emerald-600 bg-emerald-600 text-white', 'border-border text-emerald-700 hover:border-emerald-400'],
             ] as const
           ).map(([key, label, activeCls, idleCls]) => (
             <button

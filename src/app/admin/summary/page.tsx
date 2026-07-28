@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { PrintButton } from '@/app/admin/report/print-button';
 import { AutoStatusBadge, StatusBadge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Pct } from '@/components/ui/pct';
 import { formatJalali, formatJalaliLong, getWeekStart } from '@/lib/jalali';
 import {
   computePersistentBlockers,
@@ -45,7 +46,7 @@ export default async function WeeklySummaryPage() {
   const delta = trend.length >= 2 ? trend[trend.length - 1].progress - trend[trend.length - 2].progress : null;
 
   return (
-    <div className="space-y-6 bg-white">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-black">خلاصه‌ی وضعیت هفته — دپارتمان محصول و تکنولوژی</h1>
@@ -57,35 +58,43 @@ export default async function WeeklySummaryPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="pt-5 text-center">
-            <p className="text-3xl font-black text-primary">{departmentProgress}٪</p>
-            <p className="mt-1 text-sm text-muted-foreground">پیشرفت دپارتمان</p>
-            {delta !== null && (
-              <p className={`text-xs font-bold ${delta >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
-                {delta >= 0 ? '▲' : '▼'} {Math.abs(delta)} واحد نسبت به هفته قبل
-              </p>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-5 text-center">
-            <p className="text-3xl font-black text-emerald-700">{onOrAhead.length}</p>
-            <p className="mt-1 text-sm text-muted-foreground">تیم در مسیر / جلوتر</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-5 text-center">
-            <p className="text-3xl font-black text-red-700">{behind.length}</p>
-            <p className="mt-1 text-sm text-muted-foreground">تیم در ریسک / عقب</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-5 text-center">
-            <p className="text-3xl font-black text-amber-700">{notSubmitted.length}</p>
-            <p className="mt-1 text-sm text-muted-foreground">تیم با چک‌این ناقص این هفته</p>
-          </CardContent>
-        </Card>
+        <Link href="/admin/report" className="group">
+          <Card className="h-full transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg">
+            <CardContent className="pt-5 text-center">
+              <p className="text-3xl font-black text-primary"><Pct value={departmentProgress} /></p>
+              <p className="mt-1 text-sm text-muted-foreground">پیشرفت دپارتمان</p>
+              {delta !== null && (
+                <p className={`text-xs font-bold ${delta >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                  {delta >= 0 ? '▲' : '▼'} {Math.abs(delta)} واحد نسبت به هفته قبل
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin" className="group">
+          <Card className="h-full transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg">
+            <CardContent className="pt-5 text-center">
+              <p className="text-3xl font-black text-teal-700">{onOrAhead.length}</p>
+              <p className="mt-1 text-sm text-muted-foreground">تیم در مسیر / جلوتر</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin" className="group">
+          <Card className="h-full transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg">
+            <CardContent className="pt-5 text-center">
+              <p className="text-3xl font-black text-red-700">{behind.length}</p>
+              <p className="mt-1 text-sm text-muted-foreground">تیم در ریسک / عقب</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/checkins" className="group">
+          <Card className="h-full transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg">
+            <CardContent className="pt-5 text-center">
+              <p className="text-3xl font-black text-amber-700">{notSubmitted.length}</p>
+              <p className="mt-1 text-sm text-muted-foreground">تیم با چک‌این ناقص این هفته</p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -101,7 +110,7 @@ export default async function WeeklySummaryPage() {
                   {o.teamName}
                 </Link>
                 <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                  {o.progress}٪ از {o.expected ?? '—'}٪ انتظار
+                  <Pct value={o.progress} /> از {o.expected ?? '—'}٪ انتظار
                   <AutoStatusBadge status={o.autoStatus} expected={o.expected} />
                 </span>
               </div>

@@ -50,7 +50,7 @@ function num(v: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-const KR_STEPS = ['جزئیات و تیم اصلی', 'تیم‌های مشترک'] as const;
+const KR_STEPS = ['جزئیات و تیم', 'تیم‌های مشترک'] as const;
 
 export function KrForm({
   teams,
@@ -73,7 +73,7 @@ export function KrForm({
   const set = <K extends keyof KrFormValue>(key: K, v: KrFormValue[K]) =>
     setValue((prev) => ({ ...prev, [key]: v }));
 
-  // تیم اصلی = اولین تخصیص؛ بقیه = تیم‌های مشترک
+  // تیم انتخاب‌شده در استپ ۱ = اولین تخصیص؛ بقیه = تیم‌های مشترک (بدون مفهوم مالکیت)
   const primary = value.teams[0] ?? null;
   const teamName = (id: string) => teams.find((t) => t.id === id)?.name ?? id;
 
@@ -124,8 +124,8 @@ export function KrForm({
     if (value.title.trim().length < 2) return setError('عنوان نتیجه کلیدی الزامی است.');
     if (value.metricType === 'NUMERIC' && value.targetValue === null)
       return setError('برای KR عددی، تارگت الزامی است.');
-    if (!primary) return setError('تیم اصلی را انتخاب کنید.');
-    if (!primary.weight || primary.weight <= 0) return setError('وزن تیم اصلی باید عدد مثبت باشد.');
+    if (!primary) return setError('تیم را انتخاب کنید.');
+    if (!primary.weight || primary.weight <= 0) return setError('وزن تیم باید عدد مثبت باشد.');
     setStep(1);
   }
 
@@ -248,10 +248,10 @@ export function KrForm({
             />
           </div>
 
-          {/* تیم اصلی و وزن */}
+          {/* تیم و وزن (مربوط‌بودن KR به کدام تیم، در همین استپ اول) */}
           <div className="md:col-span-2 grid gap-3 rounded-md border border-border bg-card p-3 sm:grid-cols-2">
             <div>
-              <Label>تیم اصلی (مالک این KR) *</Label>
+              <Label>تیم *</Label>
               <Select value={primary?.teamId ?? ''} onChange={(e) => setPrimaryTeam(e.target.value)}>
                 <option value="" disabled>
                   انتخاب تیم…
@@ -264,7 +264,7 @@ export function KrForm({
               </Select>
             </div>
             <div>
-              <Label>وزن تیم اصلی *</Label>
+              <Label>وزن تیم *</Label>
               <Input
                 type="number"
                 min={0.1}
@@ -282,7 +282,7 @@ export function KrForm({
       {step === 1 && (
         <div className="space-y-3">
           <div className="rounded-md bg-card p-3 text-sm">
-            تیم اصلی: <b>{primary ? teamName(primary.teamId) : '—'}</b>
+            تیم انتخاب‌شده: <b>{primary ? teamName(primary.teamId) : '—'}</b>
             {primary && <span className="text-muted-foreground"> · وزن {primary.weight}</span>}
           </div>
           <div>

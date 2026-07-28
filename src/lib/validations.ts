@@ -6,7 +6,10 @@ export const roleEnum = z.enum(['SUPER_ADMIN', 'ADMIN', 'TEAM_MEMBER']);
 
 export const teamAssignmentSchema = z.object({
   teamId: z.string().min(1),
-  weight: z.coerce.number().positive('وزن باید مثبت باشد'),
+  weight: z
+    .coerce.number()
+    .positive('وزن باید مثبت باشد')
+    .max(100, 'وزن تیم باید بین ۰ تا ۱۰۰ باشد'),
   targetValueOverride: z.coerce.number().nullable().optional(),
   minValueOverride: z.coerce.number().nullable().optional(),
 });
@@ -28,13 +31,22 @@ export const keyResultSchema = z
     { message: 'برای نتیجه کلیدی عددی، تارگت الزامی است', path: ['targetValue'] }
   );
 
-export const objectiveSchema = z.object({
-  title: z.string().min(2, 'عنوان هدف الزامی است'),
-  description: z.string().nullable().optional(),
-  weight: z.coerce.number().positive('وزن باید مثبت باشد'),
-  period: z.string().min(1, 'دوره الزامی است'),
-  keyResults: z.array(keyResultSchema).optional().default([]),
-});
+export const objectiveSchema = z
+  .object({
+    title: z.string().min(2, 'عنوان هدف الزامی است'),
+    description: z.string().nullable().optional(),
+    weight: z.coerce.number().positive('وزن باید مثبت باشد'),
+    period: z.string().min(1, 'دوره الزامی است'),
+    keyResults: z.array(keyResultSchema).optional().default([]),
+  })
+  .refine(
+    (o) => {
+      if (!o.keyResults || o.keyResults.length === 0) return true;
+      const sum = o.keyResults.reduce((s, k) => s + (k.weight ?? 0), 0);
+      return Math.abs(sum - o.weight) < 0.01;
+    },
+    { message: 'مجموع وزن نتایج کلیدی باید با وزن هدف برابر باشد', path: ['keyResults'] }
+  );
 
 export const checkInSchema = z
   .object({

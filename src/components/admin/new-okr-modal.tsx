@@ -91,24 +91,38 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
     setObjTeams((prev) => prev.map((t) => (t.teamId === teamId ? { ...t, weight: w } : t)));
   }
 
+  const krWeightSum = keyResults.reduce((s, k) => s + (k.weight || 0), 0);
+  const weightMatches = keyResults.length === 0 || Math.abs(krWeightSum - weight) < 0.01;
+  const badTeamWeight = (w: number) => !w || w <= 0 || w > 100;
+
   function goShared() {
     setError('');
     if (title.trim().length < 2) return setError('عنوان هدف الزامی است.');
     if (!period.trim()) return setError('دوره را انتخاب کنید.');
     if (!primary) return setError('تیم این هدف را انتخاب کنید.');
-    if (!primary.weight || primary.weight <= 0) return setError('وزن تیم باید عدد مثبت باشد.');
+    if (badTeamWeight(primary.weight)) return setError('وزن تیم باید بین ۰ تا ۱۰۰ باشد.');
     setStep(1);
   }
 
   function goKrs() {
     setError('');
-    if (objTeams.some((t) => !t.weight || t.weight <= 0)) return setError('وزن همه‌ی تیم‌ها باید عدد مثبت باشد.');
+    if (objTeams.some((t) => badTeamWeight(t.weight))) return setError('وزن هر تیم باید بین ۰ تا ۱۰۰ باشد.');
     setStep(2);
+  }
+
+  function goReview() {
+    setError('');
+    if (keyResults.length === 0) return setError('حداقل یک نتیجه کلیدی اضافه کنید.');
+    if (!weightMatches)
+      return setError(`مجموع وزن نتایج کلیدی (${krWeightSum}) باید با وزن هدف (${weight}) برابر باشد.`);
+    setStep(3);
   }
 
   async function submit() {
     setError('');
     if (keyResults.length === 0) return setError('حداقل یک نتیجه کلیدی اضافه کنید.');
+    if (!weightMatches)
+      return setError(`مجموع وزن نتایج کلیدی (${krWeightSum}) باید با وزن هدف (${weight}) برابر باشد.`);
     setSaving(true);
     // تیم‌های سطح هدف را به همه‌ی نتایج کلیدی اعمال کن
     const withTeams = keyResults.map((kr) => ({ ...kr, teams: objTeams }));
@@ -214,10 +228,11 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
                 </Select>
               </div>
               <div>
-                <Label>وزن تیم *</Label>
+                <Label>وزن تیم (۰ تا ۱۰۰) *</Label>
                 <Input
                   type="number"
                   min={0.1}
+                  max={100}
                   step={0.1}
                   value={primary?.weight ?? 1}
                   onChange={(e) => setPrimaryWeight(Number(e.target.value))}
@@ -256,10 +271,11 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
                       </label>
                       {assignment && (
                         <div className="flex items-center gap-1 text-xs">
-                          <span>وزن:</span>
+                          <span>وزن (۰-۱۰۰):</span>
                           <Input
                             type="number"
                             min={0.1}
+                            max={100}
                             step={0.1}
                             className="h-8 w-20"
                             value={assignment.weight}
@@ -286,6 +302,22 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
               چطور موفقیت را می‌سنجید؟ نتایج کلیدی را اضافه کنید — همگی به تیم(های) انتخاب‌شده در مرحله‌ی هدف تعلق
               می‌گیرند.
             </p>
+
+            {/* مجموع وزن نتایج کلیدی باید با وزن هدف برابر باشد */}
+            <div
+              className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm font-bold ${
+                weightMatches
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : 'border-amber-200 bg-amber-50 text-amber-800'
+              }`}
+            >
+              <span>
+                مجموع وزن نتایج کلیدی: {krWeightSum} از {weight}
+              </span>
+              <span>
+                {weightMatches ? '✓ برابر با وزن هدف' : `باید ${weight} شود`}
+              </span>
+            </div>
             {keyResults.map((kr, i) => (
               <div key={i} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3">
                 <div>
@@ -376,7 +408,7 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
           {step === 0 && <Button onClick={goShared}>بعدی ←</Button>}
           {step === 1 && <Button onClick={goKrs}>بعدی ←</Button>}
           {step === 2 && (
-            <Button onClick={() => setStep(3)} disabled={keyResults.length === 0}>
+            <Button onClick={goReview} disabled={keyResults.length === 0 || !weightMatches}>
               بازبینی ←
             </Button>
           )}

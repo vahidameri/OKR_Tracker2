@@ -128,7 +128,8 @@ export function KrForm({
     if (value.metricType === 'NUMERIC' && value.targetValue === null)
       return setError('برای KR عددی، تارگت الزامی است.');
     if (!primary) return setError('تیم را انتخاب کنید.');
-    if (!primary.weight || primary.weight <= 0) return setError('وزن تیم باید عدد مثبت باشد.');
+    if (!primary.weight || primary.weight <= 0 || primary.weight > 100)
+      return setError('وزن تیم باید بین ۰ تا ۱۰۰ باشد.');
     setStep(1);
   }
 
@@ -141,8 +142,8 @@ export function KrForm({
         return setError('برای KR عددی، تارگت الزامی است.');
     } else {
       if (value.teams.length === 0) return setError('حداقل یک تیم باید انتخاب شود.');
-      if (value.teams.some((t) => !t.weight || t.weight <= 0))
-        return setError('وزن همه‌ی تیم‌های انتخاب‌شده باید عدد مثبت باشد.');
+      if (value.teams.some((t) => !t.weight || t.weight <= 0 || t.weight > 100))
+        return setError('وزن همه‌ی تیم‌های انتخاب‌شده باید بین ۰ تا ۱۰۰ باشد.');
     }
     setSaving(true);
     try {
@@ -277,10 +278,11 @@ export function KrForm({
                 </Select>
               </div>
               <div>
-                <Label>وزن تیم *</Label>
+                <Label>وزن تیم (۰ تا ۱۰۰) *</Label>
                 <Input
                   type="number"
                   min={0.1}
+                  max={100}
                   step={0.1}
                   value={primary?.weight ?? value.weight}
                   onChange={(e) => setPrimaryWeight(Number(e.target.value))}
@@ -322,10 +324,11 @@ export function KrForm({
                       {assignment && (
                         <>
                           <div className="flex items-center gap-1 text-xs">
-                            <span>وزن:</span>
+                            <span>وزن (۰-۱۰۰):</span>
                             <Input
                               type="number"
                               min={0.1}
+                              max={100}
                               step={0.1}
                               className="h-8 w-20"
                               value={assignment.weight}

@@ -289,7 +289,11 @@ export default async function TeamHomePage({
                       <TD className="text-xs">
                         {tkr.keyResult.metricType === 'NUMERIC'
                           ? `${formatCompact(target)} ${tkr.keyResult.unit ?? ''}`
-                          : '—'}
+                          : tkr.keyResult.metricType === 'BOOLEAN'
+                            ? tkr.keyResult.targetBoolean === false
+                              ? 'خیر'
+                              : 'بله'
+                            : '—'}
                       </TD>
                       <TD className="text-xs">{latestValueLabel(tkr)}</TD>
                       <TD className="min-w-[120px]">

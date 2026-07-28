@@ -86,6 +86,7 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
         metricType: 'NUMERIC',
         minValue: null,
         targetValue: null,
+        targetBoolean: true,
         unit: '',
         description: '',
         teams: [{ teamId: defaultTeamId, weight: 1, targetValueOverride: null, minValueOverride: null }],
@@ -181,6 +182,8 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
                   <p className="mt-1 text-xs text-muted-foreground">
                     {METRIC_LABELS[kr.metricType]} · وزن {kr.weight}
                     {kr.metricType === 'NUMERIC' ? ` · تارگت ${kr.targetValue}` : ''}
+                    {kr.metricType === 'BOOLEAN' ? ` · تارگت ${kr.targetBoolean ? 'بله' : 'خیر'}` : ''}
+                    {kr.teams.length > 1 ? ' · مشترک' : ''}
                   </p>
                   <div className="mt-1 flex flex-wrap gap-1">
                     {kr.teams.map((t) => (
@@ -229,11 +232,26 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
             </div>
             <p className="text-sm font-bold">{keyResults.length} نتیجه کلیدی:</p>
             {keyResults.map((kr, i) => (
-              <div key={i} className="rounded-lg border border-border p-2 text-sm">
-                {i + 1}. {kr.title}
-                <span className="mr-2 text-xs text-muted-foreground">
-                  ({kr.teams.map((t) => teamName(t.teamId)).join('، ')})
-                </span>
+              <div key={i} className="rounded-lg border border-border p-3 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-bold">
+                    {i + 1}. {kr.title}
+                  </span>
+                  {kr.teams.length > 1 && (
+                    <Badge className="bg-violet-100 text-violet-800">مشترک بین {kr.teams.length} تیم</Badge>
+                  )}
+                </div>
+                {/* تخصیص تیم‌ها با وزن واردشده — مخصوصاً برای KR مشترک */}
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {kr.teams.map((t) => (
+                    <Badge key={t.teamId} className="bg-muted text-foreground">
+                      {teamName(t.teamId)} · وزن {t.weight}
+                      {kr.metricType === 'NUMERIC' && t.targetValueOverride != null
+                        ? ` · تارگت ${t.targetValueOverride}`
+                        : ''}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

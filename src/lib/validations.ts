@@ -18,6 +18,7 @@ export const keyResultSchema = z
     metricType: metricTypeEnum,
     minValue: z.coerce.number().nullable().optional(),
     targetValue: z.coerce.number().nullable().optional(),
+    targetBoolean: z.boolean().optional().default(true),
     unit: z.string().nullable().optional(),
     description: z.string().nullable().optional(),
     teams: z.array(teamAssignmentSchema).min(1, 'حداقل یک تیم باید انتخاب شود'),

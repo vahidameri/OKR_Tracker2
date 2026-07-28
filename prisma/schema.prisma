@@ -101,6 +101,8 @@ model KeyResult {
   metricType  MetricType
   minValue    Float?
   targetValue Float?
+  // تارگت برای نوع بله/خیر: مقدار هدف «بله» است یا «خیر» (پیش‌فرض: بله)
+  targetBoolean Boolean @default(true)
   unit        String?
   description String?
   isShared    Boolean         @default(false)

@@ -25,6 +25,7 @@ export interface KrFormValue {
   metricType: 'NUMERIC' | 'BOOLEAN' | 'TEXT';
   minValue: number | null;
   targetValue: number | null;
+  targetBoolean: boolean;
   unit: string | null;
   description: string | null;
   teams: TeamAssignmentInput[];
@@ -36,6 +37,7 @@ const emptyValue: KrFormValue = {
   metricType: 'NUMERIC',
   minValue: null,
   targetValue: null,
+  targetBoolean: true,
   unit: '',
   description: '',
   teams: [],
@@ -134,9 +136,21 @@ export function KrForm({
           </Select>
         </div>
         {value.metricType === 'BOOLEAN' && (
-          <p className="self-end pb-2 text-xs text-muted-foreground md:col-span-2">
-            KR بله/خیر: تیم در چک‌این هفتگی مشخص می‌کند انجام شده یا نه (بله = ۱۰۰٪، خیر = ۰٪).
-          </p>
+          <>
+            <div>
+              <Label>تارگت (مقدار هدف)</Label>
+              <Select
+                value={value.targetBoolean ? 'YES' : 'NO'}
+                onChange={(e) => set('targetBoolean', e.target.value === 'YES')}
+              >
+                <option value="YES">بله</option>
+                <option value="NO">خیر</option>
+              </Select>
+            </div>
+            <p className="self-end pb-2 text-xs text-muted-foreground">
+              KR بله/خیر: تیم در چک‌این هفتگی مشخص می‌کند به تارگت رسیده یا نه (بله = ۱۰۰٪، خیر = ۰٪).
+            </p>
+          </>
         )}
         {value.metricType === 'NUMERIC' && (
           <>

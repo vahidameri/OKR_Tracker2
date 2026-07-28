@@ -3,19 +3,25 @@
 import { Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { KrForm, type KrFormValue, type TeamOption } from '@/components/admin/kr-form';
+import {
+  KrForm,
+  type KrFormValue,
+  type TeamAssignmentInput,
+  type TeamOption,
+} from '@/components/admin/kr-form';
 import { PeriodSelect } from '@/components/admin/period-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
+import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { METRIC_LABELS } from '@/lib/progress';
 
-const STEPS = ['هدف', 'نتایج کلیدی', 'بازبینی'] as const;
+const STEPS = ['هدف و تیم', 'تیم‌های مشترک', 'نتایج کلیدی', 'بازبینی'] as const;
 
-/** ویزارد ساخت OKR به‌صورت مودال سه‌مرحله‌ای — الهام‌گرفته از «Create OKR» مرجع */
+/** ویزارد ساخت OKR — تیم در سطح «هدف» انتخاب می‌شود و همه‌ی نتایج کلیدی آن را به ارث می‌برند */
 export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -26,6 +32,10 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
   const [description, setDescription] = useState('');
   const [weight, setWeight] = useState(1);
   const [period, setPeriod] = useState('');
+  // تخصیص تیم در سطح هدف: عنصر اول = تیم انتخاب‌شده، بقیه = تیم‌های مشترک
+  const [objTeams, setObjTeams] = useState<TeamAssignmentInput[]>(
+    defaultTeamId ? [{ teamId: defaultTeamId, weight: 1, targetValueOverride: null, minValueOverride: null }] : []
+  );
   const [keyResults, setKeyResults] = useState<KrFormValue[]>([]);
   const [showKrForm, setShowKrForm] = useState(false);
   const [error, setError] = useState('');
@@ -45,28 +55,67 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
     setDescription('');
     setWeight(1);
     setPeriod('');
+    setObjTeams(
+      defaultTeamId
+        ? [{ teamId: defaultTeamId, weight: 1, targetValueOverride: null, minValueOverride: null }]
+        : []
+    );
     setKeyResults([]);
     setShowKrForm(false);
     setError('');
   }
 
   const teamName = (id: string) => teams.find((t) => t.id === id)?.name ?? id;
+  const primary = objTeams[0] ?? null;
+  const sharedTeams = objTeams.slice(1);
 
-  function goDetails() {
+  function setPrimaryTeam(teamId: string) {
+    setObjTeams((prev) => {
+      const rest = prev.slice(1).filter((t) => t.teamId !== teamId);
+      const w = prev[0]?.weight ?? 1;
+      return [{ teamId, weight: w, targetValueOverride: null, minValueOverride: null }, ...rest];
+    });
+  }
+  function setPrimaryWeight(w: number) {
+    setObjTeams((prev) => (prev.length ? [{ ...prev[0], weight: w }, ...prev.slice(1)] : prev));
+  }
+  function toggleShared(teamId: string) {
+    setObjTeams((prev) => {
+      const exists = prev.some((t, i) => i >= 1 && t.teamId === teamId);
+      return exists
+        ? prev.filter((t) => t.teamId !== teamId)
+        : [...prev, { teamId, weight: 1, targetValueOverride: null, minValueOverride: null }];
+    });
+  }
+  function setSharedWeight(teamId: string, w: number) {
+    setObjTeams((prev) => prev.map((t) => (t.teamId === teamId ? { ...t, weight: w } : t)));
+  }
+
+  function goShared() {
     setError('');
     if (title.trim().length < 2) return setError('عنوان هدف الزامی است.');
     if (!period.trim()) return setError('دوره را انتخاب کنید.');
+    if (!primary) return setError('تیم این هدف را انتخاب کنید.');
+    if (!primary.weight || primary.weight <= 0) return setError('وزن تیم باید عدد مثبت باشد.');
     setStep(1);
+  }
+
+  function goKrs() {
+    setError('');
+    if (objTeams.some((t) => !t.weight || t.weight <= 0)) return setError('وزن همه‌ی تیم‌ها باید عدد مثبت باشد.');
+    setStep(2);
   }
 
   async function submit() {
     setError('');
     if (keyResults.length === 0) return setError('حداقل یک نتیجه کلیدی اضافه کنید.');
     setSaving(true);
+    // تیم‌های سطح هدف را به همه‌ی نتایج کلیدی اعمال کن
+    const withTeams = keyResults.map((kr) => ({ ...kr, teams: objTeams }));
     const res = await fetch('/api/admin/objectives', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, description: description || null, weight, period, keyResults }),
+      body: JSON.stringify({ title, description: description || null, weight, period, keyResults: withTeams }),
     });
     setSaving(false);
     if (!res.ok) {
@@ -77,21 +126,6 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
     reset();
     router.refresh();
   }
-
-  // KR جدید با تیم پیش‌فرض همان تب فعال
-  const initialKr: KrFormValue | undefined = defaultTeamId
-    ? {
-        title: '',
-        weight: 1,
-        metricType: 'NUMERIC',
-        minValue: null,
-        targetValue: null,
-        targetBoolean: true,
-        unit: '',
-        description: '',
-        teams: [{ teamId: defaultTeamId, weight: 1, targetValueOverride: null, minValueOverride: null }],
-      }
-    : undefined;
 
   return (
     <>
@@ -132,6 +166,7 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
           ))}
         </div>
 
+        {/* استپ ۱: هدف + تیم و وزن */}
         {step === 0 && (
           <div className="space-y-4">
             <div>
@@ -162,13 +197,94 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
               <Label>توضیحات</Label>
               <Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
+
+            {/* تیم این هدف */}
+            <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-3 sm:grid-cols-2">
+              <div>
+                <Label>تیم این هدف *</Label>
+                <Select value={primary?.teamId ?? ''} onChange={(e) => setPrimaryTeam(e.target.value)}>
+                  <option value="" disabled>
+                    انتخاب تیم…
+                  </option>
+                  {teams.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <Label>وزن تیم *</Label>
+                <Input
+                  type="number"
+                  min={0.1}
+                  step={0.1}
+                  value={primary?.weight ?? 1}
+                  onChange={(e) => setPrimaryWeight(Number(e.target.value))}
+                  disabled={!primary}
+                />
+              </div>
+            </div>
           </div>
         )}
 
+        {/* استپ ۲: تیم‌های مشترک */}
         {step === 1 && (
           <div className="space-y-3">
+            <div className="rounded-md border border-border bg-card p-3 text-sm">
+              تیم این هدف: <b>{primary ? teamName(primary.teamId) : '—'}</b>
+              {primary && <span className="text-muted-foreground"> · وزن {primary.weight}</span>}
+            </div>
+            <Label>تیم‌های مشترک (اختیاری)</Label>
+            <p className="text-xs text-muted-foreground">
+              اگر این هدف بین چند تیم مشترک است، تیم‌های دیگر را انتخاب و وزن هرکدام را وارد کنید. این تخصیص روی
+              همه‌ی نتایج کلیدی این هدف اعمال می‌شود.
+            </p>
+            <div className="space-y-2">
+              {teams
+                .filter((team) => team.id !== primary?.teamId)
+                .map((team) => {
+                  const assignment = sharedTeams.find((t) => t.teamId === team.id);
+                  return (
+                    <div
+                      key={team.id}
+                      className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-card p-2"
+                    >
+                      <label className="flex min-w-28 items-center gap-2 text-sm font-medium">
+                        <input type="checkbox" checked={!!assignment} onChange={() => toggleShared(team.id)} />
+                        {team.name}
+                      </label>
+                      {assignment && (
+                        <div className="flex items-center gap-1 text-xs">
+                          <span>وزن:</span>
+                          <Input
+                            type="number"
+                            min={0.1}
+                            step={0.1}
+                            className="h-8 w-20"
+                            value={assignment.weight}
+                            onChange={(e) => setSharedWeight(team.id, Number(e.target.value))}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+            {sharedTeams.length > 0 && (
+              <p className="text-xs font-bold text-violet-700">
+                این هدف «مشترک» بین {objTeams.length} تیم ثبت می‌شود.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* استپ ۳: نتایج کلیدی (بدون انتخاب تیم) */}
+        {step === 2 && (
+          <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              چطور موفقیت را می‌سنجید؟ هر KR را به یک یا چند تیم با وزن اختصاصی تخصیص دهید.
+              چطور موفقیت را می‌سنجید؟ نتایج کلیدی را اضافه کنید — همگی به تیم(های) انتخاب‌شده در مرحله‌ی هدف تعلق
+              می‌گیرند.
             </p>
             {keyResults.map((kr, i) => (
               <div key={i} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3">
@@ -183,15 +299,7 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
                     {METRIC_LABELS[kr.metricType]} · وزن {kr.weight}
                     {kr.metricType === 'NUMERIC' ? ` · تارگت ${kr.targetValue}` : ''}
                     {kr.metricType === 'BOOLEAN' ? ` · تارگت ${kr.targetBoolean ? 'بله' : 'خیر'}` : ''}
-                    {kr.teams.length > 1 ? ' · مشترک' : ''}
                   </p>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {kr.teams.map((t) => (
-                      <Badge key={t.teamId} className="bg-muted text-foreground">
-                        {teamName(t.teamId)} (وزن {t.weight})
-                      </Badge>
-                    ))}
-                  </div>
                 </div>
                 <Button
                   size="sm"
@@ -207,7 +315,7 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
             {showKrForm ? (
               <KrForm
                 teams={teams}
-                initial={initialKr}
+                hideTeams
                 submitLabel="افزودن به فهرست"
                 onSubmit={(v) => {
                   setKeyResults([...keyResults, v]);
@@ -223,35 +331,33 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
           </div>
         )}
 
-        {step === 2 && (
+        {/* استپ ۴: بازبینی */}
+        {step === 3 && (
           <div className="space-y-3">
             <div className="rounded-lg border border-border p-3">
               <p className="text-xs text-muted-foreground">هدف · {period}</p>
               <p className="text-lg font-black">{title}</p>
               {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {objTeams.length > 1 && (
+                  <Badge className="bg-violet-100 text-violet-800">مشترک بین {objTeams.length} تیم</Badge>
+                )}
+                {objTeams.map((t) => (
+                  <Badge key={t.teamId} className="bg-muted text-foreground">
+                    {teamName(t.teamId)} · وزن {t.weight}
+                  </Badge>
+                ))}
+              </div>
             </div>
             <p className="text-sm font-bold">{keyResults.length} نتیجه کلیدی:</p>
             {keyResults.map((kr, i) => (
-              <div key={i} className="rounded-lg border border-border p-3 text-sm">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-bold">
-                    {i + 1}. {kr.title}
-                  </span>
-                  {kr.teams.length > 1 && (
-                    <Badge className="bg-violet-100 text-violet-800">مشترک بین {kr.teams.length} تیم</Badge>
-                  )}
-                </div>
-                {/* تخصیص تیم‌ها با وزن واردشده — مخصوصاً برای KR مشترک */}
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {kr.teams.map((t) => (
-                    <Badge key={t.teamId} className="bg-muted text-foreground">
-                      {teamName(t.teamId)} · وزن {t.weight}
-                      {kr.metricType === 'NUMERIC' && t.targetValueOverride != null
-                        ? ` · تارگت ${t.targetValueOverride}`
-                        : ''}
-                    </Badge>
-                  ))}
-                </div>
+              <div key={i} className="rounded-lg border border-border p-2 text-sm">
+                {i + 1}. {kr.title}
+                <span className="mr-2 text-xs text-muted-foreground">
+                  ({METRIC_LABELS[kr.metricType]}
+                  {kr.metricType === 'NUMERIC' ? ` · تارگت ${kr.targetValue}` : ''}
+                  {kr.metricType === 'BOOLEAN' ? ` · تارگت ${kr.targetBoolean ? 'بله' : 'خیر'}` : ''})
+                </span>
               </div>
             ))}
           </div>
@@ -267,13 +373,14 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
           ) : (
             <span />
           )}
-          {step === 0 && <Button onClick={goDetails}>بعدی ←</Button>}
-          {step === 1 && (
-            <Button onClick={() => setStep(2)} disabled={keyResults.length === 0}>
+          {step === 0 && <Button onClick={goShared}>بعدی ←</Button>}
+          {step === 1 && <Button onClick={goKrs}>بعدی ←</Button>}
+          {step === 2 && (
+            <Button onClick={() => setStep(3)} disabled={keyResults.length === 0}>
               بازبینی ←
             </Button>
           )}
-          {step === 2 && (
+          {step === 3 && (
             <Button onClick={submit} disabled={saving}>
               {saving ? 'در حال ثبت…' : 'ثبت هدف'}
             </Button>

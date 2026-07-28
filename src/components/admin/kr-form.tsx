@@ -58,12 +58,15 @@ export function KrForm({
   submitLabel,
   onSubmit,
   onCancel,
+  hideTeams = false,
 }: {
   teams: TeamOption[];
   initial?: KrFormValue;
   submitLabel: string;
   onSubmit: (value: KrFormValue) => Promise<void> | void;
   onCancel?: () => void;
+  /** وقتی true باشد، تخصیص تیم در این فرم نمایش داده نمی‌شود (تیم در سطح هدف انتخاب می‌شود) */
+  hideTeams?: boolean;
 }) {
   const [value, setValue] = useState<KrFormValue>(initial ?? emptyValue);
   const [step, setStep] = useState(0);
@@ -131,9 +134,16 @@ export function KrForm({
 
   async function handleSubmit() {
     setError('');
-    if (value.teams.length === 0) return setError('حداقل یک تیم باید انتخاب شود.');
-    if (value.teams.some((t) => !t.weight || t.weight <= 0))
-      return setError('وزن همه‌ی تیم‌های انتخاب‌شده باید عدد مثبت باشد.');
+    if (hideTeams) {
+      // اعتبارسنجی جزئیات KR (تیم در سطح هدف انتخاب می‌شود)
+      if (value.title.trim().length < 2) return setError('عنوان نتیجه کلیدی الزامی است.');
+      if (value.metricType === 'NUMERIC' && value.targetValue === null)
+        return setError('برای KR عددی، تارگت الزامی است.');
+    } else {
+      if (value.teams.length === 0) return setError('حداقل یک تیم باید انتخاب شود.');
+      if (value.teams.some((t) => !t.weight || t.weight <= 0))
+        return setError('وزن همه‌ی تیم‌های انتخاب‌شده باید عدد مثبت باشد.');
+    }
     setSaving(true);
     try {
       await onSubmit(value);
@@ -146,7 +156,8 @@ export function KrForm({
 
   return (
     <div className="space-y-4 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4">
-      {/* استپر داخلی تخصیص تیم */}
+      {/* استپر داخلی تخصیص تیم (فقط وقتی تیم در همین فرم انتخاب می‌شود) */}
+      {!hideTeams && (
       <div className="flex items-center gap-2">
         {KR_STEPS.map((label, i) => (
           <div key={label} className="flex flex-1 items-center gap-2">
@@ -166,9 +177,10 @@ export function KrForm({
           </div>
         ))}
       </div>
+      )}
 
-      {/* استپ ۱: جزئیات KR + تیم اصلی و وزن */}
-      {step === 0 && (
+      {/* استپ ۱: جزئیات KR (+ تیم و وزن وقتی تیم در همین فرم انتخاب می‌شود) */}
+      {(step === 0 || hideTeams) && (
         <div className="grid gap-3 md:grid-cols-2">
           <div className="md:col-span-2">
             <Label>عنوان نتیجه کلیدی *</Label>
@@ -248,38 +260,40 @@ export function KrForm({
             />
           </div>
 
-          {/* تیم و وزن (مربوط‌بودن KR به کدام تیم، در همین استپ اول) */}
-          <div className="md:col-span-2 grid gap-3 rounded-md border border-border bg-card p-3 sm:grid-cols-2">
-            <div>
-              <Label>تیم *</Label>
-              <Select value={primary?.teamId ?? ''} onChange={(e) => setPrimaryTeam(e.target.value)}>
-                <option value="" disabled>
-                  انتخاب تیم…
-                </option>
-                {teams.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
+          {/* تیم و وزن — فقط وقتی تیم در همین فرم انتخاب می‌شود */}
+          {!hideTeams && (
+            <div className="md:col-span-2 grid gap-3 rounded-md border border-border bg-card p-3 sm:grid-cols-2">
+              <div>
+                <Label>تیم *</Label>
+                <Select value={primary?.teamId ?? ''} onChange={(e) => setPrimaryTeam(e.target.value)}>
+                  <option value="" disabled>
+                    انتخاب تیم…
                   </option>
-                ))}
-              </Select>
+                  {teams.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <Label>وزن تیم *</Label>
+                <Input
+                  type="number"
+                  min={0.1}
+                  step={0.1}
+                  value={primary?.weight ?? value.weight}
+                  onChange={(e) => setPrimaryWeight(Number(e.target.value))}
+                  disabled={!primary}
+                />
+              </div>
             </div>
-            <div>
-              <Label>وزن تیم *</Label>
-              <Input
-                type="number"
-                min={0.1}
-                step={0.1}
-                value={primary?.weight ?? value.weight}
-                onChange={(e) => setPrimaryWeight(Number(e.target.value))}
-                disabled={!primary}
-              />
-            </div>
-          </div>
+          )}
         </div>
       )}
 
       {/* استپ ۲: تیم‌های مشترک */}
-      {step === 1 && (
+      {!hideTeams && step === 1 && (
         <div className="space-y-3">
           <div className="rounded-md bg-card p-3 text-sm">
             تیم انتخاب‌شده: <b>{primary ? teamName(primary.teamId) : '—'}</b>
@@ -352,7 +366,7 @@ export function KrForm({
 
       <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
         <div>
-          {step === 1 && (
+          {!hideTeams && step === 1 && (
             <Button variant="ghost" onClick={() => setStep(0)}>
               → قبلی
             </Button>
@@ -363,7 +377,7 @@ export function KrForm({
             </Button>
           )}
         </div>
-        {step === 0 ? (
+        {!hideTeams && step === 0 ? (
           <Button onClick={goNext}>بعدی ←</Button>
         ) : (
           <Button onClick={handleSubmit} disabled={saving}>

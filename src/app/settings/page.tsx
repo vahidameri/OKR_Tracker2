@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { getSession } from '@/lib/auth';
 import { formatJalaliDateTime } from '@/lib/jalali';
 import { prisma } from '@/lib/prisma';
+import { isAdminRole, roleLabel } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +24,7 @@ export default async function SettingsPage() {
   });
   if (!user) redirect('/login');
 
-  const backHref = session.user.role === 'ADMIN' ? '/admin' : '/team';
+  const backHref = isAdminRole(session.user.role) ? '/admin' : '/team';
 
   return (
     <main className="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
@@ -50,7 +51,7 @@ export default async function SettingsPage() {
           </p>
           <p>
             <span className="text-muted-foreground">نقش: </span>
-            {user.role === 'ADMIN' ? 'ادمین (مدیریت)' : 'عضو تیم'}
+            {roleLabel(user.role)}
           </p>
           {user.teams.length > 0 && (
             <p className="flex flex-wrap items-center gap-1">

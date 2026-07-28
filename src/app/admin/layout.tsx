@@ -4,6 +4,7 @@ import { PasswordBanner } from '@/components/password-banner';
 import { getSession } from '@/lib/auth';
 import { currentQuarterInfo } from '@/lib/jalali';
 import { prisma } from '@/lib/prisma';
+import { isAdminRole } from '@/lib/roles';
 
 const links: SideEntry[] = [
   { href: '/admin', label: 'داشبورد', icon: 'dashboard' },
@@ -28,7 +29,7 @@ const links: SideEntry[] = [
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session?.user) redirect('/login');
-  if (session.user.role !== 'ADMIN') redirect('/team');
+  if (!isAdminRole(session.user.role)) redirect('/team');
 
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id },

@@ -12,7 +12,7 @@ export interface CommentItem {
   body: string;
   createdAt: string;
   authorName: string | null;
-  authorRole: 'ADMIN' | 'TEAM_MEMBER' | null;
+  authorRole: 'SUPER_ADMIN' | 'ADMIN' | 'TEAM_MEMBER' | null;
 }
 
 /** گفتگوی روی چک‌این: ثبت‌کننده و مدیر می‌توانند رفت‌وبرگشتی کامنت بگذارند */
@@ -67,12 +67,12 @@ export function CommentThread({
           key={c.id}
           className={cn(
             'rounded-md p-2 text-xs',
-            c.authorRole === 'ADMIN' ? 'bg-blue-50 text-blue-900' : 'bg-card'
+            c.authorRole === 'ADMIN' || c.authorRole === 'SUPER_ADMIN' ? 'bg-blue-50 text-blue-900' : 'bg-card'
           )}
         >
           <p className="mb-0.5 flex flex-wrap items-center gap-2 font-bold">
             {c.authorName ?? '—'}
-            {c.authorRole === 'ADMIN' && (
+            {(c.authorRole === 'ADMIN' || c.authorRole === 'SUPER_ADMIN') && (
               <span className="rounded-full bg-blue-200 px-1.5 text-[10px]">مدیر</span>
             )}
             <span className="font-normal text-muted-foreground">{formatJalaliDateTime(c.createdAt)}</span>

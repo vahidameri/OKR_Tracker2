@@ -40,8 +40,8 @@ const TEAMS: { name: string; leadName: string; description: string }[] = [
 
 // یوزرنیم‌ها بر مبنای نام لاتین (در README مستند شده و قابل تغییر است)
 const USERS: { username: string; fullName: string; title?: string; role: Role; teamNames: string[] }[] = [
-  // نقش‌های سازمانی بالادستی — هر دو ADMIN کامل
-  { username: 'vahid.ameri', fullName: 'وحید عامری', title: 'مدیر پروژه', role: 'ADMIN', teamNames: [] },
+  // نقش‌های سازمانی بالادستی — وحید عامری سوپرادمین (دسترسی کامل)، جلیل علیزاده ادمین
+  { username: 'vahid.ameri', fullName: 'وحید عامری', title: 'مدیر پروژه', role: 'SUPER_ADMIN', teamNames: [] },
   { username: 'jalil.alizadeh', fullName: 'جلیل علیزاده', title: 'مدیر دپارتمان', role: 'ADMIN', teamNames: [] },
   // لیدهای تیم‌ها
   { username: 'morteza.safari', fullName: 'مرتضی صفری شاهی', title: 'لید تیم تکنولوژی', role: 'TEAM_MEMBER', teamNames: ['تکنولوژی'] },

@@ -4,6 +4,7 @@ import { PasswordBanner } from '@/components/password-banner';
 import { getSession } from '@/lib/auth';
 import { currentQuarterInfo } from '@/lib/jalali';
 import { prisma } from '@/lib/prisma';
+import { roleLabel } from '@/lib/roles';
 
 const links: SideLink[] = [
   { href: '/team', label: 'OKRهای من', icon: 'myokrs' },
@@ -26,7 +27,7 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
         quarterLabel={currentQuarterInfo().label}
         links={links}
         userName={session.user.fullName}
-        roleLabel={dbUser?.title ?? (session.user.role === 'ADMIN' ? 'ادمین' : 'عضو تیم')}
+        roleLabel={dbUser?.title ?? roleLabel(session.user.role)}
         homeHref="/team"
       />
       <div className="min-w-0 flex-1">

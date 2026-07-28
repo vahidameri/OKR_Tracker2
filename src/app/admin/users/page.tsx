@@ -19,7 +19,7 @@ interface UserRow {
   id: string;
   username: string;
   fullName: string;
-  role: 'ADMIN' | 'TEAM_MEMBER';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'TEAM_MEMBER';
   isActive: boolean;
   teams: { team: { id: string; name: string } }[];
   _count: { sessions: number };
@@ -42,7 +42,7 @@ export default function UsersPage() {
     username: '',
     fullName: '',
     password: '',
-    role: 'TEAM_MEMBER' as 'ADMIN' | 'TEAM_MEMBER',
+    role: 'TEAM_MEMBER' as 'SUPER_ADMIN' | 'ADMIN' | 'TEAM_MEMBER',
     teamIds: [] as string[],
   });
   const [error, setError] = useState('');
@@ -148,10 +148,13 @@ export default function UsersPage() {
                 <Label>نقش</Label>
                 <Select
                   value={form.role}
-                  onChange={(e) => setForm({ ...form, role: e.target.value as 'ADMIN' | 'TEAM_MEMBER' })}
+                  onChange={(e) =>
+                    setForm({ ...form, role: e.target.value as 'SUPER_ADMIN' | 'ADMIN' | 'TEAM_MEMBER' })
+                  }
                 >
                   <option value="TEAM_MEMBER">عضو تیم</option>
-                  <option value="ADMIN">ادمین (PgM / مدیر دپارتمان)</option>
+                  <option value="ADMIN">ادمین (مدیریت)</option>
+                  <option value="SUPER_ADMIN">سوپر ادمین (دسترسی کامل)</option>
                 </Select>
               </div>
             </div>
@@ -200,7 +203,9 @@ export default function UsersPage() {
                       {u.username}
                     </TD>
                     <TD>
-                      {u.role === 'ADMIN' ? (
+                      {u.role === 'SUPER_ADMIN' ? (
+                        <Badge className="bg-amber-100 text-amber-900 ring-1 ring-inset ring-amber-600/30">سوپر ادمین</Badge>
+                      ) : u.role === 'ADMIN' ? (
                         <Badge className="bg-violet-100 text-violet-800">ادمین</Badge>
                       ) : (
                         <Badge className="bg-muted text-foreground">عضو تیم</Badge>

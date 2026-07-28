@@ -1,13 +1,14 @@
 import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
+import { isAdminRole } from '@/lib/roles';
 
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const { pathname } = req.nextUrl;
 
-    // RBAC: مسیرهای ادمین فقط برای ADMIN
-    if ((pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) && token?.role !== 'ADMIN') {
+    // RBAC: مسیرهای ادمین فقط برای نقش‌های مدیریتی (ادمین/سوپرادمین)
+    if ((pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) && !isAdminRole(token?.role as string | undefined)) {
       if (pathname.startsWith('/api')) {
         return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 });
       }

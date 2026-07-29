@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const metricTypeEnum = z.enum(['NUMERIC', 'BOOLEAN', 'TEXT']);
 export const progressStatusEnum = z.enum(['ON_TRACK', 'AT_RISK', 'BLOCKED', 'COMPLETED']);
-export const roleEnum = z.enum(['SUPER_ADMIN', 'ADMIN', 'TEAM_MEMBER']);
+export const roleEnum = z.enum(['ADMIN', 'TEAM_MEMBER']);
 
 export const teamAssignmentSchema = z.object({
   teamId: z.string().min(1),

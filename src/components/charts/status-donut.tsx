@@ -33,7 +33,7 @@ export function StatusDonut({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-4">
+    <div className="flex flex-wrap items-center justify-center gap-6">
       <div dir="ltr" className="relative h-52 w-52 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -62,7 +62,7 @@ export function StatusDonut({
           <span className="text-xs text-muted-foreground">KR-تیم</span>
         </div>
       </div>
-      <ul className="min-w-36 flex-1 space-y-2 text-sm">
+      <ul className="min-w-36 space-y-2 text-sm">
         {data.map((d) => (
           <li key={d.key} className="flex items-center justify-between gap-3">
             <span className="flex items-center gap-2">

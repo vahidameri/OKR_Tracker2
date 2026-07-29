@@ -23,7 +23,7 @@ function currentCycle() {
   };
 }
 
-const DEFAULT_PASSWORD = process.env.SEED_DEFAULT_PASSWORD ?? 'okr405@TPD';
+const DEFAULT_PASSWORD = process.env.SEED_DEFAULT_PASSWORD ?? 'OKR4052@tpd';
 // اگر true (پیش‌فرض)، در هر seed پسورد همه‌ی کاربران به مقدار پیش‌فرض ریست می‌شود.
 // برای حفظ پسوردهای تغییریافته، در .env مقدار SEED_RESET_PASSWORDS=false بگذارید.
 const RESET_PASSWORDS = (process.env.SEED_RESET_PASSWORDS ?? 'true').toLowerCase() !== 'false';
@@ -40,13 +40,15 @@ const TEAMS: { name: string; leadName: string; description: string }[] = [
 
 // یوزرنیم‌ها بر مبنای نام لاتین (در README مستند شده و قابل تغییر است)
 const USERS: { username: string; fullName: string; title?: string; role: Role; teamNames: string[] }[] = [
-  // نقش‌های سازمانی بالادستی — وحید عامری سوپرادمین (دسترسی کامل)، جلیل علیزاده ادمین
-  { username: 'vahid.ameri', fullName: 'وحید عامری', title: 'مدیر پروژه', role: 'SUPER_ADMIN', teamNames: [] },
+  // نقش‌های سازمانی بالادستی — هر دو ادمین کامل
+  { username: 'vahid.ameri', fullName: 'وحید عامری', title: 'مدیر پروژه', role: 'ADMIN', teamNames: [] },
   { username: 'jalil.alizadeh', fullName: 'جلیل علیزاده', title: 'مدیر دپارتمان', role: 'ADMIN', teamNames: [] },
   // لیدهای تیم‌ها
   { username: 'morteza.safari', fullName: 'مرتضی صفری شاهی', title: 'لید تیم تکنولوژی', role: 'TEAM_MEMBER', teamNames: ['تکنولوژی'] },
   { username: 'pardis.ghasemi', fullName: 'پردیس قاسمی', title: 'لید تیم بینش داده', role: 'TEAM_MEMBER', teamNames: ['بینش داده'] },
   { username: 'ali.khoshnood', fullName: 'علی خوشنود', title: 'لید تیم عملیات/CRM', role: 'TEAM_MEMBER', teamNames: ['عملیات/CRM'] },
+  { username: 'mona.nobari', fullName: 'مونا نوبری', title: 'عضو تیم عملیات', role: 'TEAM_MEMBER', teamNames: ['عملیات/CRM'] },
+  { username: 'zahra.nateghi', fullName: 'زهرا ناطقی', title: 'عضو تیم عملیات', role: 'TEAM_MEMBER', teamNames: ['عملیات/CRM'] },
   { username: 'ali.nasimi', fullName: 'علی نسیمی', title: 'لید تیم پیام‌رسان', role: 'TEAM_MEMBER', teamNames: ['پیام‌رسان'] },
   { username: 'misagh.riginejad', fullName: 'میثاق ریگی‌نژاد', title: 'لید تیم کلاسا', role: 'TEAM_MEMBER', teamNames: ['کلاسا'] },
   // علیرضا یحیایی مسئول هم‌زمان ورزشی و تماشا → دو رکورد UserTeam

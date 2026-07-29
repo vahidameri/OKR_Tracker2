@@ -154,7 +154,6 @@ export default function UsersPage() {
                 >
                   <option value="TEAM_MEMBER">عضو تیم</option>
                   <option value="ADMIN">ادمین (مدیریت)</option>
-                  <option value="SUPER_ADMIN">سوپر ادمین (دسترسی کامل)</option>
                 </Select>
               </div>
             </div>
@@ -203,9 +202,7 @@ export default function UsersPage() {
                       {u.username}
                     </TD>
                     <TD>
-                      {u.role === 'SUPER_ADMIN' ? (
-                        <Badge className="bg-amber-100 text-amber-900 ring-1 ring-inset ring-amber-600/30">سوپر ادمین</Badge>
-                      ) : u.role === 'ADMIN' ? (
+                      {u.role === 'ADMIN' || u.role === 'SUPER_ADMIN' ? (
                         <Badge className="bg-violet-100 text-violet-800">ادمین</Badge>
                       ) : (
                         <Badge className="bg-muted text-foreground">عضو تیم</Badge>

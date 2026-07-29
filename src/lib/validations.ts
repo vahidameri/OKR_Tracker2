@@ -6,7 +6,10 @@ export const roleEnum = z.enum(['ADMIN', 'TEAM_MEMBER']);
 
 export const teamAssignmentSchema = z.object({
   teamId: z.string().min(1),
-  weight: z.coerce.number().positive('وزن باید مثبت باشد'),
+  weight: z
+    .coerce.number()
+    .positive('وزن باید مثبت باشد')
+    .max(100, 'وزن تیم باید بین ۰ تا ۱۰۰ باشد'),
   targetValueOverride: z.coerce.number().nullable().optional(),
   minValueOverride: z.coerce.number().nullable().optional(),
 });
@@ -18,6 +21,7 @@ export const keyResultSchema = z
     metricType: metricTypeEnum,
     minValue: z.coerce.number().nullable().optional(),
     targetValue: z.coerce.number().nullable().optional(),
+    targetBoolean: z.boolean().optional().default(true),
     unit: z.string().nullable().optional(),
     description: z.string().nullable().optional(),
     teams: z.array(teamAssignmentSchema).min(1, 'حداقل یک تیم باید انتخاب شود'),
@@ -48,11 +52,6 @@ export const checkInSchema = z
     message: 'برای وضعیت بلاک‌شده، توضیح بلاکر الزامی است',
     path: ['blockerDescription'],
   });
-
-export const feedbackSchema = z.object({
-  score: z.coerce.number().int().min(0).max(10).nullable().optional(),
-  comment: z.string().nullable().optional(),
-});
 
 export const createUserSchema = z.object({
   username: z

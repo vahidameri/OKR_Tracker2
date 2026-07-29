@@ -38,7 +38,13 @@ export default async function ReportPage() {
       krTitle: tkr.keyResult.title,
       metricLabel: METRIC_LABELS[tkr.keyResult.metricType],
       targetLabel:
-        tkr.keyResult.metricType === 'NUMERIC' ? `${formatCompact(target)} ${tkr.keyResult.unit ?? ''}` : '—',
+        tkr.keyResult.metricType === 'NUMERIC'
+          ? `${formatCompact(target)} ${tkr.keyResult.unit ?? ''}`
+          : tkr.keyResult.metricType === 'BOOLEAN'
+            ? tkr.keyResult.targetBoolean === false
+              ? 'خیر'
+              : 'بله'
+            : '—',
       valueLabel: latestValueLabel(tkr),
       progress: tkrProgress(tkr),
       recordedStatus: tkr.checkIns[0]?.progressStatus ?? null,

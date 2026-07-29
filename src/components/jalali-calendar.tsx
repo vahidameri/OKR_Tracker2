@@ -151,7 +151,7 @@ export function JalaliCalendar() {
                 isTodayMonth && day === today.jd
                   ? 'bg-primary font-black text-primary-foreground'
                   : isWeekend
-                    ? 'bg-red-50 font-bold text-[#D03B3B]'
+                    ? 'bg-red-50 font-bold text-red-600'
                     : isCheckinDay(view.jy, view.jm, day)
                       ? 'bg-amber-100 font-medium text-amber-900'
                       : 'text-foreground'
@@ -169,8 +169,6 @@ export function JalaliCalendar() {
             <span className="ml-1 inline-block h-3 w-3 rounded-sm bg-primary align-middle" /> امروز
             <span className="mx-1.5">·</span>
             <span className="ml-1 inline-block h-3 w-3 rounded-sm bg-amber-100 align-middle" /> بازه‌ی چک‌این
-            <span className="mx-1.5">·</span>
-            <span className="ml-1 inline-block h-3 w-3 rounded-sm bg-red-50 align-middle" /> پنج‌شنبه و جمعه
           </p>
         </div>
         {!isTodayMonth && (

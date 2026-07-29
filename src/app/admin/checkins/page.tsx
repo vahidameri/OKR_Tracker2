@@ -1,5 +1,3 @@
-import { CheckinEditForm } from '@/components/admin/checkin-edit-form';
-import { FeedbackForm } from '@/components/admin/feedback-form';
 import { CommentThread } from '@/components/comment-thread';
 import { StatusBadge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,7 +32,6 @@ export default async function CheckInsReviewPage({
     orderBy: [{ weekStartDate: 'desc' }, { submittedAt: 'desc' }],
     take: 100,
     include: {
-      feedback: true,
       submittedBy: { select: { fullName: true } },
       editedBy: { select: { fullName: true } },
       comments: {
@@ -55,7 +52,7 @@ export default async function CheckInsReviewPage({
       <div>
         <h1 className="text-xl font-black">گزارش‌های هفتگی تیم‌ها</h1>
         <p className="text-sm text-muted-foreground">
-          امتیازدهی و کامنت‌گذاری روی چک‌این‌های هفتگی (۱۰۰ مورد اخیر)
+          مرور و کامنت‌گذاری روی چک‌این‌های هفتگی (۱۰۰ مورد اخیر)
         </p>
       </div>
 
@@ -96,7 +93,6 @@ export default async function CheckInsReviewPage({
                   <TH>مقدار / گزارش</TH>
                   <TH>وضعیت</TH>
                   <TH>ثبت‌کننده</TH>
-                  <TH>امتیاز و کامنت ادمین</TH>
                 </TR>
               </THead>
               <TBody>
@@ -119,13 +115,6 @@ export default async function CheckInsReviewPage({
                         <StatusBadge status={c.progressStatus} />
                       </TD>
                       <TD className="text-xs">{c.submittedBy?.fullName ?? '—'}</TD>
-                      <TD className="min-w-72">
-                        <FeedbackForm
-                          checkInId={c.id}
-                          initialScore={c.feedback?.score ?? null}
-                          initialComment={c.feedback?.comment ?? null}
-                        />
-                      </TD>
                     </TR>
                   );
                 })}
@@ -178,22 +167,6 @@ export default async function CheckInsReviewPage({
                     <p className="mt-1 rounded-md bg-red-50 p-2 text-red-800">بلاکر: {c.blockerDescription}</p>
                   )}
                 </div>
-                <FeedbackForm
-                  checkInId={c.id}
-                  initialScore={c.feedback?.score ?? null}
-                  initialComment={c.feedback?.comment ?? null}
-                />
-                <CheckinEditForm
-                  checkInId={c.id}
-                  metricType={kr.metricType}
-                  initial={{
-                    currentValue: c.currentValue,
-                    booleanValue: c.booleanValue,
-                    textValue: c.textValue,
-                    progressStatus: c.progressStatus,
-                    blockerDescription: c.blockerDescription,
-                  }}
-                />
                 <CommentThread
                   checkInId={c.id}
                   comments={c.comments.map((cm) => ({

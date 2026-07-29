@@ -28,6 +28,7 @@ export async function POST(req: Request) {
       metricType: kr.metricType,
       minValue: kr.minValue ?? null,
       targetValue: kr.targetValue ?? null,
+      targetBoolean: kr.targetBoolean ?? true,
       unit: kr.unit ?? null,
       description: kr.description ?? null,
       isShared: teams.length > 1,

@@ -27,6 +27,7 @@ interface Kr {
   metricType: 'NUMERIC' | 'BOOLEAN' | 'TEXT';
   minValue: number | null;
   targetValue: number | null;
+  targetBoolean: boolean;
   unit: string | null;
   description: string | null;
   isShared: boolean;
@@ -49,6 +50,7 @@ function krToFormValue(kr: Kr): KrFormValue {
     metricType: kr.metricType,
     minValue: kr.minValue,
     targetValue: kr.targetValue,
+    targetBoolean: kr.targetBoolean ?? true,
     unit: kr.unit,
     description: kr.description,
     teams: kr.teams.map((t) => ({

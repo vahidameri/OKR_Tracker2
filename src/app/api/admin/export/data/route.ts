@@ -4,6 +4,7 @@ import { formatJalali, formatJalaliDateTime } from '@/lib/jalali';
 import { fetchAllTkrs, tkrProgress } from '@/lib/okr-data';
 import { METRIC_LABELS, STATUS_LABELS } from '@/lib/progress';
 import { prisma } from '@/lib/prisma';
+import { roleLabel } from '@/lib/roles';
 
 export const runtime = 'nodejs';
 
@@ -99,7 +100,7 @@ async function buildDataset(dataset: string): Promise<{ rows: Row[]; name: strin
       rows: users.map((u) => ({
         'نام کاربری': u.username,
         'نام': u.fullName,
-        'نقش': u.role === 'ADMIN' ? 'ادمین' : 'عضو تیم',
+        'نقش': roleLabel(u.role),
         'تیم‌ها': u.teams.map((t) => t.team.name).join('، '),
         'فعال': u.isActive ? 'بله' : 'خیر',
         'تاریخ ایجاد': formatJalali(u.createdAt),

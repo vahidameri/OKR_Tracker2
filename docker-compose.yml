@@ -24,7 +24,9 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-okr}:${POSTGRES_PASSWORD:-okr_password}@postgres:5432/${POSTGRES_DB:-okr_tracker}?schema=public
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-me-to-a-strong-random-secret}
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
-      SEED_DEFAULT_PASSWORD: ${SEED_DEFAULT_PASSWORD:-okr405@TPD}
+      # پسورد اولیه‌ی کاربران به‌صورت پیش‌فرض OKR4052@tpd است (در خود برنامه تعریف شده)؛
+      # برای تغییر، خط زیر را از کامنت خارج کنید:
+      # SEED_DEFAULT_PASSWORD: ${SEED_DEFAULT_PASSWORD:-OKR4052@tpd}
     ports:
       # پورت بیرونی از .env قابل تغییر است (APP_PORT)؛ پیش‌فرض 3000
       - '${APP_PORT:-3000}:3000'

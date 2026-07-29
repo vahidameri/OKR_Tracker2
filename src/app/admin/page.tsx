@@ -14,8 +14,8 @@ import { StatusDonut } from '@/components/charts/status-donut';
 import { TrendChart } from '@/components/charts/trend-chart';
 import { CycleTimeBar } from '@/components/cycle-time-bar';
 import { JalaliCalendar } from '@/components/jalali-calendar';
+import { Pct } from '@/components/ui/pct';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatJalaliLong } from '@/lib/jalali';
 import { LeaderboardTable } from '@/components/leaderboard-table';
 import { computeStandings } from '@/lib/leaderboard';
 import { computePersistentBlockers, computeTrend, getDepartmentOverview } from '@/lib/okr-data';
@@ -51,10 +51,10 @@ export default async function AdminDashboard() {
     trend.length >= 2 ? trend[trend.length - 1].progress - trend[trend.length - 2].progress : null;
 
   const tiles = [
-    { key: 'ON_TRACK', label: 'در مسیر', value: totals.onTrack, Icon: Circle, accent: 'text-emerald-600', bar: 'bg-emerald-500', ring: 'bg-emerald-50 text-emerald-600' },
+    { key: 'ON_TRACK', label: 'در مسیر', value: totals.onTrack, Icon: Circle, accent: 'text-teal-600', bar: 'bg-teal-500', ring: 'bg-teal-50 text-teal-600' },
     { key: 'AT_RISK', label: 'در ریسک', value: totals.atRisk, Icon: AlertTriangle, accent: 'text-amber-600', bar: 'bg-amber-500', ring: 'bg-amber-50 text-amber-600' },
     { key: 'BLOCKED', label: 'بلاک‌شده', value: totals.blocked, Icon: AlertTriangle, accent: 'text-red-600', bar: 'bg-red-500', ring: 'bg-red-50 text-red-600' },
-    { key: 'COMPLETED', label: 'تکمیل‌شده', value: totals.completed, Icon: CheckCircle2, accent: 'text-blue-600', bar: 'bg-blue-500', ring: 'bg-blue-50 text-blue-600' },
+    { key: 'COMPLETED', label: 'تکمیل‌شده', value: totals.completed, Icon: CheckCircle2, accent: 'text-emerald-600', bar: 'bg-emerald-500', ring: 'bg-emerald-50 text-emerald-600' },
   ];
 
   return (
@@ -63,7 +63,6 @@ export default async function AdminDashboard() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black tracking-tight">داشبورد دپارتمان</h1>
-          <p className="text-sm text-muted-foreground">{formatJalaliLong(new Date())}</p>
         </div>
         <div className="no-print flex gap-2">
           <Link
@@ -80,17 +79,18 @@ export default async function AdminDashboard() {
         {/* هیرو: پیشرفت دپارتمان → گزارش */}
         <Link href="/admin/report" className="group col-span-2 lg:col-span-1">
           <Card className="relative h-full overflow-hidden rounded-2xl bg-gradient-to-bl from-primary/15 via-primary/5 to-transparent ring-1 ring-primary/10 transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg group-hover:ring-primary/30">
-            <CardContent className="pt-5">
+            <CardContent className="pt-4">
               <div className="flex items-center justify-between text-primary">
                 <span className="flex items-center gap-2 text-xs font-bold">
                   <Gauge className="h-4 w-4" /> پیشرفت دپارتمان
                 </span>
                 <ArrowUpLeft className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
               </div>
-              <p className="mt-2 text-4xl font-black text-primary">{departmentProgress}٪</p>
+              <p className="mt-1 text-4xl font-black text-primary"><Pct value={departmentProgress} /></p>
+              {/* دلتای هفته قبل فقط هنگام هاور نشان داده می‌شود تا کارت کوتاه بماند */}
               {trendDelta !== null && (
                 <p
-                  className={`mt-1 flex items-center gap-1 text-xs font-bold ${
+                  className={`pointer-events-none absolute inset-x-4 bottom-3 flex items-center gap-1 text-xs font-bold opacity-0 transition-opacity group-hover:opacity-100 ${
                     trendDelta >= 0 ? 'text-emerald-700' : 'text-red-700'
                   }`}
                 >
@@ -107,7 +107,7 @@ export default async function AdminDashboard() {
             <Card className="relative h-full overflow-hidden rounded-2xl transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg">
               <span className={`absolute inset-y-0 right-0 w-1 ${t.bar}`} />
               <ArrowUpLeft className="absolute left-3 top-3 h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-              <CardContent className="flex items-center justify-between pt-5">
+              <CardContent className="flex items-center justify-between pt-4">
                 <div>
                   <p className={`text-3xl font-black ${t.accent}`}>{t.value}</p>
                   <p className="mt-1 text-xs text-muted-foreground">KR {t.label}</p>
@@ -147,8 +147,8 @@ export default async function AdminDashboard() {
       )}
 
       {/* روند هفتگی (عریض) + توزیع وضعیت */}
-      <div className="grid gap-5 lg:grid-cols-3">
-        <Card className="rounded-2xl lg:col-span-2">
+      <div className="grid gap-5 lg:grid-cols-5">
+        <Card className="rounded-2xl lg:col-span-3">
           <CardHeader>
             <CardTitle>روند هفتگی دپارتمان</CardTitle>
             <CardDescription>پیشرفت وزنی تجمیعی هفته‌به‌هفته</CardDescription>
@@ -157,7 +157,7 @@ export default async function AdminDashboard() {
             <TrendChart data={trend} height={300} />
           </CardContent>
         </Card>
-        <Card className="rounded-2xl">
+        <Card className="rounded-2xl lg:col-span-2">
           <CardHeader>
             <CardTitle>توزیع وضعیت KRها</CardTitle>
             <CardDescription>بر اساس آخرین چک‌این هر KR-تیم</CardDescription>
@@ -172,17 +172,17 @@ export default async function AdminDashboard() {
       </div>
 
       {/* لیدربورد (عریض) + تقویم */}
-      <div className="grid gap-5 lg:grid-cols-3">
-        <Card className="rounded-2xl lg:col-span-2">
+      <div className="grid gap-5 lg:grid-cols-5">
+        <Card className="rounded-2xl lg:col-span-3">
           <CardHeader>
             <CardTitle>🏆 لیدربورد تیم‌ها</CardTitle>
-            <CardDescription>رتبه‌بندی بر اساس فاصله از برنامه (pacing)</CardDescription>
+            <CardDescription>رتبه‌بندی بر اساس فاصله از برنامه</CardDescription>
           </CardHeader>
           <CardContent>
             <LeaderboardTable standings={standings} />
           </CardContent>
         </Card>
-        <Card className="flex h-full flex-col rounded-2xl">
+        <Card className="flex h-full flex-col rounded-2xl lg:col-span-2">
           <CardHeader>
             <CardTitle>تقویم</CardTitle>
           </CardHeader>
@@ -256,8 +256,8 @@ export default async function AdminDashboard() {
                             strokeDasharray={`${(o.progress / 100) * 97.4} 97.4`}
                           />
                         </svg>
-                        <span className="absolute inset-0 flex items-center justify-center text-sm font-black tabular-nums">
-                          {o.progress}٪
+                        <span className="absolute inset-0 flex items-center justify-center text-sm font-black">
+                          <Pct value={o.progress} />
                         </span>
                       </div>
                     </div>
@@ -270,7 +270,7 @@ export default async function AdminDashboard() {
                     <Sparkline data={teamTrend.map((t) => ({ progress: t.progress }))} />
 
                     <div className="grid grid-cols-4 gap-1.5 text-center text-[11px]">
-                      <span className="rounded-lg bg-emerald-50 py-1 font-bold text-emerald-700">
+                      <span className="rounded-lg bg-teal-50 py-1 font-bold text-teal-700">
                         {o.statusCounts.ON_TRACK}
                         <span className="block text-[9px] font-normal">مسیر</span>
                       </span>
@@ -282,7 +282,7 @@ export default async function AdminDashboard() {
                         {o.statusCounts.BLOCKED}
                         <span className="block text-[9px] font-normal">بلاک</span>
                       </span>
-                      <span className="rounded-lg bg-blue-50 py-1 font-bold text-blue-600">
+                      <span className="rounded-lg bg-emerald-50 py-1 font-bold text-emerald-600">
                         {o.statusCounts.COMPLETED}
                         <span className="block text-[9px] font-normal">تکمیل</span>
                       </span>

@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { Logo } from '@/components/logo';
+import { LiveClock } from '@/components/live-clock';
 import { cn } from '@/lib/utils';
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -116,14 +117,12 @@ function NavGroup({
 
 export function AppSidebar({
   title,
-  quarterLabel,
   links,
   userName,
   roleLabel,
   homeHref,
 }: {
   title: string;
-  quarterLabel: string;
   links: SideEntry[];
   userName: string;
   roleLabel: string;
@@ -150,7 +149,7 @@ export function AppSidebar({
             <Logo className="h-10 w-auto" />
           </span>
           <p className="mt-2 text-sm font-black text-white">{title}</p>
-          <p className="mt-1 text-[11px] leading-5 text-sidebar-foreground">{quarterLabel}</p>
+          <LiveClock className="mt-1 block text-[11px] leading-5 text-sidebar-foreground" />
         </Link>
 
         <nav className="no-scrollbar flex-1 space-y-1 overflow-y-auto p-3">

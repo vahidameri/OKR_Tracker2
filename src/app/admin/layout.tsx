@@ -2,8 +2,8 @@ import { redirect } from 'next/navigation';
 import { AppSidebar, type SideEntry } from '@/components/app-sidebar';
 import { PasswordBanner } from '@/components/password-banner';
 import { getSession } from '@/lib/auth';
-import { currentQuarterInfo } from '@/lib/jalali';
 import { prisma } from '@/lib/prisma';
+import { isAdminRole } from '@/lib/roles';
 
 const links: SideEntry[] = [
   { href: '/admin', label: 'داشبورد', icon: 'dashboard' },
@@ -28,7 +28,7 @@ const links: SideEntry[] = [
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session?.user) redirect('/login');
-  if (session.user.role !== 'ADMIN') redirect('/team');
+  if (!isAdminRole(session.user.role)) redirect('/team');
 
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -39,7 +39,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="flex min-h-screen flex-col md:flex-row">
       <AppSidebar
         title="پنل مدیریت OKR"
-        quarterLabel={currentQuarterInfo().label}
         links={links}
         userName={session.user.fullName}
         roleLabel={dbUser?.title ?? 'ادمین'}

@@ -1,8 +1,9 @@
 import { prisma } from '@/lib/prisma';
+import { isAdminRole } from '@/lib/roles';
 
 /** تیم‌های قابل‌دسترسی کاربر: ادمین همه‌ی تیم‌ها، عضو تیم فقط تیم‌های خودش */
 export async function getUserTeams(userId: string, role: string) {
-  if (role === 'ADMIN') {
+  if (isAdminRole(role)) {
     return prisma.team.findMany({ orderBy: { name: 'asc' } });
   }
   const memberships = await prisma.userTeam.findMany({

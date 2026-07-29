@@ -7,11 +7,12 @@ export const STATUS_LABELS: Record<ProgressStatus, string> = {
   COMPLETED: 'تکمیل‌شده',
 };
 
+// پالت یکدست: در مسیر=فیروزه‌ای، ریسک=کهربایی، بلاک=قرمز، تکمیل=سبز (۱۰۰٪)
 export const STATUS_COLORS: Record<ProgressStatus, string> = {
-  ON_TRACK: '#0ca30c',
-  AT_RISK: '#fab219',
-  BLOCKED: '#d03b3b',
-  COMPLETED: '#2a78d6',
+  ON_TRACK: '#0d9488',
+  AT_RISK: '#f59e0b',
+  BLOCKED: '#ef4444',
+  COMPLETED: '#10b981',
 };
 
 export const METRIC_LABELS: Record<MetricType, string> = {

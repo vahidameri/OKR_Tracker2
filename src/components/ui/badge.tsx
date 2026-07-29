@@ -24,15 +24,22 @@ export function Badge({
   );
 }
 
-const statusStyles: Record<ProgressStatus, string> = {
-  ON_TRACK: 'bg-emerald-100 text-emerald-800',
-  AT_RISK: 'bg-amber-100 text-amber-800',
-  BLOCKED: 'bg-red-100 text-red-800',
-  COMPLETED: 'bg-blue-100 text-blue-800',
+// پالت یکدست وضعیت: در مسیر=فیروزه‌ای، ریسک=کهربایی، بلاک=قرمز، تکمیل=سبز (۱۰۰٪)
+const statusStyles: Record<ProgressStatus, { badge: string; dot: string }> = {
+  ON_TRACK: { badge: 'bg-teal-50 text-teal-800 ring-1 ring-inset ring-teal-600/20', dot: 'bg-teal-500' },
+  AT_RISK: { badge: 'bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-600/25', dot: 'bg-amber-500' },
+  BLOCKED: { badge: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/25', dot: 'bg-red-500' },
+  COMPLETED: { badge: 'bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-600/25', dot: 'bg-emerald-500' },
 };
 
 export function StatusBadge({ status }: { status: ProgressStatus }) {
-  return <Badge className={statusStyles[status]}>{STATUS_LABELS[status]}</Badge>;
+  const s = statusStyles[status];
+  return (
+    <Badge className={cn('gap-1.5', s.badge)}>
+      <span className={cn('h-1.5 w-1.5 rounded-full', s.dot)} />
+      {STATUS_LABELS[status]}
+    </Badge>
+  );
 }
 
 export function AutoStatusBadge({

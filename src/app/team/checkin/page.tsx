@@ -9,7 +9,7 @@ import { formatJalali, getWeekStart } from '@/lib/jalali';
 import { getTeamOkrs } from '@/lib/okr-data';
 import { METRIC_LABELS } from '@/lib/progress';
 import { getUserTeams, resolveActiveTeam } from '@/lib/team-access';
-import { formatCompact } from '@/lib/utils';
+import { cn, formatCompact } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -110,20 +110,39 @@ export default async function CheckInPage({
               const thisWeek = tkr.checkIns.find((c) => c.weekStartDate.toISOString() === weekStartIso) ?? null;
               const target = tkr.targetValueOverride ?? tkr.keyResult.targetValue;
               return (
-                <div key={tkr.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-4">
+                <div
+                  key={tkr.id}
+                  id={`kr-${tkr.id}`}
+                  className={cn(
+                    'flex scroll-mt-24 flex-col gap-3 rounded-xl border p-4 transition-colors target:ring-2 target:ring-primary/40 sm:flex-row sm:items-center sm:justify-between',
+                    thisWeek ? 'border-emerald-200 bg-emerald-50/40' : 'border-border bg-card'
+                  )}
+                >
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium">
+                    <p className="font-bold">
                       {tkr.keyResult.title}
                       {tkr.keyResult.isShared && (
-                        <span className="mr-2 text-xs text-violet-600">(مشترک — فقط سهم تیم شما ثبت می‌شود)</span>
+                        <span className="mr-2 text-xs font-normal text-violet-600">(مشترک — فقط سهم تیم شما)</span>
                       )}
                     </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {METRIC_LABELS[tkr.keyResult.metricType]} · وزن تیمی: {tkr.weight}
-                      {tkr.keyResult.metricType === 'NUMERIC' &&
-                        ` · تارگت تیم شما: ${formatCompact(target)} ${tkr.keyResult.unit ?? ''}`}
-                      {thisWeek && <span className="mr-1 text-primary"> · ✔ این هفته ثبت شده</span>}
-                    </p>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+                        {METRIC_LABELS[tkr.keyResult.metricType]}
+                      </span>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+                        وزن تیمی: {tkr.weight}
+                      </span>
+                      {tkr.keyResult.metricType === 'NUMERIC' && (
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+                          تارگت: {formatCompact(target)} {tkr.keyResult.unit ?? ''}
+                        </span>
+                      )}
+                      {tkr.keyResult.metricType === 'BOOLEAN' && (
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+                          تارگت: {tkr.keyResult.targetBoolean === false ? 'خیر' : 'بله'}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <CheckinModalButton
                     teamKeyResultId={tkr.id}

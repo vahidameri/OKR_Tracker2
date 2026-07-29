@@ -33,7 +33,7 @@ export function StatusDonut({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-4">
+    <div className="flex flex-wrap items-center justify-center gap-6">
       <div dir="ltr" className="relative h-52 w-52 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -62,20 +62,20 @@ export function StatusDonut({
           <span className="text-xs text-muted-foreground">KR-تیم</span>
         </div>
       </div>
-      <ul className="min-w-36 flex-1 space-y-2 text-sm">
+      <ul className="w-full max-w-xs space-y-2.5 text-sm sm:flex-1">
         {data.map((d) => (
-          <li key={d.key} className="flex items-center justify-between gap-3">
-            <span className="flex items-center gap-2">
+          <li key={d.key} className="flex items-center justify-between gap-4">
+            <span className="flex min-w-0 items-center gap-2">
               <span
-                className="inline-block h-3 w-3 rounded-sm"
+                className="inline-block h-3 w-3 shrink-0 rounded-sm"
                 style={{ background: d.key === 'NONE' ? chartTheme.empty : chartTheme.status[d.key] }}
               />
-              {d.name}
+              <span className="truncate">{d.name}</span>
             </span>
-            <span className="font-bold tabular-nums">
-              {d.value}
-              <span className="mr-1 text-xs font-normal text-muted-foreground">
-                ({Math.round((d.value / total) * 100)}٪)
+            <span className="flex shrink-0 items-center gap-2">
+              <span className="font-bold tabular-nums">{d.value}</span>
+              <span dir="ltr" className="w-10 text-left text-xs text-muted-foreground tabular-nums">
+                ٪{Math.round((d.value / total) * 100)}
               </span>
             </span>
           </li>

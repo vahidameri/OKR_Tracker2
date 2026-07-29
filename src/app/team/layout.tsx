@@ -2,12 +2,14 @@ import { redirect } from 'next/navigation';
 import { AppSidebar, type SideLink } from '@/components/app-sidebar';
 import { PasswordBanner } from '@/components/password-banner';
 import { getSession } from '@/lib/auth';
-import { currentQuarterInfo } from '@/lib/jalali';
 import { prisma } from '@/lib/prisma';
+import { roleLabel } from '@/lib/roles';
 
 const links: SideLink[] = [
-  { href: '/team', label: 'OKRهای من', icon: 'myokrs' },
+  { href: '/team', label: 'داشبورد', icon: 'dashboard' },
+  { href: '/team/okrs', label: 'OKRهای من', icon: 'myokrs' },
   { href: '/team/checkin', label: 'ثبت وضعیت هفتگی', icon: 'checkin' },
+  { href: '/team/summary', label: 'خلاصه وضعیت', icon: 'summary' },
 ];
 
 export default async function TeamLayout({ children }: { children: React.ReactNode }) {
@@ -23,10 +25,9 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
     <div className="flex min-h-screen flex-col md:flex-row">
       <AppSidebar
         title="پنل تیم — OKR"
-        quarterLabel={currentQuarterInfo().label}
         links={links}
         userName={session.user.fullName}
-        roleLabel={dbUser?.title ?? (session.user.role === 'ADMIN' ? 'ادمین' : 'عضو تیم')}
+        roleLabel={dbUser?.title ?? roleLabel(session.user.role)}
         homeHref="/team"
       />
       <div className="min-w-0 flex-1">

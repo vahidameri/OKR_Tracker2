@@ -1,5 +1,6 @@
 import { monthKeyLabel } from '@/lib/leaderboard';
 import type { Standing } from '@/lib/leaderboard';
+import { Pct, Signed } from '@/components/ui/pct';
 import { cn } from '@/lib/utils';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
@@ -48,31 +49,23 @@ export function LeaderboardTable({
               <p className="flex flex-wrap items-center gap-2 font-bold">
                 {s.teamName}
                 {mine && <span className="text-xs font-normal text-primary">(تیم شما)</span>}
-                {s.isLast && (
-                  <span
-                    className="rounded-full bg-pink-100 px-2 py-0.5 text-xs text-pink-800"
-                    title="تگ نمایشی برای روحیه‌ی تیمی — بدون اثر روی محاسبات"
-                  >
-                    🍦 بستنی این ماه با این تیمه
-                  </span>
-                )}
               </p>
               <div className="mt-1.5 flex items-center gap-2">
                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/5">
                   <div
-                    className={cn('h-full rounded-full', ahead ? 'bg-primary' : 'bg-[#D03B3B]')}
+                    className={cn('h-full rounded-full', ahead ? 'bg-primary' : 'bg-red-500')}
                     style={{ width: `${barPct}%` }}
                   />
                 </div>
-                <span className={cn('text-xs font-bold tabular-nums', ahead ? 'text-primary' : 'text-[#D03B3B]')}>
-                  {ahead ? '↑' : '↓'} {ahead ? '+' : ''}{s.paceScore}
+                <span className={cn('flex items-center gap-1 text-xs font-bold', ahead ? 'text-primary' : 'text-red-600')}>
+                  {ahead ? '↑' : '↓'} <Signed value={s.paceScore} />
                 </span>
               </div>
             </div>
 
             {/* درصدها */}
             <div className="shrink-0 text-left">
-              <p className="text-lg font-black tabular-nums">{s.progress}٪</p>
+              <p className="text-lg font-black"><Pct value={s.progress} /></p>
               <p className="text-[11px] text-muted-foreground">
                 انتظار {s.expected !== null ? `${s.expected}٪` : '—'}
               </p>

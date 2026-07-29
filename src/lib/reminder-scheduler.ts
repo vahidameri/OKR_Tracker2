@@ -1,8 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { sendCheckinReminders } from '@/lib/push';
 
-const REMINDER_HOUR = 10; // ساعت ارسال به وقت تهران
-const REMINDER_DAYS = new Set(['Sat', 'Sun']); // شنبه تا یک‌شنبه (بازه‌ی ثبت چک‌این)
+const REMINDER_HOUR = 12; // ساعت ارسال به وقت تهران (۱۲ ظهر)
+const REMINDER_DAYS = new Set(['Sat', 'Sun']); // شنبه و یک‌شنبه (بازه‌ی ثبت چک‌این)
 
 function tehranNow() {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -21,8 +21,8 @@ function tehranNow() {
 let started = false;
 
 /**
- * زمان‌بند داخلی (بدون سرویس خارجی): هر ۱۰ دقیقه چک می‌کند و روزهای دوشنبه تا
- * چهارشنبه، از ساعت ۱۰ صبح تهران به بعد، یک بار در روز یادآوری پوش می‌فرستد.
+ * زمان‌بند داخلی (بدون سرویس خارجی): هر ۱۰ دقیقه چک می‌کند و روزهای شنبه و
+ * یک‌شنبه، از ساعت ۱۲ ظهر تهران به بعد، یک بار در روز یادآوری پوش می‌فرستد.
  */
 export function startReminderScheduler() {
   if (started) return;

@@ -3,6 +3,7 @@ import type { NextAuthOptions } from 'next-auth';
 import { getServerSession } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/prisma';
+import { isAdminRole } from '@/lib/roles';
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: 'jwt', maxAge: 12 * 60 * 60 },
@@ -95,7 +96,7 @@ export function getSession() {
 export async function requireAdmin() {
   const session = await getSession();
   if (!session?.user) return { error: 'unauthorized' as const, session: null };
-  if (session.user.role !== 'ADMIN') return { error: 'forbidden' as const, session: null };
+  if (!isAdminRole(session.user.role)) return { error: 'forbidden' as const, session: null };
   return { error: null, session };
 }
 
@@ -107,7 +108,7 @@ export async function requireUser() {
 
 /** بررسی عضویت کاربر جاری در یک تیم (ادمین‌ها به همه‌ی تیم‌ها دسترسی دارند) */
 export async function canAccessTeam(userId: string, role: string, teamId: string) {
-  if (role === 'ADMIN') return true;
+  if (isAdminRole(role)) return true;
   const membership = await prisma.userTeam.findUnique({
     where: { userId_teamId: { userId, teamId } },
   });

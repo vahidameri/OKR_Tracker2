@@ -1,6 +1,0 @@
-# context این ایمیج پوشهٔ frm-tpd-01 است، پس .dockerignore ریشه اینجا اعمال نمی‌شود.
-# بدون این فایل، node_modules و dist سیستم میزبان روی نتیجهٔ npm ci کپی می‌شود.
-node_modules
-dist
-.git
-*.log

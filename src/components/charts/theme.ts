@@ -9,16 +9,16 @@ export const chartTheme = {
   axisInk: '#898781',
   baseline: '#c3c2b7',
   surface: '#fcfcfb',
-  /** پالت وضعیت (رزروشده) + آبی برای «تکمیل‌شده» */
+  /** پالت وضعیت یکدست: در مسیر=فیروزه‌ای، ریسک=کهربایی، بلاک=قرمز، تکمیل=سبز */
   status: {
-    ON_TRACK: '#0ca30c',
-    AT_RISK: '#fab219',
-    BLOCKED: '#d03b3b',
-    COMPLETED: '#2a78d6',
+    ON_TRACK: '#0d9488',
+    AT_RISK: '#f59e0b',
+    BLOCKED: '#ef4444',
+    COMPLETED: '#10b981',
   } as Record<string, string>,
   /** رمپ ترتیبی تک‌رنگ (آبی، روشن→تیره) برای مقدارهای پیوسته */
   seq: ['#cde2fb', '#9ec5f4', '#6da7ec', '#3987e5', '#256abf', '#184f95', '#0d366b'],
-  /** خانه‌ی «صفر/خالی» در هیت‌مپ */
+  /** رنگ بخش «بدون چک‌این» در نمودار دونات */
   empty: '#f0efec',
   tooltip: {
     fontFamily: 'Vazirmatn FD, Vazirmatn',

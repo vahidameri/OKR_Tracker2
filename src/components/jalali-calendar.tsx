@@ -151,7 +151,7 @@ export function JalaliCalendar() {
                 isTodayMonth && day === today.jd
                   ? 'bg-primary font-black text-primary-foreground'
                   : isWeekend
-                    ? 'bg-red-50 font-bold text-[#D03B3B]'
+                    ? 'bg-red-50 font-bold text-red-600'
                     : isCheckinDay(view.jy, view.jm, day)
                       ? 'bg-amber-100 font-medium text-amber-900'
                       : 'text-foreground'

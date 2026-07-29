@@ -89,9 +89,7 @@ export default async function TeamDashboardPage({
         <div>
           <h1 className="text-2xl font-black tracking-tight">داشبورد تیم {activeTeam.name}</h1>
           <p className="text-sm text-muted-foreground">{currentQuarterInfo().label}</p>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            مسئول تیم: {activeTeam.leadName ?? '—'} · پیشرفت وزنی: <b><Pct value={teamProgress} /></b>
-          </p>
+          <p className="mt-0.5 text-sm text-muted-foreground">مسئول تیم: {activeTeam.leadName ?? '—'}</p>
         </div>
         <div className="flex gap-2">
           <Link

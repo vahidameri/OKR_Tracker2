@@ -117,14 +117,12 @@ function NavGroup({
 
 export function AppSidebar({
   title,
-  quarterLabel,
   links,
   userName,
   roleLabel,
   homeHref,
 }: {
   title: string;
-  quarterLabel: string;
   links: SideEntry[];
   userName: string;
   roleLabel: string;

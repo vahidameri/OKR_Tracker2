@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation';
 import { AppSidebar, type SideEntry } from '@/components/app-sidebar';
 import { PasswordBanner } from '@/components/password-banner';
 import { getSession } from '@/lib/auth';
-import { currentQuarterInfo } from '@/lib/jalali';
 import { prisma } from '@/lib/prisma';
 import { isAdminRole } from '@/lib/roles';
 
@@ -40,7 +39,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="flex min-h-screen flex-col md:flex-row">
       <AppSidebar
         title="پنل مدیریت OKR"
-        quarterLabel={currentQuarterInfo().label}
         links={links}
         userName={session.user.fullName}
         roleLabel={dbUser?.title ?? 'ادمین'}

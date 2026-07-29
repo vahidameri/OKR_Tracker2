@@ -53,11 +53,6 @@ export const checkInSchema = z
     path: ['blockerDescription'],
   });
 
-export const feedbackSchema = z.object({
-  score: z.coerce.number().int().min(0).max(10).nullable().optional(),
-  comment: z.string().nullable().optional(),
-});
-
 export const createUserSchema = z.object({
   username: z
     .string()

@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation';
 import { AppSidebar, type SideLink } from '@/components/app-sidebar';
 import { PasswordBanner } from '@/components/password-banner';
 import { getSession } from '@/lib/auth';
-import { currentQuarterInfo } from '@/lib/jalali';
 import { prisma } from '@/lib/prisma';
 import { roleLabel } from '@/lib/roles';
 
@@ -26,7 +25,6 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
     <div className="flex min-h-screen flex-col md:flex-row">
       <AppSidebar
         title="پنل تیم — OKR"
-        quarterLabel={currentQuarterInfo().label}
         links={links}
         userName={session.user.fullName}
         roleLabel={dbUser?.title ?? roleLabel(session.user.role)}

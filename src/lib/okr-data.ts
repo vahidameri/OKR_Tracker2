@@ -230,66 +230,6 @@ export function computeObjectiveProgress(tkrs: TkrWithData[]): ObjectiveProgress
   });
 }
 
-export interface ComplianceCell {
-  weekIso: string;
-  submitted: number;
-  total: number;
-  ratio: number;
-  /** وضعیت pacing تیم در پایان آن هفته (خودکار) */
-  autoStatus: AutoStatus | null;
-  progressAtWeek: number;
-}
-
-export interface ComplianceRow {
-  teamId: string;
-  teamName: string;
-  cells: ComplianceCell[];
-}
-
-/**
- * ماتریس تیم × هفته: ترکیب «ثبت/عدم‌ثبت چک‌این» و «وضعیت pacing» هر تیم در هر هفته
- * برای دید سریع کل دوره در یک نگاه.
- */
-export function computeCompliance(teams: TeamRow[], tkrs: TkrWithData[]) {
-  const weekSet = new Set<string>();
-  for (const tkr of tkrs) {
-    for (const c of tkr.checkIns) weekSet.add(c.weekStartDate.toISOString());
-  }
-  const weeks = Array.from(weekSet).sort().slice(-12); // ۱۲ هفته‌ی اخیر
-
-  const rows: ComplianceRow[] = teams.map((team) => {
-    const teamTkrs = tkrs.filter((t) => t.teamId === team.id);
-    return {
-      teamId: team.id,
-      teamName: team.name,
-      cells: weeks.map((weekIso) => {
-        const submitted = teamTkrs.filter((t) =>
-          t.checkIns.some((c) => c.weekStartDate.toISOString() === weekIso)
-        ).length;
-        // پیشرفت تیم تا انتهای آن هفته (آخرین چک‌این تا آن هفته carry-forward می‌شود)
-        const progressAtWeek = weightedProgress(
-          teamTkrs.map((tkr) => {
-            const upTo = tkr.checkIns.find((c) => c.weekStartDate.toISOString() <= weekIso);
-            return { weight: tkr.weight, progress: checkInProgress(tkr, upTo ?? null) };
-          })
-        );
-        const weekEnd = new Date(new Date(weekIso).getTime() + 6 * 86400000);
-        const expected = expectedOf(teamTkrs, weekEnd);
-        return {
-          weekIso,
-          submitted,
-          total: teamTkrs.length,
-          ratio: teamTkrs.length === 0 ? 0 : submitted / teamTkrs.length,
-          autoStatus: teamTkrs.length > 0 ? computeAutoStatus(progressAtWeek, expected) : null,
-          progressAtWeek,
-        };
-      }),
-    };
-  });
-
-  return { weeks, rows };
-}
-
 export interface TrendPoint {
   week: string;
   weekDate: string;

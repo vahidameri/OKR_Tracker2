@@ -22,7 +22,9 @@ export async function GET(_req: Request, { params }: { params: { id: string; att
   return new NextResponse(new Uint8Array(att.data), {
     headers: {
       'Content-Type': att.mimeType,
+      // دانلود اجباری + جلوگیری از حدس نوع محتوا (دفاع در برابر XSS از فایل کاربر)
       'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(att.filename)}`,
+      'X-Content-Type-Options': 'nosniff',
       'Content-Length': String(att.size),
     },
   });

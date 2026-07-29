@@ -51,7 +51,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     if (file.size > MAX_SIZE) {
       return NextResponse.json({ error: `«${file.name}» بزرگ‌تر از ۱۰ مگابایت است` }, { status: 400 });
     }
-    if (file.type && !ALLOWED.includes(file.type)) {
+    if (!ALLOWED.includes(file.type)) {
+      // نوع خالی یا غیرمجاز رد می‌شود (جلوگیری از دور زدن با content-type جعلی/خالی)
       return NextResponse.json({ error: `نوع فایل «${file.name}» مجاز نیست (PNG, JPG, PDF, DOCX)` }, { status: 400 });
     }
     const buffer = Buffer.from(await file.arrayBuffer());

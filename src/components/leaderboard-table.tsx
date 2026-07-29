@@ -48,14 +48,6 @@ export function LeaderboardTable({
               <p className="flex flex-wrap items-center gap-2 font-bold">
                 {s.teamName}
                 {mine && <span className="text-xs font-normal text-primary">(تیم شما)</span>}
-                {s.isLast && (
-                  <span
-                    className="rounded-full bg-pink-100 px-2 py-0.5 text-xs text-pink-800"
-                    title="تگ نمایشی برای روحیه‌ی تیمی — بدون اثر روی محاسبات"
-                  >
-                    🍦 بستنی این ماه با این تیمه
-                  </span>
-                )}
               </p>
               <div className="mt-1.5 flex items-center gap-2">
                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/5">

@@ -31,22 +31,13 @@ export const keyResultSchema = z
     { message: 'برای نتیجه کلیدی عددی، تارگت الزامی است', path: ['targetValue'] }
   );
 
-export const objectiveSchema = z
-  .object({
-    title: z.string().min(2, 'عنوان هدف الزامی است'),
-    description: z.string().nullable().optional(),
-    weight: z.coerce.number().positive('وزن باید مثبت باشد'),
-    period: z.string().min(1, 'دوره الزامی است'),
-    keyResults: z.array(keyResultSchema).optional().default([]),
-  })
-  .refine(
-    (o) => {
-      if (!o.keyResults || o.keyResults.length === 0) return true;
-      const sum = o.keyResults.reduce((s, k) => s + (k.weight ?? 0), 0);
-      return Math.abs(sum - o.weight) < 0.01;
-    },
-    { message: 'مجموع وزن نتایج کلیدی باید با وزن هدف برابر باشد', path: ['keyResults'] }
-  );
+export const objectiveSchema = z.object({
+  title: z.string().min(2, 'عنوان هدف الزامی است'),
+  description: z.string().nullable().optional(),
+  weight: z.coerce.number().positive('وزن باید مثبت باشد'),
+  period: z.string().min(1, 'دوره الزامی است'),
+  keyResults: z.array(keyResultSchema).optional().default([]),
+});
 
 export const checkInSchema = z
   .object({

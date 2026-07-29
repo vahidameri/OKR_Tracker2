@@ -50,6 +50,9 @@ function num(v: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** محدودسازی وزن به بازه‌ی ۰ تا ۱۰۰ */
+const clamp100 = (v: number) => (Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 0);
+
 const KR_STEPS = ['جزئیات و تیم', 'تیم‌های مشترک'] as const;
 
 export function KrForm({
@@ -188,13 +191,14 @@ export function KrForm({
             <Input value={value.title} onChange={(e) => set('title', e.target.value)} />
           </div>
           <div>
-            <Label>وزن پیش‌فرض KR</Label>
+            <Label>وزن KR (۰ تا ۱۰۰)</Label>
             <Input
               type="number"
               min={0.1}
+              max={100}
               step={0.1}
               value={value.weight}
-              onChange={(e) => set('weight', Number(e.target.value))}
+              onChange={(e) => set('weight', clamp100(Number(e.target.value)))}
             />
           </div>
           <div>
@@ -285,7 +289,7 @@ export function KrForm({
                   max={100}
                   step={0.1}
                   value={primary?.weight ?? value.weight}
-                  onChange={(e) => setPrimaryWeight(Number(e.target.value))}
+                  onChange={(e) => setPrimaryWeight(clamp100(Number(e.target.value)))}
                   disabled={!primary}
                 />
               </div>
@@ -332,7 +336,7 @@ export function KrForm({
                               step={0.1}
                               className="h-8 w-20"
                               value={assignment.weight}
-                              onChange={(e) => setSharedAssignment(team.id, { weight: Number(e.target.value) })}
+                              onChange={(e) => setSharedAssignment(team.id, { weight: clamp100(Number(e.target.value)) })}
                             />
                           </div>
                           {value.metricType === 'NUMERIC' && (

@@ -110,8 +110,8 @@ export default async function TeamDashboardPage({
 
       <TeamSwitcher teams={teams} activeTeamId={activeTeam.id} basePath="/team" />
 
-      {/* کارت‌های وضعیت — کلیک‌پذیر به فهرست OKR با فیلتر همان وضعیت */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {/* کارت‌های وضعیت — همه در یک ردیف (۵ کارت) */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Link
           href={`/team/okrs?team=${activeTeam.id}`}
           className="group rounded-2xl bg-gradient-to-bl from-primary/15 via-primary/5 to-transparent p-4 ring-1 ring-primary/10 transition-all hover:-translate-y-0.5 hover:shadow-lg"
@@ -184,9 +184,9 @@ export default async function TeamDashboardPage({
                   {pendingKrs.slice(0, 8).map((t) => (
                     <Link
                       key={t.id}
-                      href={`/team/okrs?team=${activeTeam.id}&status=NONE`}
+                      href={`/team/checkin?team=${activeTeam.id}#kr-${t.id}`}
                       className="max-w-full truncate rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] text-amber-800 hover:bg-amber-100"
-                      title={t.keyResult.title}
+                      title={`ثبت چک‌این: ${t.keyResult.title}`}
                     >
                       {t.keyResult.title}
                     </Link>

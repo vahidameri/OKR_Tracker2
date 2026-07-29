@@ -72,12 +72,9 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
   function setPrimaryTeam(teamId: string) {
     setObjTeams((prev) => {
       const rest = prev.slice(1).filter((t) => t.teamId !== teamId);
-      const w = prev[0]?.weight ?? 1;
-      return [{ teamId, weight: w, targetValueOverride: null, minValueOverride: null }, ...rest];
+      // وزن تیم = وزن هدف (یکسان)
+      return [{ teamId, weight, targetValueOverride: null, minValueOverride: null }, ...rest];
     });
-  }
-  function setPrimaryWeight(w: number) {
-    setObjTeams((prev) => (prev.length ? [{ ...prev[0], weight: w }, ...prev.slice(1)] : prev));
   }
   function toggleShared(teamId: string) {
     setObjTeams((prev) => {
@@ -91,16 +88,22 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
     setObjTeams((prev) => prev.map((t) => (t.teamId === teamId ? { ...t, weight: w } : t)));
   }
 
-  const krWeightSum = keyResults.reduce((s, k) => s + (k.weight || 0), 0);
-  const weightMatches = keyResults.length === 0 || Math.abs(krWeightSum - weight) < 0.01;
+  const clamp100 = (v: number) => (Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 0);
   const badTeamWeight = (w: number) => !w || w <= 0 || w > 100;
+
+  // وزن هدف = وزن تیمِ همان هدف؛ یک مقدار است و دوبار ثبت نمی‌شود
+  function setObjectiveWeight(w: number) {
+    const c = clamp100(w);
+    setWeight(c);
+    setObjTeams((prev) => (prev.length ? [{ ...prev[0], weight: c }, ...prev.slice(1)] : prev));
+  }
 
   function goShared() {
     setError('');
     if (title.trim().length < 2) return setError('عنوان هدف الزامی است.');
     if (!period.trim()) return setError('دوره را انتخاب کنید.');
     if (!primary) return setError('تیم این هدف را انتخاب کنید.');
-    if (badTeamWeight(primary.weight)) return setError('وزن تیم باید بین ۰ تا ۱۰۰ باشد.');
+    if (badTeamWeight(weight)) return setError('وزن هدف باید بین ۰ تا ۱۰۰ باشد.');
     setStep(1);
   }
 
@@ -113,16 +116,12 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
   function goReview() {
     setError('');
     if (keyResults.length === 0) return setError('حداقل یک نتیجه کلیدی اضافه کنید.');
-    if (!weightMatches)
-      return setError(`مجموع وزن نتایج کلیدی (${krWeightSum}) باید با وزن هدف (${weight}) برابر باشد.`);
     setStep(3);
   }
 
   async function submit() {
     setError('');
     if (keyResults.length === 0) return setError('حداقل یک نتیجه کلیدی اضافه کنید.');
-    if (!weightMatches)
-      return setError(`مجموع وزن نتایج کلیدی (${krWeightSum}) باید با وزن هدف (${weight}) برابر باشد.`);
     setSaving(true);
     // تیم‌های سطح هدف را به همه‌ی نتایج کلیدی اعمال کن
     const withTeams = keyResults.map((kr) => ({ ...kr, teams: objTeams }));
@@ -193,14 +192,16 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <Label>وزن هدف</Label>
+                <Label>وزن هدف / تیم (۰ تا ۱۰۰)</Label>
                 <Input
                   type="number"
                   min={0.1}
+                  max={100}
                   step={0.1}
                   value={weight}
-                  onChange={(e) => setWeight(Number(e.target.value))}
+                  onChange={(e) => setObjectiveWeight(Number(e.target.value))}
                 />
+                <p className="mt-1 text-[11px] text-muted-foreground">همین مقدار وزن این هدف برای تیم است.</p>
               </div>
               <div>
                 <Label>دوره (شمسی) *</Label>
@@ -212,33 +213,19 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
               <Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
 
-            {/* تیم این هدف */}
-            <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-3 sm:grid-cols-2">
-              <div>
-                <Label>تیم این هدف *</Label>
-                <Select value={primary?.teamId ?? ''} onChange={(e) => setPrimaryTeam(e.target.value)}>
-                  <option value="" disabled>
-                    انتخاب تیم…
+            {/* تیم این هدف — وزن همان وزن هدف است */}
+            <div className="rounded-lg border border-border bg-muted/30 p-3">
+              <Label>تیم این هدف *</Label>
+              <Select value={primary?.teamId ?? ''} onChange={(e) => setPrimaryTeam(e.target.value)}>
+                <option value="" disabled>
+                  انتخاب تیم…
+                </option>
+                {teams.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
                   </option>
-                  {teams.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div>
-                <Label>وزن تیم (۰ تا ۱۰۰) *</Label>
-                <Input
-                  type="number"
-                  min={0.1}
-                  max={100}
-                  step={0.1}
-                  value={primary?.weight ?? 1}
-                  onChange={(e) => setPrimaryWeight(Number(e.target.value))}
-                  disabled={!primary}
-                />
-              </div>
+                ))}
+              </Select>
             </div>
           </div>
         )}
@@ -279,7 +266,7 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
                             step={0.1}
                             className="h-8 w-20"
                             value={assignment.weight}
-                            onChange={(e) => setSharedWeight(team.id, Number(e.target.value))}
+                            onChange={(e) => setSharedWeight(team.id, clamp100(Number(e.target.value)))}
                           />
                         </div>
                       )}
@@ -302,22 +289,6 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
               چطور موفقیت را می‌سنجید؟ نتایج کلیدی را اضافه کنید — همگی به تیم(های) انتخاب‌شده در مرحله‌ی هدف تعلق
               می‌گیرند.
             </p>
-
-            {/* مجموع وزن نتایج کلیدی باید با وزن هدف برابر باشد */}
-            <div
-              className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm font-bold ${
-                weightMatches
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                  : 'border-amber-200 bg-amber-50 text-amber-800'
-              }`}
-            >
-              <span>
-                مجموع وزن نتایج کلیدی: {krWeightSum} از {weight}
-              </span>
-              <span>
-                {weightMatches ? '✓ برابر با وزن هدف' : `باید ${weight} شود`}
-              </span>
-            </div>
             {keyResults.map((kr, i) => (
               <div key={i} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3">
                 <div>
@@ -408,7 +379,7 @@ export function NewOkrModal({ defaultTeamId }: { defaultTeamId?: string }) {
           {step === 0 && <Button onClick={goShared}>بعدی ←</Button>}
           {step === 1 && <Button onClick={goKrs}>بعدی ←</Button>}
           {step === 2 && (
-            <Button onClick={goReview} disabled={keyResults.length === 0 || !weightMatches}>
+            <Button onClick={goReview} disabled={keyResults.length === 0}>
               بازبینی ←
             </Button>
           )}

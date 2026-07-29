@@ -178,7 +178,7 @@ export default async function AdminDashboard() {
         <Card className="rounded-2xl lg:col-span-3">
           <CardHeader>
             <CardTitle>🏆 لیدربورد تیم‌ها</CardTitle>
-            <CardDescription>رتبه‌بندی بر اساس فاصله از برنامه (pacing)</CardDescription>
+            <CardDescription>رتبه‌بندی بر اساس فاصله از برنامه</CardDescription>
           </CardHeader>
           <CardContent>
             <LeaderboardTable standings={standings} />

@@ -10,7 +10,7 @@ import { CycleTimeBar } from '@/components/cycle-time-bar';
 import { TeamSwitcher } from '@/components/team/team-switcher';
 import { LeaderboardTable } from '@/components/leaderboard-table';
 import { getSession } from '@/lib/auth';
-import { currentQuarterInfo, getWeekStart } from '@/lib/jalali';
+import { getWeekStart } from '@/lib/jalali';
 import { getTeamOkrs, getWeeklyTrend, tkrProgress } from '@/lib/okr-data';
 import { weightedProgress } from '@/lib/progress';
 import { getLeaderboard } from '@/lib/leaderboard';
@@ -88,7 +88,6 @@ export default async function TeamDashboardPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black tracking-tight">داشبورد تیم {activeTeam.name}</h1>
-          <p className="text-sm text-muted-foreground">{currentQuarterInfo().label}</p>
           <p className="mt-0.5 text-sm text-muted-foreground">مسئول تیم: {activeTeam.leadName ?? '—'}</p>
         </div>
         <div className="flex gap-2">

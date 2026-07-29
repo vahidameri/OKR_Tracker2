@@ -169,8 +169,6 @@ export function JalaliCalendar() {
             <span className="ml-1 inline-block h-3 w-3 rounded-sm bg-primary align-middle" /> امروز
             <span className="mx-1.5">·</span>
             <span className="ml-1 inline-block h-3 w-3 rounded-sm bg-amber-100 align-middle" /> بازه‌ی چک‌این
-            <span className="mx-1.5">·</span>
-            <span className="ml-1 inline-block h-3 w-3 rounded-sm bg-red-50 align-middle" /> پنج‌شنبه و جمعه
           </p>
         </div>
         {!isTodayMonth && (

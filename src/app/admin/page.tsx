@@ -16,7 +16,6 @@ import { CycleTimeBar } from '@/components/cycle-time-bar';
 import { JalaliCalendar } from '@/components/jalali-calendar';
 import { Pct } from '@/components/ui/pct';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { currentQuarterInfo } from '@/lib/jalali';
 import { LeaderboardTable } from '@/components/leaderboard-table';
 import { computeStandings } from '@/lib/leaderboard';
 import { computePersistentBlockers, computeTrend, getDepartmentOverview } from '@/lib/okr-data';
@@ -64,7 +63,6 @@ export default async function AdminDashboard() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black tracking-tight">داشبورد دپارتمان</h1>
-          <p className="text-sm text-muted-foreground">{currentQuarterInfo().label}</p>
         </div>
         <div className="no-print flex gap-2">
           <Link
